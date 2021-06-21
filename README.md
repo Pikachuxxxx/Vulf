@@ -18,7 +18,7 @@ make run
 
 Once built, the program can be run from within the build directory using the `make run` command (even for changes)
 
-For compiling the shaders using `./../src/shaders/glsl/compile-glsl.sh` from within the build directory (if ou get permission erros use `chmod +x ../src/shaders/glsl/compile-glsl.sh` before running the shell script)
+For compiling the shaders use `./../src/shaders/glsl/compile-glsl.sh` from within the build directory (if you get permission erros use `chmod +x ../src/shaders/glsl/compile-glsl.sh` before running the shell script)
 
 ## Thanks to
 *  Alexander Overvoorde for his awesome Vulkan tutorial.
