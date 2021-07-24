@@ -174,6 +174,6 @@ void VKSwapchain::CreateSwapchainImageViews()
         imvCI.subresourceRange.layerCount = 1;
         if(VK_CALL(vkCreateImageView(VKLogicalDevice::GetDeviceManager()->GetLogicalDevice(), &imvCI, nullptr, &m_SwapchainImageViews[i])))
             throw std::runtime_error("Cannot create image view!");
-        else VK_LOG_SUCCESS("Image view succesfully created!");
+        else VK_LOG("Image view(id=", i ,") succesfully created!");
     }
 }

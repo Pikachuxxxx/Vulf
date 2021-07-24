@@ -19,6 +19,8 @@
 #include "Vulkan/VKInstance.h"
 #include "Vulkan/VKDevice.h"
 #include "Vulkan/VKSwapchain.h"
+#include "Vulkan/VKShader.h"
+#include "Vulkan/VKFixedPipelineFuncs.h"
 
 class Application
 {
@@ -36,6 +38,9 @@ private:
     void CleanUp();
 /**************************** Vulkan Initialization ***************************/
 VKSwapchain swapchainManager;
+VKShader vertexShader;
+VKShader fragmentShader;
+VKFixedPipelineFuncs fixedPipelineFuncs;
 /******************************* Vulkan Helper ********************************/
 
 

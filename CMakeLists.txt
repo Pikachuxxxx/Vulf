@@ -59,5 +59,5 @@ endif (APPLE)
 add_custom_target(run
     COMMAND HelloVulkan
     DEPENDS HelloVulkan
-    WORKING_DIRECTORY ${CMAKE_SOURCE_DIR}
+    WORKING_DIRECTORY ${CMAKE_SOURCE_DIR} # here we set the executable direcotry to the CMake home dir
 )

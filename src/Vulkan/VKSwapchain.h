@@ -19,6 +19,7 @@ public:
     VKSwapchain() = default;
     void Init(GLFWwindow* window);
     void Destroy();
+    const VkExtent2D& GetSwapExtent() { return m_SwapchainExtent; }
 private:
     VkSwapchainKHR m_SwapchainKHR;
     SwapchainProperties m_SurfaceProperties;

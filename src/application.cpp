@@ -23,8 +23,23 @@ void Application::InitWindow()
 void Application::InitVulkan()
 {
     VKInstance::GetInstanceManager()->Init("Hello Vulkan", window);
+
     VKLogicalDevice::GetDeviceManager()->Init();
+
     swapchainManager.Init(window);
+
+    vertexShader.CreateShader("./src/shaders/spir-v/trivert.spv", ShaderType::VERTEX_SHADER);
+    fragmentShader.CreateShader("./src/shaders/spir-v/trifrag.spv", ShaderType::FRAGMENT_SHADER);
+
+    fixedPipelineFuncs.SetVertexInputSCI();
+    fixedPipelineFuncs.SetInputAssemblyStageInfo(Topology::TRIANGLES);
+    fixedPipelineFuncs.SetViewportSCI(swapchainManager.GetSwapExtent());
+    fixedPipelineFuncs.SetRasterizerSCI();
+    fixedPipelineFuncs.SetMultiSampleSCI();
+    fixedPipelineFuncs.SetDepthStencilSCI();
+    fixedPipelineFuncs.SetColorBlendSCI();
+    fixedPipelineFuncs.SetDynamicSCI();
+    fixedPipelineFuncs.SetPipelineLayout();
 }
 
 void Application::MainLoop()
@@ -42,14 +57,12 @@ void Application::DrawFrame()
 
 void Application::CleanUp()
 {
+    fixedPipelineFuncs.DestroyPipelineLayout();
+    vertexShader.DestroyModule();
+    fragmentShader.DestroyModule();
     swapchainManager.Destroy();
     VKLogicalDevice::GetDeviceManager()->Destroy();
     VKInstance::GetInstanceManager()->Destroy();
 }
 /******************************************************************************/
-
-/******************************** Vulkan Instance *****************************/
-
-/******************************* Vulkan Helper ********************************/
-
 /******************************* GLFW Callbacks *******************************/
