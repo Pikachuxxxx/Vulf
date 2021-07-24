@@ -52,7 +52,7 @@ file(GLOB_RECURSE HEADER_FILES
 add_executable(HelloVulkan ${HEADER_FILES} ${SOURCE_FILES})
 
 if (APPLE)
-target_link_libraries(HelloVulkan glfw3 vulkan.1 vulkan.1.2.170 "-framework CoreFoundation -framework CoreAudio -framework OpenAL -framework Cocoa -framework IOKit -framework CoreGraphics")
+target_link_libraries(HelloVulkan glfw3 vulkan.1 "-framework CoreFoundation -framework CoreAudio -framework OpenAL -framework Cocoa -framework IOKit -framework CoreGraphics")
 endif (APPLE)
 
 # Run the binary built using 'make run' command

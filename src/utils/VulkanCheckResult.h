@@ -56,3 +56,19 @@ static bool VulkanCheckErrorStatus(VkResult x, const char* file, int line)
     }
     else return false;
 }
+
+#define VK_LOG_SUCCESS(msg) std::cout << "\033[1;32m[VULKAN]\033[1;32m - SUCCESS : " << (msg) <<  " \033[0m\n";
+
+#define VK_LOG(...) std::cout , "\033[1;32m[VULKAN]\033[1;33m - LOG : " , __VA_ARGS__ , " \033[0m" , std::endl
+
+template <typename T>
+static std::ostream& operator,(std::ostream& out, const T& t) {
+  out << t;
+  return out;
+}
+
+//overloaded version to handle all those special std::endl and others...
+static std::ostream& operator,(std::ostream& out, std::ostream&(*f)(std::ostream&)) {
+  out << f;
+  return out;
+}
