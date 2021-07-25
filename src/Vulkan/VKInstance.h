@@ -4,6 +4,7 @@
 #define GLFW_INCLUDE_VULKAN
 #include <GLFW/glfw3.h>
 #include <vector>
+#include <string>
 
 extern std::vector<const char*> validationLayers;
 extern std::vector<const char*> instanceExtensions;

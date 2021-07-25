@@ -13,7 +13,7 @@ public:
     void Create(std::vector<VkPipelineShaderStageCreateInfo> shaderStages,
     VKFixedPipelineFuncs& fixedfunctions,
     VkRenderPass& renderpass);
-    void Bind(VKCmdBuffer& cmdBuffers);
+    void Bind(VkCommandBuffer& cmdBuffers);
     void Destroy();
 private:
     VkPipeline m_GraphicsPipeline;

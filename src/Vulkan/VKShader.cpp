@@ -18,7 +18,7 @@ void VKShader::CreateShader(const std::string& path, ShaderType type)
         throw std::runtime_error("Cannot Create shader module!");
     else VK_LOG(GetShaderTypeString(), " shader module created!");
 
-    // Create the pipeline shader shate create info
+    // Create the pipeline shader stage create info
     m_ShaderStageInfo = {};
     m_ShaderStageInfo.sType = VK_STRUCTURE_TYPE_PIPELINE_SHADER_STAGE_CREATE_INFO;
     switch (type) {
@@ -31,6 +31,7 @@ void VKShader::CreateShader(const std::string& path, ShaderType type)
     }
     m_ShaderStageInfo.module = m_Module;
     m_ShaderStageInfo.pName = "main";
+    m_ShaderStageInfo.pSpecializationInfo = nullptr;
 }
 
 void VKShader::DestroyModule()

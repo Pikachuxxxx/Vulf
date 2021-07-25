@@ -48,7 +48,7 @@ void VKFixedPipelineFuncs::SetInputAssemblyStageInfo(Topology topology)
 
 void VKFixedPipelineFuncs::SetViewportSCI(const VkExtent2D& swapchainExtent)
 {
-    VkViewport viewport{};
+    viewport = {};
     viewport.x = 0;
     viewport.y = 0;
     viewport.width = swapchainExtent.width;
@@ -56,7 +56,7 @@ void VKFixedPipelineFuncs::SetViewportSCI(const VkExtent2D& swapchainExtent)
     viewport.minDepth = 0.0f;
     viewport.maxDepth = 1.0f;
 
-    VkRect2D scissor{};
+    scissor = {};
     scissor.offset = {0, 0};
     scissor.extent = swapchainExtent;
 
@@ -74,10 +74,11 @@ void VKFixedPipelineFuncs::SetRasterizerSCI()
     m_RasterizerSCI = {};
     m_RasterizerSCI.sType = VK_STRUCTURE_TYPE_PIPELINE_RASTERIZATION_STATE_CREATE_INFO;
     m_RasterizerSCI.depthClampEnable = VK_FALSE;
-    m_RasterizerSCI.rasterizerDiscardEnable = VK_TRUE;
+    m_RasterizerSCI.rasterizerDiscardEnable = VK_FALSE;
     // TODO: Add arguments to set polygonMode functionality
     m_RasterizerSCI.polygonMode = VK_POLYGON_MODE_FILL;
     m_RasterizerSCI.cullMode = VK_CULL_MODE_NONE;
+    m_RasterizerSCI.frontFace = VK_FRONT_FACE_CLOCKWISE;
     m_RasterizerSCI.depthBiasEnable = VK_FALSE;
     m_RasterizerSCI.depthBiasConstantFactor = 0.0f;
     m_RasterizerSCI.depthBiasClamp = 0.0f;
@@ -106,7 +107,6 @@ void VKFixedPipelineFuncs::SetDepthStencilSCI()
 
 void VKFixedPipelineFuncs::SetColorBlendSCI()
 {
-    VkPipelineColorBlendAttachmentState colorBlendAttachment{};
     colorBlendAttachment.colorWriteMask = VK_COLOR_COMPONENT_R_BIT | VK_COLOR_COMPONENT_G_BIT | VK_COLOR_COMPONENT_B_BIT | VK_COLOR_COMPONENT_A_BIT;
     colorBlendAttachment.blendEnable = VK_TRUE;
     colorBlendAttachment.srcColorBlendFactor = VK_BLEND_FACTOR_SRC_ALPHA;
@@ -132,7 +132,6 @@ void VKFixedPipelineFuncs::SetDynamicSCI() { }
 
 void VKFixedPipelineFuncs::SetPipelineLayout()
 {
-    VkPipelineLayoutCreateInfo layoutCI{};
     layoutCI.sType = VK_STRUCTURE_TYPE_PIPELINE_LAYOUT_CREATE_INFO;
     layoutCI.setLayoutCount = 0;
     layoutCI.pSetLayouts = nullptr;

@@ -51,29 +51,23 @@ void VKRenderPass::Destroy()
     vkDestroyRenderPass(VKLogicalDevice::GetDeviceManager()->GetLogicalDevice(), m_RenderPass, nullptr);
 }
 
-void VKRenderPass::BeginRenderPass(VKCmdBuffer& cmdBuffers, std::vector<VkFramebuffer> framebuffers, const VkExtent2D& swapextent)
+void VKRenderPass::BeginRenderPass(VkCommandBuffer& cmdBuffer, VkFramebuffer& framebuffer, const VkExtent2D& swapextent)
 {
     VK_LOG("Starting render pass!");
-    int i = 0;
-    for(const auto& cmdBuffer : cmdBuffers.GetBuffers())
-    {
-        VkRenderPassBeginInfo beginInfo{};
-        beginInfo.sType = VK_STRUCTURE_TYPE_RENDER_PASS_BEGIN_INFO;
-        beginInfo.renderPass = m_RenderPass;
-        beginInfo.framebuffer = framebuffers[i];
-        beginInfo.renderArea.offset = {0, 0};
-        beginInfo.renderArea.extent = swapextent;
-        beginInfo.clearValueCount = 1;
-        VkClearValue clearColor = {{{m_ClearColor[0], m_ClearColor[1], m_ClearColor[2], 1.0f}}};
-        beginInfo.pClearValues = &clearColor;
+	VkRenderPassBeginInfo beginInfo{};
+	beginInfo.sType = VK_STRUCTURE_TYPE_RENDER_PASS_BEGIN_INFO;
+	beginInfo.renderPass = m_RenderPass;
+	beginInfo.framebuffer = framebuffer;
+	beginInfo.renderArea.offset = { 0, 0 };
+	beginInfo.renderArea.extent = swapextent;
+	beginInfo.clearValueCount = 1;
+	VkClearValue clearColor = { {{m_ClearColor[0], m_ClearColor[1], m_ClearColor[2], 1.0f}} };
+	beginInfo.pClearValues = &clearColor;
 
-        vkCmdBeginRenderPass(cmdBuffer, &beginInfo, VK_SUBPASS_CONTENTS_INLINE);
-        i++;
-    }
+	vkCmdBeginRenderPass(cmdBuffer, &beginInfo, VK_SUBPASS_CONTENTS_INLINE);
 }
 
-void VKRenderPass::EndRenderPass(VKCmdBuffer& cmdBuffers)
+void VKRenderPass::EndRenderPass(VkCommandBuffer& cmdBuffer)
 {
-    for(const auto& cmdBuffer : cmdBuffers.GetBuffers())
         vkCmdEndRenderPass(cmdBuffer);
 }

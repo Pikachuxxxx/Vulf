@@ -12,32 +12,30 @@ void VKCmdBuffer::AllocateBuffers(const VkCommandPool& pool)
     allocInfo.commandBufferCount = 3;
     m_CommandBuffers.resize(3);
     if(VK_CALL(vkAllocateCommandBuffers(VKLogicalDevice::GetDeviceManager()->GetLogicalDevice(), &allocInfo, m_CommandBuffers.data())))
-        throw std::runtime_error("Cannot creae commandbuffers!");
+        throw std::runtime_error("Cannot create command buffers!");
     else VK_LOG_SUCCESS("CommandBuffers succesfully Allocated!");
 }
 
-void VKCmdBuffer::RecordBuffers()
+void VKCmdBuffer::DestroyBuffer(VkCommandBuffer& buffer)
 {
-    int i = 0;
-    for(const auto& commandBuffer : m_CommandBuffers)
-    {
-        VkCommandBufferBeginInfo beginInfo{};
-        beginInfo.sType = VK_STRUCTURE_TYPE_COMMAND_BUFFER_BEGIN_INFO;
-        beginInfo.flags = VK_COMMAND_BUFFER_USAGE_SIMULTANEOUS_USE_BIT;
-        beginInfo.pInheritanceInfo = nullptr;
-        i++;
-        if(VK_CALL(vkBeginCommandBuffer(commandBuffer, &beginInfo)))
-            throw std::runtime_error("Cannot record onto CommandBuffers");
-        else VK_LOG("Recoring to command buffer(", i, ")...");
-    }
+    //vkFreeCommandBuffers(VKLogicalDevice::GetDeviceManager()->GetLogicalDevice(), buffer, nullptr);
+	throw std::runtime_error("Unmiplemented method!");
 }
 
-void VKCmdBuffer::EndRecordingBuffers()
+void VKCmdBuffer::RecordBuffer(VkCommandBuffer& buffer)
 {
-    for(const auto& commandBuffer : m_CommandBuffers)
-    {
-        if (VK_CALL(vkEndCommandBuffer(commandBuffer))) {
-            throw std::runtime_error("failed to record command buffer!");
-        }
-    }
+	VkCommandBufferBeginInfo beginInfo{};
+	beginInfo.sType = VK_STRUCTURE_TYPE_COMMAND_BUFFER_BEGIN_INFO;
+	beginInfo.flags = VK_COMMAND_BUFFER_USAGE_SIMULTANEOUS_USE_BIT;
+	beginInfo.pInheritanceInfo = nullptr;
+	if (VK_CALL(vkBeginCommandBuffer(buffer, &beginInfo)))
+		throw std::runtime_error("Cannot record onto CommandBuffers");
+	else VK_LOG("Recoring to command buffer...");
+}
+
+void VKCmdBuffer::EndRecordingBuffer(VkCommandBuffer& buffer)
+{
+	if (VK_CALL(vkEndCommandBuffer(buffer))) {
+		throw std::runtime_error("failed to record command buffer!");
+	}
 }

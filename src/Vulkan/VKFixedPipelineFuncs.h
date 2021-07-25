@@ -42,4 +42,8 @@ private:
     VkPipelineColorBlendStateCreateInfo m_ColorBlendSCI;
     VkPipelineDynamicStateCreateInfo m_DynamicSCI;
     VkPipelineLayout m_PipelineLayout;
+    VkViewport viewport;
+    VkRect2D scissor;
+	VkPipelineColorBlendAttachmentState colorBlendAttachment{};
+	VkPipelineLayoutCreateInfo layoutCI{};
 };

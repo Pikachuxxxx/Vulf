@@ -8,9 +8,9 @@ class VKCmdBuffer
 public:
     VKCmdBuffer() = default;
     void AllocateBuffers(const VkCommandPool& pool);
-    void RecordBuffers();
-    void EndRecordingBuffers();
-    void DestroyBuffers();
+    void RecordBuffer(VkCommandBuffer& buffer);
+    void EndRecordingBuffer(VkCommandBuffer& buffer);
+    void DestroyBuffer(VkCommandBuffer& buffer);
     std::vector<VkCommandBuffer>& GetBuffers() { return m_CommandBuffers; }
     VkCommandBuffer& GetBufferAt(int index) { return m_CommandBuffers[index];}
 private:

@@ -30,8 +30,8 @@ void Application::InitVulkan()
 
     swapchainManager.Init(window);
 
-    vertexShader.CreateShader("./src/shaders/spir-v/trivert.spv", ShaderType::VERTEX_SHADER);
-    fragmentShader.CreateShader("./src/shaders/spir-v/trifrag.spv", ShaderType::FRAGMENT_SHADER);
+    vertexShader.CreateShader("../src/shaders/spir-v/trivert.spv", ShaderType::VERTEX_SHADER);
+    fragmentShader.CreateShader("../src/shaders/spir-v/trifrag.spv", ShaderType::FRAGMENT_SHADER);
 
     fixedPipelineFuncs.SetVertexInputSCI();
     fixedPipelineFuncs.SetInputAssemblyStageInfo(Topology::TRIANGLES);
@@ -53,16 +53,20 @@ void Application::InitVulkan()
     cmdPoolManager.Init();
 
     swapCmdBuffers.AllocateBuffers(cmdPoolManager.GetPool());
-    swapCmdBuffers.RecordBuffers();
-    renderPassManager.SetClearColor(0.85, 0.44, 0.48);
-    renderPassManager.BeginRenderPass(swapCmdBuffers, framebufferManager.GetFramebuffers(), swapchainManager.GetSwapExtent());
-    graphicsPipeline.Bind(swapCmdBuffers);
 
-    for(const auto& buffers : swapCmdBuffers.GetBuffers())
-        vkCmdDraw(buffers, 3, 1, 0, 0);
+    auto cmdBuffers = swapCmdBuffers.GetBuffers();
+    auto framebuffers = framebufferManager.GetFramebuffers();
+    for (int i = 0; i < cmdBuffers.size(); i++)
+    {
+        swapCmdBuffers.RecordBuffer(cmdBuffers[i]);
+        renderPassManager.SetClearColor(0.85, 0.44, 0.48);
+        renderPassManager.BeginRenderPass(cmdBuffers[i], framebuffers[i], swapchainManager.GetSwapExtent());
+        graphicsPipeline.Bind(cmdBuffers[i]);
+        vkCmdDraw(cmdBuffers[i], 3, 1, 0, 0);
+        renderPassManager.EndRenderPass(cmdBuffers[i]);
+		swapCmdBuffers.EndRecordingBuffer(cmdBuffers[i]);
+    }
 
-    renderPassManager.EndRenderPass(swapCmdBuffers);
-    swapCmdBuffers.EndRecordingBuffers();
 
     // Create the synchronization stuff
     VkSemaphoreCreateInfo semaphoreInfo{};
@@ -93,7 +97,7 @@ void Application::DrawFrame()
     if(VK_CALL(vkAcquireNextImageKHR(VKLogicalDevice::GetDeviceManager()->GetLogicalDevice(), swapchainManager.GetSwapchainKHR(), UINT64_MAX, imageAvailableSemaphore, VK_NULL_HANDLE, &imageIndex)))
         throw std::runtime_error("Cannot acquire next image!");
 
-    VK_LOG("Image index : ", imageIndex);
+    //VK_LOG("Image index : ", imageIndex);
     // Submit the command buffer queue
     VkSubmitInfo submitInfo{};
     submitInfo.sType = VK_STRUCTURE_TYPE_SUBMIT_INFO;
