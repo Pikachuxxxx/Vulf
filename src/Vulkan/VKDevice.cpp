@@ -97,9 +97,17 @@ void VKLogicalDevice::Init()
     else
         VK_LOG_SUCCESS("Logical Device succesfully created!");
 
+    CreateQueues();
 }
 
 void VKLogicalDevice::Destroy()
 {
     vkDestroyDevice(m_Device, nullptr);
+}
+
+void VKLogicalDevice::CreateQueues()
+{
+    auto indices = m_GPUManager.GetQueueFamilyIndices();
+    vkGetDeviceQueue(m_Device, indices.graphicsFamily.value(), 0, &graphicsQueue);
+    vkGetDeviceQueue(m_Device, indices.presentFamily.value(), 0, &presentQueue);
 }

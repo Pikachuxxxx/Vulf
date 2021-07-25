@@ -143,7 +143,6 @@ VkPresentModeKHR VKSwapchain::choosePresentMode()
 
 void VKSwapchain::RetrieveSwapchainImages()
 {
-    // TODO: First check the image count using m_SwapchainImageCount and then fill the m_SwapchainImages, do a double vk call
     vkGetSwapchainImagesKHR(VKLogicalDevice::GetDeviceManager()->GetLogicalDevice(), m_SwapchainKHR, &m_SwapchainImageCount, nullptr);
     m_SwapchainImages.resize(m_SwapchainImageCount);
     if(VK_CALL(vkGetSwapchainImagesKHR(VKLogicalDevice::GetDeviceManager()->GetLogicalDevice(), m_SwapchainKHR, &m_SwapchainImageCount, m_SwapchainImages.data())))

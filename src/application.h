@@ -21,6 +21,11 @@
 #include "Vulkan/VKSwapchain.h"
 #include "Vulkan/VKShader.h"
 #include "Vulkan/VKFixedPipelineFuncs.h"
+#include "Vulkan/VKRenderPass.h"
+#include "Vulkan/VKGraphicsPipeline.h"
+#include "Vulkan/VKFramebuffer.h"
+#include "Vulkan/VKCmdPool.h"
+#include "Vulkan/VKCmdBuffer.h"
 
 class Application
 {
@@ -30,18 +35,24 @@ private:
     GLFWwindow* window;
 /***************************** Vulkan Variables *******************************/
 private:
-/**************************** Application Flow ********************************/
+/****************************** Application Flow ******************************/
     void InitWindow();
     void InitVulkan();
     void MainLoop();
     void DrawFrame();
     void CleanUp();
-/**************************** Vulkan Initialization ***************************/
+/***************************** Vulkan Encapsulation ***************************/
 VKSwapchain swapchainManager;
 VKShader vertexShader;
 VKShader fragmentShader;
 VKFixedPipelineFuncs fixedPipelineFuncs;
-/******************************* Vulkan Helper ********************************/
-
-
+VKRenderPass renderPassManager;
+VKGraphicsPipeline graphicsPipeline;
+VKFramebuffer framebufferManager;
+VKCmdPool cmdPoolManager;
+VKCmdBuffer swapCmdBuffers;
+/******************************* Vulkan Variables *****************************/
+VkSemaphore imageAvailableSemaphore;
+VkSemaphore renderingFinishedSemaphore;
+/******************************************************************************/
 };

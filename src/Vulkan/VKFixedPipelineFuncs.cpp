@@ -73,7 +73,7 @@ void VKFixedPipelineFuncs::SetRasterizerSCI()
 {
     m_RasterizerSCI = {};
     m_RasterizerSCI.sType = VK_STRUCTURE_TYPE_PIPELINE_RASTERIZATION_STATE_CREATE_INFO;
-    m_RasterizerSCI.depthClampEnable = VK_TRUE;
+    m_RasterizerSCI.depthClampEnable = VK_FALSE;
     m_RasterizerSCI.rasterizerDiscardEnable = VK_TRUE;
     // TODO: Add arguments to set polygonMode functionality
     m_RasterizerSCI.polygonMode = VK_POLYGON_MODE_FILL;

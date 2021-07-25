@@ -45,10 +45,15 @@ public:
     static VKLogicalDevice* GetDeviceManager() { if(s_Instance ==  nullptr) s_Instance = new VKLogicalDevice; return s_Instance; }
     VkDevice& GetLogicalDevice() { return m_Device; }
     VKPhysicalDevice& GetGPUManager() { return m_GPUManager; }
+    VkQueue& GetGraphicsQueue() { return graphicsQueue; }
+    VkQueue& GetPresentQueue() { return presentQueue; }
 private:
     VkDevice m_Device;
     VKPhysicalDevice m_GPUManager;
     static VKLogicalDevice* s_Instance;
+    VkQueue graphicsQueue;
+    VkQueue presentQueue;
 private:
     VKLogicalDevice() = default;
+    void CreateQueues();
 };
