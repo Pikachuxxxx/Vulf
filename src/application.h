@@ -36,6 +36,8 @@ public:
 private:
     GLFWwindow* window;
     bool framebufferResized = false;
+    double lastTime;
+    double nbFrames = 0;
 /***************************** Vulkan Variables *******************************/
 private:
 /****************************** Application Flow ******************************/

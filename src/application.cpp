@@ -2,6 +2,8 @@
 
 #include "utils/VulkanCheckResult.h"
 
+#include <sstream>
+
 /**************************** Application Flow ********************************/
 void Application::Run()
 {
@@ -93,8 +95,26 @@ void Application::InitVulkan()
 
 void Application::MainLoop()
 {
+    lastTime = glfwGetTime();;
     while (!glfwWindowShouldClose(window)) {
         glfwPollEvents();
+
+        double currentTime = glfwGetTime();
+        double delta = currentTime - lastTime;
+        nbFrames++;
+        if ( delta >= 1.0 ){ // If last cout was more than 1 sec ago
+
+            double fps = double(nbFrames) / delta;
+
+            std::stringstream ss;
+            ss << " Hello Vulkan again! " << " [" << (unsigned int)fps << " FPS]";
+            std::cout << "\033[1;32m[VULKAN]\033[1;32m - SUCCESS : " << nbFrames <<  " \033[0m\n";
+
+            glfwSetWindowTitle(window, ss.str().c_str());
+
+            nbFrames = 0;
+            lastTime = currentTime;
+        }
 
         // Changing the clear color every frame, whilst also waiting for the commands to finish before re-recording them
         auto cmdBuffers = swapCmdBuffers.GetBuffers();

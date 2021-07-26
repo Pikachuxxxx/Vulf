@@ -33,6 +33,7 @@ private:
 private:
     bool isDeviceSuitable(VkPhysicalDevice& gpu);
     void findQueueFamilyIndices(VkPhysicalDevice gpu);
+    uint32_t findMemoryTypeIndex(uint32_t typeBitFieldFilter, VkMemoryPropertyFlags flags);
 };
 
 extern std::vector<const char*> deviceExtensions;
