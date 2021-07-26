@@ -16,10 +16,12 @@ void Application::InitWindow()
     glfwInit();
 
     glfwWindowHint(GLFW_CLIENT_API, GLFW_NO_API);
-    glfwWindowHint(GLFW_RESIZABLE, GLFW_FALSE);
+    glfwWindowHint(GLFW_RESIZABLE, GLFW_TRUE);
     // Create the window
     window = glfwCreateWindow(800, 600, "Hello Vulkan again!", nullptr, nullptr);
-    // glfwSetKeyCallback(window, key_callback);
+    glfwSetWindowUserPointer(window, this);
+    glfwSetKeyCallback(window, key_callback);
+    glfwSetFramebufferSizeCallback(window, resize_callback);
 }
 
 void Application::InitVulkan()
@@ -118,8 +120,17 @@ void Application::DrawFrame()
     vkWaitForFences(VKLogicalDevice::GetDeviceManager()->GetLogicalDevice(), 1, &inFlightFences[currentFrame], VK_TRUE, UINT64_MAX);
     // Acquire the image to render onto
     uint32_t imageIndex;
-    if(VK_CALL(vkAcquireNextImageKHR(VKLogicalDevice::GetDeviceManager()->GetLogicalDevice(), swapchainManager.GetSwapchainKHR(), UINT64_MAX, imageAvailableSemaphores[currentFrame], VK_NULL_HANDLE, &imageIndex)))
+
+    VkResult result = vkAcquireNextImageKHR(VKLogicalDevice::GetDeviceManager()->GetLogicalDevice(), swapchainManager.GetSwapchainKHR(), UINT64_MAX, imageAvailableSemaphores[currentFrame], VK_NULL_HANDLE, &imageIndex);
+
+    if(result == VK_ERROR_OUT_OF_DATE_KHR) {
+        // framebufferResized = false;
+        RecreateSwapchain();
+        return;
+    }
+    else if(result != VK_SUCCESS && result != VK_SUBOPTIMAL_KHR) {
         throw std::runtime_error("Cannot acquire next image!");
+    }
 
     if(imagesInFlight[imageIndex] != VK_NULL_HANDLE)
         vkWaitForFences(VKLogicalDevice::GetDeviceManager()->GetLogicalDevice(), 1, &imagesInFlight[imageIndex], VK_TRUE, UINT64_MAX);
@@ -141,8 +152,9 @@ void Application::DrawFrame()
     submitInfo.pSignalSemaphores = signalSemaphores;
 
     vkResetFences(VKLogicalDevice::GetDeviceManager()->GetLogicalDevice(), 1, &inFlightFences[currentFrame]);
-    if(VK_CALL(vkQueueSubmit(VKLogicalDevice::GetDeviceManager()->GetGraphicsQueue(), 1, &submitInfo, inFlightFences[currentFrame])))
+    if(VK_CALL(vkQueueSubmit(VKLogicalDevice::GetDeviceManager()->GetGraphicsQueue(), 1, &submitInfo, inFlightFences[currentFrame]))) {
         throw std::runtime_error("Cannot submit command buffer!");
+    }
 
     VkPresentInfoKHR presentInfo{};
     presentInfo.sType = VK_STRUCTURE_TYPE_PRESENT_INFO_KHR;
@@ -153,8 +165,16 @@ void Application::DrawFrame()
     presentInfo.pSwapchains = swapChains;
     presentInfo.pImageIndices = &imageIndex;
 
-    if(VK_CALL(vkQueuePresentKHR(VKLogicalDevice::GetDeviceManager()->GetPresentQueue(), &presentInfo)))
+    result = vkQueuePresentKHR(VKLogicalDevice::GetDeviceManager()->GetPresentQueue(), &presentInfo);
+
+    if(result == VK_ERROR_OUT_OF_DATE_KHR || result == VK_SUBOPTIMAL_KHR || framebufferResized) {
+        framebufferResized = false;
+        RecreateSwapchain();
+        return;
+    }
+    else if(result != VK_SUCCESS) {
         throw std::runtime_error("Cannot submit presentation queue!");
+    }
 
     currentFrame = (currentFrame + 1 ) % MAX_FRAMES_IN_FLIGHT;
 }
@@ -179,4 +199,62 @@ void Application::CleanUp()
     VKInstance::GetInstanceManager()->Destroy();
 }
 /******************************************************************************/
+void Application::RecreateSwapchain()
+{
+    vkDeviceWaitIdle(VKLogicalDevice::GetDeviceManager()->GetLogicalDevice());
+
+    vkFreeCommandBuffers(VKLogicalDevice::GetDeviceManager()->GetLogicalDevice(), cmdPoolManager.GetPool(), static_cast<uint32_t>(swapCmdBuffers.GetBuffers().size()), swapCmdBuffers.GetBuffers().data());
+    cmdPoolManager.Destroy();
+    framebufferManager.Destroy();
+    graphicsPipeline.Destroy();
+    renderPassManager.Destroy();
+    fixedPipelineFuncs.DestroyPipelineLayout();
+    swapchainManager.Destroy();
+
+    swapchainManager.Init(window);
+    fixedPipelineFuncs.SetVertexInputSCI();
+    fixedPipelineFuncs.SetInputAssemblyStageInfo(Topology::TRIANGLES);
+    fixedPipelineFuncs.SetViewportSCI(swapchainManager.GetSwapExtent());
+    fixedPipelineFuncs.SetRasterizerSCI();
+    fixedPipelineFuncs.SetMultiSampleSCI();
+    fixedPipelineFuncs.SetDepthStencilSCI();
+    fixedPipelineFuncs.SetColorBlendSCI();
+    fixedPipelineFuncs.SetDynamicSCI();
+    fixedPipelineFuncs.SetPipelineLayout();
+
+    renderPassManager.Init(swapchainManager.GetSwapFormat());
+    std::vector<VkPipelineShaderStageCreateInfo>  shaderInfo = {vertexShader.GetShaderStageInfo(), fragmentShader.GetShaderStageInfo()};
+
+    graphicsPipeline.Create(shaderInfo, fixedPipelineFuncs, renderPassManager.GetRenderPass());
+
+    framebufferManager.Create(renderPassManager.GetRenderPass(), swapchainManager.GetSwapImageViews(), swapchainManager.GetSwapExtent());
+
+    cmdPoolManager.Init();
+
+    swapCmdBuffers.AllocateBuffers(cmdPoolManager.GetPool());
+
+    auto cmdBuffers = swapCmdBuffers.GetBuffers();
+    auto framebuffers = framebufferManager.GetFramebuffers();
+    for (int i = 0; i < cmdBuffers.size(); i++)
+    {
+        swapCmdBuffers.RecordBuffer(cmdBuffers[i]);
+        renderPassManager.SetClearColor(0.85, 0.44, 0.48);
+        renderPassManager.BeginRenderPass(cmdBuffers[i], framebuffers[i], swapchainManager.GetSwapExtent());
+        graphicsPipeline.Bind(cmdBuffers[i]);
+        vkCmdDraw(cmdBuffers[i], 3, 1, 0, 0);
+        renderPassManager.EndRenderPass(cmdBuffers[i]);
+		swapCmdBuffers.EndRecordingBuffer(cmdBuffers[i]);
+    }
+}
 /******************************* GLFW Callbacks *******************************/
+void Application::key_callback(GLFWwindow* window, int key, int scancode, int action, int mods)
+{
+    if(key == GLFW_KEY_ESCAPE && action == GLFW_PRESS)
+        glfwSetWindowShouldClose(window, GLFW_TRUE);
+}
+
+void Application::resize_callback(GLFWwindow* window, int width, int height)
+{
+    auto app = reinterpret_cast<Application*>(glfwGetWindowUserPointer(window));
+    app->framebufferResized = true;
+}
