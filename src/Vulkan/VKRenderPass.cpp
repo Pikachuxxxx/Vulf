@@ -69,5 +69,5 @@ void VKRenderPass::BeginRenderPass(VkCommandBuffer& cmdBuffer, VkFramebuffer& fr
 
 void VKRenderPass::EndRenderPass(VkCommandBuffer& cmdBuffer)
 {
-        vkCmdEndRenderPass(cmdBuffer);
+    vkCmdEndRenderPass(cmdBuffer);
 }

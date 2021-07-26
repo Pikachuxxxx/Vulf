@@ -18,7 +18,7 @@ void VKCmdBuffer::AllocateBuffers(const VkCommandPool& pool)
 
 void VKCmdBuffer::DestroyBuffer(VkCommandBuffer& buffer)
 {
-    //vkFreeCommandBuffers(VKLogicalDevice::GetDeviceManager()->GetLogicalDevice(), buffer, nullptr);
+    // vkFreeCommandBuffers(VKLogicalDevice::GetDeviceManager()->GetLogicalDevice(), buffer, nullptr);
 	throw std::runtime_error("Unmiplemented method!");
 }
 
@@ -30,7 +30,7 @@ void VKCmdBuffer::RecordBuffer(VkCommandBuffer& buffer)
 	beginInfo.pInheritanceInfo = nullptr;
 	if (VK_CALL(vkBeginCommandBuffer(buffer, &beginInfo)))
 		throw std::runtime_error("Cannot record onto CommandBuffers");
-	else VK_LOG("Recoring to command buffer...");
+	else VK_LOG("Recording to command buffer...");
 }
 
 void VKCmdBuffer::EndRecordingBuffer(VkCommandBuffer& buffer)

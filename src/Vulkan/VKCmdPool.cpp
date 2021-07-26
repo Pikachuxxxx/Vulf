@@ -7,6 +7,7 @@ void VKCmdPool::Init()
 {
     VkCommandPoolCreateInfo poolCI{};
     poolCI.sType = VK_STRUCTURE_TYPE_COMMAND_POOL_CREATE_INFO;
+    poolCI.flags = VK_COMMAND_POOL_CREATE_RESET_COMMAND_BUFFER_BIT;
     poolCI.queueFamilyIndex = VKLogicalDevice::GetDeviceManager()->GetGPUManager().GetQueueFamilyIndices().graphicsFamily.value();
 
     if(VK_CALL(vkCreateCommandPool(VKLogicalDevice::GetDeviceManager()->GetLogicalDevice(), &poolCI, nullptr, &m_CommandPool)))

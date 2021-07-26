@@ -27,6 +27,8 @@
 #include "Vulkan/VKCmdPool.h"
 #include "Vulkan/VKCmdBuffer.h"
 
+const int MAX_FRAMES_IN_FLIGHT = 2;
+
 class Application
 {
 public:
@@ -52,7 +54,10 @@ VKFramebuffer framebufferManager;
 VKCmdPool cmdPoolManager;
 VKCmdBuffer swapCmdBuffers;
 /******************************* Vulkan Variables *****************************/
-VkSemaphore imageAvailableSemaphore;
-VkSemaphore renderingFinishedSemaphore;
+std::vector<VkSemaphore> imageAvailableSemaphores;
+std::vector<VkSemaphore> renderingFinishedSemaphores;
+std::vector<VkFence> inFlightFences;
+std::vector<VkFence> imagesInFlight;
+size_t currentFrame = 0;
 /******************************************************************************/
 };

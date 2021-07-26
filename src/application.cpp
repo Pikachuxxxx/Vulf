@@ -30,8 +30,8 @@ void Application::InitVulkan()
 
     swapchainManager.Init(window);
 
-    vertexShader.CreateShader("../src/shaders/spir-v/trivert.spv", ShaderType::VERTEX_SHADER);
-    fragmentShader.CreateShader("../src/shaders/spir-v/trifrag.spv", ShaderType::FRAGMENT_SHADER);
+    vertexShader.CreateShader("./src/shaders/spir-v/trivert.spv", ShaderType::VERTEX_SHADER);
+    fragmentShader.CreateShader("./src/shaders/spir-v/trifrag.spv", ShaderType::FRAGMENT_SHADER);
 
     fixedPipelineFuncs.SetVertexInputSCI();
     fixedPipelineFuncs.SetInputAssemblyStageInfo(Topology::TRIANGLES);
@@ -67,24 +67,47 @@ void Application::InitVulkan()
 		swapCmdBuffers.EndRecordingBuffer(cmdBuffers[i]);
     }
 
-
     // Create the synchronization stuff
     VkSemaphoreCreateInfo semaphoreInfo{};
     semaphoreInfo.sType = VK_STRUCTURE_TYPE_SEMAPHORE_CREATE_INFO;
-    if(VK_CALL(vkCreateSemaphore(VKLogicalDevice::GetDeviceManager()->GetLogicalDevice(), &semaphoreInfo, nullptr, &imageAvailableSemaphore)))
-        throw std::runtime_error("Cannot make semaphore!");
-    else VK_LOG("Created imageAvailableSemaphore");
-    if(VK_CALL(vkCreateSemaphore(VKLogicalDevice::GetDeviceManager()->GetLogicalDevice(), &semaphoreInfo, nullptr, &renderingFinishedSemaphore)))
-        throw std::runtime_error("Cannot make semaphore!");
-    else VK_LOG("Created renderingFinishedSemaphore");
+    imageAvailableSemaphores.resize(MAX_FRAMES_IN_FLIGHT);
+    renderingFinishedSemaphores.resize(MAX_FRAMES_IN_FLIGHT);
+    VkFenceCreateInfo fenceInfo{};
+    fenceInfo.sType = VK_STRUCTURE_TYPE_FENCE_CREATE_INFO;
+    fenceInfo.flags = VK_FENCE_CREATE_SIGNALED_BIT;
+    inFlightFences.resize(MAX_FRAMES_IN_FLIGHT);
+    imagesInFlight.resize(cmdBuffers.size(), VK_NULL_HANDLE);
+    for (size_t i = 0; i < MAX_FRAMES_IN_FLIGHT; i++)
+    {
+        if(VK_CALL(vkCreateSemaphore(VKLogicalDevice::GetDeviceManager()->GetLogicalDevice(), &semaphoreInfo, nullptr, &imageAvailableSemaphores[i])) ||
+        VK_CALL(vkCreateSemaphore(VKLogicalDevice::GetDeviceManager()->GetLogicalDevice(), &semaphoreInfo, nullptr, &renderingFinishedSemaphores[i])) ||
+        VK_CALL(vkCreateFence(VKLogicalDevice::GetDeviceManager()->GetLogicalDevice(), &fenceInfo, nullptr, &inFlightFences[i])))
+        {
+            throw std::runtime_error("Cannot make semaphore!");
+        }
+    }
 
 }
-
 
 void Application::MainLoop()
 {
     while (!glfwWindowShouldClose(window)) {
         glfwPollEvents();
+
+        // Changing the clear color every frame, whilst also waiting for the commands to finish before re-recording them
+        auto cmdBuffers = swapCmdBuffers.GetBuffers();
+        auto framebuffers = framebufferManager.GetFramebuffers();
+        for (int i = 0; i < cmdBuffers.size(); i++)
+        {
+            vkDeviceWaitIdle(VKLogicalDevice::GetDeviceManager()->GetLogicalDevice());
+            swapCmdBuffers.RecordBuffer(cmdBuffers[i]);
+            renderPassManager.SetClearColor(abs(cos(glfwGetTime())), 0.44, 0.48);
+            renderPassManager.BeginRenderPass(cmdBuffers[i], framebuffers[i], swapchainManager.GetSwapExtent());
+            graphicsPipeline.Bind(cmdBuffers[i]);
+            vkCmdDraw(cmdBuffers[i], 3, 1, 0, 0);
+            renderPassManager.EndRenderPass(cmdBuffers[i]);
+    		swapCmdBuffers.EndRecordingBuffer(cmdBuffers[i]);
+        }
         DrawFrame();
     }
     vkDeviceWaitIdle(VKLogicalDevice::GetDeviceManager()->GetLogicalDevice());
@@ -92,27 +115,33 @@ void Application::MainLoop()
 
 void Application::DrawFrame()
 {
+    vkWaitForFences(VKLogicalDevice::GetDeviceManager()->GetLogicalDevice(), 1, &inFlightFences[currentFrame], VK_TRUE, UINT64_MAX);
     // Acquire the image to render onto
     uint32_t imageIndex;
-    if(VK_CALL(vkAcquireNextImageKHR(VKLogicalDevice::GetDeviceManager()->GetLogicalDevice(), swapchainManager.GetSwapchainKHR(), UINT64_MAX, imageAvailableSemaphore, VK_NULL_HANDLE, &imageIndex)))
+    if(VK_CALL(vkAcquireNextImageKHR(VKLogicalDevice::GetDeviceManager()->GetLogicalDevice(), swapchainManager.GetSwapchainKHR(), UINT64_MAX, imageAvailableSemaphores[currentFrame], VK_NULL_HANDLE, &imageIndex)))
         throw std::runtime_error("Cannot acquire next image!");
+
+    if(imagesInFlight[imageIndex] != VK_NULL_HANDLE)
+        vkWaitForFences(VKLogicalDevice::GetDeviceManager()->GetLogicalDevice(), 1, &imagesInFlight[imageIndex], VK_TRUE, UINT64_MAX);
+    imagesInFlight[imageIndex] = inFlightFences[currentFrame];
 
     //VK_LOG("Image index : ", imageIndex);
     // Submit the command buffer queue
     VkSubmitInfo submitInfo{};
     submitInfo.sType = VK_STRUCTURE_TYPE_SUBMIT_INFO;
-    VkSemaphore waitSemaphore[] = { imageAvailableSemaphore };
+    VkSemaphore waitSemaphore[] = { imageAvailableSemaphores[currentFrame] };
     VkPipelineStageFlags waitStages[] = {VK_PIPELINE_STAGE_COLOR_ATTACHMENT_OUTPUT_BIT};
     submitInfo.waitSemaphoreCount = 1;
     submitInfo.pWaitSemaphores = waitSemaphore;
     submitInfo.pWaitDstStageMask = waitStages;
     submitInfo.commandBufferCount = 1;
     submitInfo.pCommandBuffers = &(swapCmdBuffers.GetBufferAt(imageIndex));
-    VkSemaphore signalSemaphores[] = {renderingFinishedSemaphore};
+    VkSemaphore signalSemaphores[] = {renderingFinishedSemaphores[currentFrame]};
     submitInfo.signalSemaphoreCount = 1;
     submitInfo.pSignalSemaphores = signalSemaphores;
 
-    if(VK_CALL(vkQueueSubmit(VKLogicalDevice::GetDeviceManager()->GetGraphicsQueue(), 1, &submitInfo, VK_NULL_HANDLE)))
+    vkResetFences(VKLogicalDevice::GetDeviceManager()->GetLogicalDevice(), 1, &inFlightFences[currentFrame]);
+    if(VK_CALL(vkQueueSubmit(VKLogicalDevice::GetDeviceManager()->GetGraphicsQueue(), 1, &submitInfo, inFlightFences[currentFrame])))
         throw std::runtime_error("Cannot submit command buffer!");
 
     VkPresentInfoKHR presentInfo{};
@@ -127,12 +156,17 @@ void Application::DrawFrame()
     if(VK_CALL(vkQueuePresentKHR(VKLogicalDevice::GetDeviceManager()->GetPresentQueue(), &presentInfo)))
         throw std::runtime_error("Cannot submit presentation queue!");
 
+    currentFrame = (currentFrame + 1 ) % MAX_FRAMES_IN_FLIGHT;
 }
 
 void Application::CleanUp()
 {
-    vkDestroySemaphore(VKLogicalDevice::GetDeviceManager()->GetLogicalDevice(), imageAvailableSemaphore, nullptr);
-    vkDestroySemaphore(VKLogicalDevice::GetDeviceManager()->GetLogicalDevice(), renderingFinishedSemaphore, nullptr);
+    for (size_t i = 0; i < MAX_FRAMES_IN_FLIGHT; i++)
+    {
+        vkDestroySemaphore(VKLogicalDevice::GetDeviceManager()->GetLogicalDevice(), imageAvailableSemaphores[i], nullptr);
+        vkDestroySemaphore(VKLogicalDevice::GetDeviceManager()->GetLogicalDevice(), renderingFinishedSemaphores[i], nullptr);
+        vkDestroyFence(VKLogicalDevice::GetDeviceManager()->GetLogicalDevice(), inFlightFences[i], nullptr);
+    }
     cmdPoolManager.Destroy();
     framebufferManager.Destroy();
     graphicsPipeline.Destroy();

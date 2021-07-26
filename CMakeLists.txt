@@ -23,10 +23,11 @@ link_directories(
     # glfw library path
     "${CMAKE_SOURCE_DIR}/vendor/glfw/build/src"
     # MoltenVk libraries
-    $ENV{VULKAN_SDK}/Lib
+    $ENV{VULKAN_SDK}/macOS/lib
 )
 endif()
 
+if(WIN32)
 include_directories(
     # GLFW headers
     "${CMAKE_SOURCE_DIR}/vendor/glfw/include"
@@ -40,9 +41,9 @@ link_directories(
     # glfw library path
     "${CMAKE_SOURCE_DIR}/vendor/glfw/build/src"
     # MoltenVk libraries
-    $ENV{VULKAN_SDK}Lib
+    $ENV{VULKAN_SDK}/Lib
 )
-
+endif()
 
 # Checking the include directories
 get_property(dirs DIRECTORY ${CMAKE_CURRENT_SOURCE_DIR} PROPERTY INCLUDE_DIRECTORIES)
@@ -73,9 +74,9 @@ add_executable(HelloVulkan ${HEADER_FILES} ${SOURCE_FILES})
 if (APPLE)
 target_link_libraries(HelloVulkan glfw3 vulkan.1 "-framework CoreFoundation -framework CoreAudio -framework OpenAL -framework Cocoa -framework IOKit -framework CoreGraphics")
 endif (APPLE)
-
+if(WIN32)
 target_link_libraries(HelloVulkan glfw3 vulkan-1)
-
+endif()
 
 # Run the binary built using 'make run' command
 add_custom_target(run

@@ -13,7 +13,7 @@ std::vector<const char*> instanceExtensions = {
 
 std::vector<const char*> deviceExtensions = {
    VK_KHR_SWAPCHAIN_EXTENSION_NAME,
-   //"VK_KHR_portability_subset"
+   "VK_KHR_portability_subset"
 };
 
 int main() {
