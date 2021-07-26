@@ -13,7 +13,9 @@ std::vector<const char*> instanceExtensions = {
 
 std::vector<const char*> deviceExtensions = {
    VK_KHR_SWAPCHAIN_EXTENSION_NAME,
+#if (__APPLE__)
    "VK_KHR_portability_subset"
+#endif
 };
 
 int main() {

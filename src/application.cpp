@@ -201,6 +201,7 @@ void Application::CleanUp()
 /******************************************************************************/
 void Application::RecreateSwapchain()
 {
+    VK_LOG_SUCCESS("Recreating Swapchain..........");
     vkDeviceWaitIdle(VKLogicalDevice::GetDeviceManager()->GetLogicalDevice());
 
     vkFreeCommandBuffers(VKLogicalDevice::GetDeviceManager()->GetLogicalDevice(), cmdPoolManager.GetPool(), static_cast<uint32_t>(swapCmdBuffers.GetBuffers().size()), swapCmdBuffers.GetBuffers().data());
