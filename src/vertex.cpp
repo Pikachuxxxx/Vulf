@@ -25,10 +25,3 @@ std::array<VkVertexInputAttributeDescription, 2> Vertex::getAttributeDescription
     attributeDescriptions[1].offset = offsetof(Vertex, color);
     return attributeDescriptions;
 }
-
-static const std::vector<Vertex> rainbowTriangleVertices = {
-    {{-0.5f, -0.5f, 0.0f}, {0.0f, 1.0f, 0.0f}},
-    {{0.5f,  0.5f, 0.0f}, {0.0f, 0.0f, 0.0f}},
-    {{-0.5f, 0.5f, 0.0f}, {1.0f, 0.0f, 0.0f}},
-    {{0.5f, 0.5f, 0.0f}, {1.0f, 1.0f, 0.0f}}
-};
