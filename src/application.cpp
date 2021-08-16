@@ -15,24 +15,19 @@ void Application::Run()
 
 void Application::InitWindow()
 {
-    glfwInit();
-
-    glfwWindowHint(GLFW_CLIENT_API, GLFW_NO_API);
-    glfwWindowHint(GLFW_RESIZABLE, GLFW_TRUE);
     // Create the window
-    window = glfwCreateWindow(800, 600, "Hello Vulkan again!", nullptr, nullptr);
-    glfwSetWindowUserPointer(window, this);
-    glfwSetKeyCallback(window, key_callback);
-    glfwSetFramebufferSizeCallback(window, resize_callback);
+    window = new Window("Hello Vulkan again!", 800, 600);
+    glfwSetWindowUserPointer(window->getGLFWwindow(), this);
+    glfwSetFramebufferSizeCallback(window->getGLFWwindow(), resize_callback);
 }
 
 void Application::InitVulkan()
 {
-    VKInstance::GetInstanceManager()->Init("Hello Vulkan", window);
+    VKInstance::GetInstanceManager()->Init("Hello Vulkan", window->getGLFWwindow());
 
     VKLogicalDevice::GetDeviceManager()->Init();
 
-    swapchainManager.Init(window);
+    swapchainManager.Init(window->getGLFWwindow());
 
     vertexShader.CreateShader("./src/shaders/spir-v/vert.spv", ShaderType::VERTEX_SHADER);
     fragmentShader.CreateShader("./src/shaders/spir-v/frag.spv", ShaderType::FRAGMENT_SHADER);
@@ -133,8 +128,9 @@ void Application::InitVulkan()
 void Application::MainLoop()
 {
     lastTime = glfwGetTime();;
-    while (!glfwWindowShouldClose(window)) {
-        glfwPollEvents();
+    while (!window->closed()) {
+        window->Update();
+        camera.Update(*window);
 
         double currentTime = glfwGetTime();
         double delta = currentTime - lastTime;
@@ -145,7 +141,7 @@ void Application::MainLoop()
 
             std::stringstream ss;
             ss << " Hello Vulkan again! " << " [" << (unsigned int)fps << " FPS]";
-            glfwSetWindowTitle(window, ss.str().c_str());
+            glfwSetWindowTitle(window->getGLFWwindow(), ss.str().c_str());
 
             nbFrames = 0;
             lastTime = currentTime;
@@ -243,6 +239,7 @@ void Application::CleanUp()
         vkDestroySemaphore(VKLogicalDevice::GetDeviceManager()->GetLogicalDevice(), renderingFinishedSemaphores[i], nullptr);
         vkDestroyFence(VKLogicalDevice::GetDeviceManager()->GetLogicalDevice(), inFlightFences[i], nullptr);
     }
+    delete window;
     cmdPoolManager.Destroy();
     framebufferManager.Destroy();
     triangleVertexBuffer.DestroyBuffer();
@@ -274,7 +271,7 @@ void Application::RecreateSwapchain()
     fixedPipelineFuncs.DestroyPipelineLayout();
     swapchainManager.Destroy();
 
-    swapchainManager.Init(window);
+    swapchainManager.Init(window->getGLFWwindow());
     fixedPipelineFuncs.SetInputAssemblyStageInfo(Topology::TRIANGLES);
     fixedPipelineFuncs.SetViewportSCI(swapchainManager.GetSwapExtent());
     fixedPipelineFuncs.SetRasterizerSCI();

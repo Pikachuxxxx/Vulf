@@ -15,8 +15,8 @@
 #include "vertex.h"
 
 // Helper includes
-// #include "utils/prettytable.h"
-// #include "utils/VulkanCheckResult.h"
+#include "utils/Window.h"
+#include "utils/Camera3D.h"
 
 #include "Vulkan/VKInstance.h"
 #include "Vulkan/VKDevice.h"
@@ -37,7 +37,8 @@ class Application
 public:
     void Run();
 private:
-    GLFWwindow* window;
+    Window* window;
+    Camera3D camera;
     bool framebufferResized = false;
     double lastTime;
     double nbFrames = 0;
@@ -59,6 +60,7 @@ VKGraphicsPipeline graphicsPipeline;
 VKFramebuffer framebufferManager;
 VKCmdPool cmdPoolManager;
 VKCmdBuffer swapCmdBuffers;
+
 VKBuffer triangleStagingBuffer;
 VKBuffer triangleVertexBuffer;
 VKBuffer triangleStagingIndexBuffer;
