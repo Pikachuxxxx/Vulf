@@ -12,6 +12,8 @@
 #include <cstdint>
 #include <algorithm>
 
+#include "vertex.h"
+
 // Helper includes
 // #include "utils/prettytable.h"
 // #include "utils/VulkanCheckResult.h"
@@ -26,6 +28,7 @@
 #include "Vulkan/VKFramebuffer.h"
 #include "Vulkan/VKCmdPool.h"
 #include "Vulkan/VKCmdBuffer.h"
+#include "Vulkan/VKBuffer.h"
 
 const int MAX_FRAMES_IN_FLIGHT = 2;
 
@@ -56,6 +59,7 @@ VKGraphicsPipeline graphicsPipeline;
 VKFramebuffer framebufferManager;
 VKCmdPool cmdPoolManager;
 VKCmdBuffer swapCmdBuffers;
+VKBuffer triangleBuffer;
 /******************************* Vulkan Variables *****************************/
 std::vector<VkSemaphore> imageAvailableSemaphores;
 std::vector<VkSemaphore> renderingFinishedSemaphores;

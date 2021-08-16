@@ -25,6 +25,7 @@ public:
     void Init();
     VkPhysicalDevice& GetGPU() { return m_GPU; }
     QueueFamilyIndices& GetQueueFamilyIndices() { return m_QueueFamilyIndices; }
+    uint32_t FindMemoryTypeIndex(uint32_t typeBitFieldFilter, VkMemoryPropertyFlags flags);
 private:
     VkPhysicalDevice m_GPU;
     VkPhysicalDeviceProperties deviceProperties;
@@ -33,7 +34,6 @@ private:
 private:
     bool isDeviceSuitable(VkPhysicalDevice& gpu);
     void findQueueFamilyIndices(VkPhysicalDevice gpu);
-    uint32_t findMemoryTypeIndex(uint32_t typeBitFieldFilter, VkMemoryPropertyFlags flags);
 };
 
 extern std::vector<const char*> deviceExtensions;

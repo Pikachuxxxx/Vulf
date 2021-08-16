@@ -34,8 +34,8 @@ void Application::InitVulkan()
 
     swapchainManager.Init(window);
 
-    vertexShader.CreateShader("./src/shaders/spir-v/trivert.spv", ShaderType::VERTEX_SHADER);
-    fragmentShader.CreateShader("./src/shaders/spir-v/trifrag.spv", ShaderType::FRAGMENT_SHADER);
+    vertexShader.CreateShader("./src/shaders/spir-v/vert.spv", ShaderType::VERTEX_SHADER);
+    fragmentShader.CreateShader("./src/shaders/spir-v/frag.spv", ShaderType::FRAGMENT_SHADER);
 
     fixedPipelineFuncs.SetVertexInputSCI();
     fixedPipelineFuncs.SetInputAssemblyStageInfo(Topology::TRIANGLES);
@@ -58,6 +58,9 @@ void Application::InitVulkan()
 
     swapCmdBuffers.AllocateBuffers(cmdPoolManager.GetPool());
 
+    // Create the triangle vertex buffer
+    // triangleBuffer.CreateBuffer(rainbowTriangleVertices);
+
     auto cmdBuffers = swapCmdBuffers.GetBuffers();
     auto framebuffers = framebufferManager.GetFramebuffers();
     for (int i = 0; i < cmdBuffers.size(); i++)
@@ -66,6 +69,8 @@ void Application::InitVulkan()
         renderPassManager.SetClearColor(0.85, 0.44, 0.48);
         renderPassManager.BeginRenderPass(cmdBuffers[i], framebuffers[i], swapchainManager.GetSwapExtent());
         graphicsPipeline.Bind(cmdBuffers[i]);
+        // Bind buffer to the comands
+        // triangleBuffer.Bind(cmdBuffers[i]);
         vkCmdDraw(cmdBuffers[i], 3, 1, 0, 0);
         renderPassManager.EndRenderPass(cmdBuffers[i]);
 		swapCmdBuffers.EndRecordingBuffer(cmdBuffers[i]);

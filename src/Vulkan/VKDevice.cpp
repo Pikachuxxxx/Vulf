@@ -59,7 +59,7 @@ void VKPhysicalDevice::findQueueFamilyIndices(VkPhysicalDevice gpu)
     }
 }
 
-uint32_t VKPhysicalDevice::findMemoryTypeIndex(uint32_t typeBitFieldFilter, VkMemoryPropertyFlags flags)
+uint32_t VKPhysicalDevice::FindMemoryTypeIndex(uint32_t typeBitFieldFilter, VkMemoryPropertyFlags flags)
 {
     VkPhysicalDeviceMemoryProperties memProperties;
     vkGetPhysicalDeviceMemoryProperties(m_GPU, &memProperties);
