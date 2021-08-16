@@ -34,10 +34,10 @@ void Application::InitVulkan()
 
     swapchainManager.Init(window);
 
-    vertexShader.CreateShader("./src/shaders/spir-v/vert.spv", ShaderType::VERTEX_SHADER);
-    fragmentShader.CreateShader("./src/shaders/spir-v/frag.spv", ShaderType::FRAGMENT_SHADER);
+    vertexShader.CreateShader("../src/shaders/spir-v/vert.spv", ShaderType::VERTEX_SHADER);
+    fragmentShader.CreateShader("../src/shaders/spir-v/frag.spv", ShaderType::FRAGMENT_SHADER);
 
-    fixedPipelineFuncs.SetVertexInputSCI();
+    //fixedPipelineFuncs.SetVertexInputSCI();
     fixedPipelineFuncs.SetInputAssemblyStageInfo(Topology::TRIANGLES);
     fixedPipelineFuncs.SetViewportSCI(swapchainManager.GetSwapExtent());
     fixedPipelineFuncs.SetRasterizerSCI();
@@ -59,7 +59,7 @@ void Application::InitVulkan()
     swapCmdBuffers.AllocateBuffers(cmdPoolManager.GetPool());
 
     // Create the triangle vertex buffer
-    // triangleBuffer.CreateBuffer(rainbowTriangleVertices);
+    triangleBuffer.CreateBuffer(rainbowTriangleVertices);
 
     auto cmdBuffers = swapCmdBuffers.GetBuffers();
     auto framebuffers = framebufferManager.GetFramebuffers();
@@ -69,11 +69,11 @@ void Application::InitVulkan()
         renderPassManager.SetClearColor(0.85, 0.44, 0.48);
         renderPassManager.BeginRenderPass(cmdBuffers[i], framebuffers[i], swapchainManager.GetSwapExtent());
         graphicsPipeline.Bind(cmdBuffers[i]);
-        // Bind buffer to the comands
-        // triangleBuffer.Bind(cmdBuffers[i]);
+        // Bind buffer to the commands
+        triangleBuffer.Bind(cmdBuffers[i]);
         vkCmdDraw(cmdBuffers[i], 3, 1, 0, 0);
         renderPassManager.EndRenderPass(cmdBuffers[i]);
-		swapCmdBuffers.EndRecordingBuffer(cmdBuffers[i]);
+        swapCmdBuffers.EndRecordingBuffer(cmdBuffers[i]);
     }
 
     // Create the synchronization stuff
@@ -121,6 +121,7 @@ void Application::MainLoop()
             lastTime = currentTime;
         }
 
+        /*
         // Changing the clear color every frame, whilst also waiting for the commands to finish before re-recording them
         auto cmdBuffers = swapCmdBuffers.GetBuffers();
         auto framebuffers = framebufferManager.GetFramebuffers();
@@ -133,8 +134,9 @@ void Application::MainLoop()
             graphicsPipeline.Bind(cmdBuffers[i]);
             vkCmdDraw(cmdBuffers[i], 3, 1, 0, 0);
             renderPassManager.EndRenderPass(cmdBuffers[i]);
-    		swapCmdBuffers.EndRecordingBuffer(cmdBuffers[i]);
+            swapCmdBuffers.EndRecordingBuffer(cmdBuffers[i]);
         }
+        */
         DrawFrame();
     }
     vkDeviceWaitIdle(VKLogicalDevice::GetDeviceManager()->GetLogicalDevice());
@@ -212,6 +214,7 @@ void Application::CleanUp()
         vkDestroySemaphore(VKLogicalDevice::GetDeviceManager()->GetLogicalDevice(), renderingFinishedSemaphores[i], nullptr);
         vkDestroyFence(VKLogicalDevice::GetDeviceManager()->GetLogicalDevice(), inFlightFences[i], nullptr);
     }
+    triangleBuffer.DestroyBuffer();
     cmdPoolManager.Destroy();
     framebufferManager.Destroy();
     graphicsPipeline.Destroy();
@@ -269,7 +272,7 @@ void Application::RecreateSwapchain()
         graphicsPipeline.Bind(cmdBuffers[i]);
         vkCmdDraw(cmdBuffers[i], 3, 1, 0, 0);
         renderPassManager.EndRenderPass(cmdBuffers[i]);
-		swapCmdBuffers.EndRecordingBuffer(cmdBuffers[i]);
+        swapCmdBuffers.EndRecordingBuffer(cmdBuffers[i]);
     }
 }
 /******************************* GLFW Callbacks *******************************/

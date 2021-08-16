@@ -6,14 +6,14 @@
 
 // TODO: Add methods to add bindings and attributes dynamically
 
-void VKFixedPipelineFuncs::SetVertexInputSCI(uint32_t bindID, uint32_t stride)
+void VKFixedPipelineFuncs::SetVertexInputSCI()
 {
     // Get the Vertex Attribuite descrioption and binding information
     auto bindingDescription = Vertex::getBindingDescription();
     auto attributeDescriptions = Vertex::getAttributeDescription();
     std::cout << "Binding Description Input Rate : " << bindingDescription.inputRate << std::endl;
     // we need the vertex binding information and attribute info to create the Input create info struct
-    // m_VertexInputSCI = {};
+   // m_VertexInputSCI = {};
     m_VertexInputSCI.sType = VK_STRUCTURE_TYPE_PIPELINE_VERTEX_INPUT_STATE_CREATE_INFO;
     m_VertexInputSCI.flags = 0;
     m_VertexInputSCI.pNext = nullptr;

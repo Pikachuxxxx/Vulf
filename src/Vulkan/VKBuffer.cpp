@@ -32,7 +32,7 @@ void VKBuffer::CreateBuffer(const std::vector<Vertex> vertexData)
     // Now fill the buffer with the vertex data
     void* buffer;
     vkMapMemory(VKLogicalDevice::GetDeviceManager()->GetLogicalDevice(), m_VertexBufferMemory, 0, bufferInfo.size, 0, &buffer);
-    memcpy(buffer, vertexData.data(), (uint32_t)vertexData.size());
+    memcpy(buffer, vertexData.data(), (uint32_t)bufferInfo.size);
     vkUnmapMemory(VKLogicalDevice::GetDeviceManager()->GetLogicalDevice(), m_VertexBufferMemory);
 }
 

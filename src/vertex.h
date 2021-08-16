@@ -13,3 +13,10 @@ struct Vertex
     static VkVertexInputBindingDescription getBindingDescription();
     static std::array<VkVertexInputAttributeDescription, 2> getAttributeDescription();
 };
+
+static const std::vector<Vertex> rainbowTriangleVertices = {
+	{{-0.5f, -0.5f, 0.0f}, {0.0f, 1.0f, 0.0f}},
+	{{0.5f,  0.5f, 0.0f}, {0.0f, 0.0f, 0.0f}},
+	{{-0.5f, 0.5f, 0.0f}, {1.0f, 0.0f, 0.0f}},
+	{{0.5f, 0.5f, 0.0f}, {1.0f, 1.0f, 0.0f}}
+};
