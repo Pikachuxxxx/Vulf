@@ -13,7 +13,6 @@ void VKGraphicsPipeline::Create(std::vector<VkPipelineShaderStageCreateInfo> sha
 
     auto bindingDescription = Vertex::getBindingDescription();
     auto attributeDescriptions = Vertex::getAttributeDescription();
-    std::cout << "Binding Description Input Rate : " << bindingDescription.inputRate << std::endl;
     // we need the vertex binding information and attribute info to create the Input create info struct
     VkPipelineVertexInputStateCreateInfo m_VertexInputSCI = {};
     m_VertexInputSCI.sType = VK_STRUCTURE_TYPE_PIPELINE_VERTEX_INPUT_STATE_CREATE_INFO;

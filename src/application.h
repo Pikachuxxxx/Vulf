@@ -59,7 +59,10 @@ VKGraphicsPipeline graphicsPipeline;
 VKFramebuffer framebufferManager;
 VKCmdPool cmdPoolManager;
 VKCmdBuffer swapCmdBuffers;
-VKBuffer triangleBuffer;
+VKBuffer triangleStagingBuffer;
+VKBuffer triangleVertexBuffer;
+VKBuffer triangleStagingIndexBuffer;
+VKBuffer triangleIndexBuffer;
 /******************************* Vulkan Variables *****************************/
 std::vector<VkSemaphore> imageAvailableSemaphores;
 std::vector<VkSemaphore> renderingFinishedSemaphores;

@@ -59,7 +59,19 @@ void Application::InitVulkan()
     swapCmdBuffers.AllocateBuffers(cmdPoolManager.GetPool());
 
     // Create the triangle vertex buffer
-    triangleBuffer.CreateBuffer(rainbowTriangleVertices);
+    VkDeviceSize vertexDataSize = sizeof(rainbowTriangleVertices[0]) * rainbowTriangleVertices.size();
+    triangleStagingBuffer.CreateBuffer(vertexDataSize, VK_BUFFER_USAGE_TRANSFER_SRC_BIT, VK_MEMORY_PROPERTY_HOST_VISIBLE_BIT | VK_MEMORY_PROPERTY_HOST_COHERENT_BIT);
+    triangleStagingBuffer.MapVertexBufferData(rainbowTriangleVertices);
+    triangleVertexBuffer.CreateBuffer(vertexDataSize, VK_BUFFER_USAGE_TRANSFER_DST_BIT | VK_BUFFER_USAGE_VERTEX_BUFFER_BIT, VK_MEMORY_PROPERTY_DEVICE_LOCAL_BIT);
+    triangleStagingBuffer.CopyBufferToDevice(cmdPoolManager.GetPool(), triangleVertexBuffer.GetBuffer(), vertexDataSize);
+    triangleStagingBuffer.DestroyBuffer();
+    // Index buffer for the quad
+    VkDeviceSize indexDataSize = sizeof(rainbowTriangleIndices[0]) * rainbowTriangleIndices.size();
+    triangleStagingIndexBuffer.CreateBuffer(indexDataSize, VK_BUFFER_USAGE_TRANSFER_SRC_BIT, VK_MEMORY_PROPERTY_HOST_VISIBLE_BIT | VK_MEMORY_PROPERTY_HOST_COHERENT_BIT);
+    triangleStagingIndexBuffer.MapIndexBufferData(rainbowTriangleIndices);
+    triangleIndexBuffer.CreateBuffer(indexDataSize, VK_BUFFER_USAGE_TRANSFER_DST_BIT | VK_BUFFER_USAGE_INDEX_BUFFER_BIT, VK_MEMORY_PROPERTY_DEVICE_LOCAL_BIT);
+    triangleStagingIndexBuffer.CopyBufferToDevice(cmdPoolManager.GetPool(), triangleIndexBuffer.GetBuffer(), indexDataSize);
+    triangleStagingIndexBuffer.DestroyBuffer();
 
     auto cmdBuffers = swapCmdBuffers.GetBuffers();
     auto framebuffers = framebufferManager.GetFramebuffers();
@@ -70,8 +82,9 @@ void Application::InitVulkan()
         renderPassManager.BeginRenderPass(cmdBuffers[i], framebuffers[i], swapchainManager.GetSwapExtent());
         graphicsPipeline.Bind(cmdBuffers[i]);
         // Bind buffer to the comands
-        triangleBuffer.Bind(cmdBuffers[i]);
-        vkCmdDraw(cmdBuffers[i], 3, 1, 0, 0);
+        triangleVertexBuffer.BindVertexBuffer(cmdBuffers[i]);
+        triangleIndexBuffer.BindIndexBuffer(cmdBuffers[i]);
+        vkCmdDrawIndexed(cmdBuffers[i], 6, 1, 0, 0, 0);
         renderPassManager.EndRenderPass(cmdBuffers[i]);
 		swapCmdBuffers.EndRecordingBuffer(cmdBuffers[i]);
     }
@@ -113,8 +126,6 @@ void Application::MainLoop()
 
             std::stringstream ss;
             ss << " Hello Vulkan again! " << " [" << (unsigned int)fps << " FPS]";
-            std::cout << "\033[1;32m[VULKAN]\033[1;32m - SUCCESS : " << nbFrames <<  " \033[0m\n";
-
             glfwSetWindowTitle(window, ss.str().c_str());
 
             nbFrames = 0;
@@ -215,7 +226,8 @@ void Application::CleanUp()
     }
     cmdPoolManager.Destroy();
     framebufferManager.Destroy();
-    triangleBuffer.DestroyBuffer();
+    triangleVertexBuffer.DestroyBuffer();
+    triangleIndexBuffer.DestroyBuffer();
     graphicsPipeline.Destroy();
     renderPassManager.Destroy();
     fixedPipelineFuncs.DestroyPipelineLayout();
@@ -232,14 +244,14 @@ void Application::RecreateSwapchain()
     vkDeviceWaitIdle(VKLogicalDevice::GetDeviceManager()->GetLogicalDevice());
 
     framebufferManager.Destroy();
-    triangleBuffer.DestroyBuffer();
+    triangleVertexBuffer.DestroyBuffer();
+    triangleIndexBuffer.DestroyBuffer();
     graphicsPipeline.Destroy();
     renderPassManager.Destroy();
     fixedPipelineFuncs.DestroyPipelineLayout();
     swapchainManager.Destroy();
 
     swapchainManager.Init(window);
-    // fixedPipelineFuncs.SetVertexInputSCI();
     fixedPipelineFuncs.SetInputAssemblyStageInfo(Topology::TRIANGLES);
     fixedPipelineFuncs.SetViewportSCI(swapchainManager.GetSwapExtent());
     fixedPipelineFuncs.SetRasterizerSCI();
@@ -257,7 +269,19 @@ void Application::RecreateSwapchain()
     framebufferManager.Create(renderPassManager.GetRenderPass(), swapchainManager.GetSwapImageViews(), swapchainManager.GetSwapExtent());
 
     // Create the triangle vertex buffer
-    triangleBuffer.CreateBuffer(rainbowTriangleVertices);
+    VkDeviceSize vertexDataSize = sizeof(rainbowTriangleVertices[0]) * rainbowTriangleVertices.size();
+    triangleStagingBuffer.CreateBuffer(vertexDataSize, VK_BUFFER_USAGE_TRANSFER_SRC_BIT, VK_MEMORY_PROPERTY_HOST_VISIBLE_BIT | VK_MEMORY_PROPERTY_HOST_COHERENT_BIT);
+    triangleStagingBuffer.MapVertexBufferData(rainbowTriangleVertices);
+    triangleVertexBuffer.CreateBuffer(vertexDataSize, VK_BUFFER_USAGE_TRANSFER_DST_BIT | VK_BUFFER_USAGE_VERTEX_BUFFER_BIT, VK_MEMORY_PROPERTY_DEVICE_LOCAL_BIT);
+    triangleStagingBuffer.CopyBufferToDevice(cmdPoolManager.GetPool(), triangleVertexBuffer.GetBuffer(), vertexDataSize);
+    triangleStagingBuffer.DestroyBuffer();
+    // Index buffer for the quad
+    VkDeviceSize indexDataSize = sizeof(rainbowTriangleIndices[0]) * rainbowTriangleIndices.size();
+    triangleStagingIndexBuffer.CreateBuffer(indexDataSize, VK_BUFFER_USAGE_TRANSFER_SRC_BIT, VK_MEMORY_PROPERTY_HOST_VISIBLE_BIT | VK_MEMORY_PROPERTY_HOST_COHERENT_BIT);
+    triangleStagingIndexBuffer.MapIndexBufferData(rainbowTriangleIndices);
+    triangleIndexBuffer.CreateBuffer(indexDataSize, VK_BUFFER_USAGE_TRANSFER_DST_BIT | VK_BUFFER_USAGE_INDEX_BUFFER_BIT, VK_MEMORY_PROPERTY_DEVICE_LOCAL_BIT);
+    triangleStagingIndexBuffer.CopyBufferToDevice(cmdPoolManager.GetPool(), triangleIndexBuffer.GetBuffer(), indexDataSize);
+    triangleStagingIndexBuffer.DestroyBuffer();
 
     auto cmdBuffers = swapCmdBuffers.GetBuffers();
     auto framebuffers = framebufferManager.GetFramebuffers();
@@ -268,8 +292,9 @@ void Application::RecreateSwapchain()
         renderPassManager.BeginRenderPass(cmdBuffers[i], framebuffers[i], swapchainManager.GetSwapExtent());
         graphicsPipeline.Bind(cmdBuffers[i]);
         // Bind buffer to the comands
-        triangleBuffer.Bind(cmdBuffers[i]);
-        vkCmdDraw(cmdBuffers[i], 3, 1, 0, 0);
+        triangleVertexBuffer.BindVertexBuffer(cmdBuffers[i]);
+        triangleIndexBuffer.BindIndexBuffer(cmdBuffers[i]);
+        vkCmdDrawIndexed(cmdBuffers[i], 6, 1, 0, 0, 0);
         renderPassManager.EndRenderPass(cmdBuffers[i]);
 		swapCmdBuffers.EndRecordingBuffer(cmdBuffers[i]);
     }
