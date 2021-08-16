@@ -63,6 +63,11 @@ VKBuffer triangleStagingBuffer;
 VKBuffer triangleVertexBuffer;
 VKBuffer triangleStagingIndexBuffer;
 VKBuffer triangleIndexBuffer;
+
+VKBuffer whiteQuadStagingBuffer;
+VKBuffer whiteQuadVertexBuffer;
+VKBuffer whiteQuadStagingIndexBuffer;
+VKBuffer whiteQuadIndexBuffer;
 /******************************* Vulkan Variables *****************************/
 std::vector<VkSemaphore> imageAvailableSemaphores;
 std::vector<VkSemaphore> renderingFinishedSemaphores;
