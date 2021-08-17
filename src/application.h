@@ -30,9 +30,24 @@
 #include "Vulkan/VKCmdBuffer.h"
 #include "Vulkan/VKVertexBuffer.h"
 #include "Vulkan/VKIndexBuffer.h"
+#include "Vulkan/VKDescriptorSetLayout.h"
+#include "Vulkan/VKDescriptorPool.h"
+#include "Vulkan/VKDescriptorSet.h"
+
+// Imgui
+#include <imgui.h>
+#include <imgui_internal.h>
+#include <backends/imgui_impl_glfw.h>
+#include <backends/imgui_impl_vulkan.h>
+
+struct UniformBufferObject
+{
+    glm::mat4 model;
+    glm::mat4 view;
+    glm::mat4 proj;
+};
 
 const int MAX_FRAMES_IN_FLIGHT = 2;
-
 
 class Application
 {
@@ -44,11 +59,13 @@ private:
     bool framebufferResized = false;
     double lastTime;
     double nbFrames = 0;
+    double delta = 0;
 /***************************** Vulkan Variables *******************************/
 private:
 /****************************** Application Flow ******************************/
     void InitWindow();
     void InitVulkan();
+    void InitImGui();
     void MainLoop();
     void DrawFrame();
     void CleanUp();
@@ -68,6 +85,13 @@ VKIndexBuffer triIBO;
 
 VKVertexBuffer quadVBO;
 VKIndexBuffer quadIBO;
+
+// Descriptor and ubniforms shit!
+//TODO: Abstract them into nice single class with a void buffer for uniform data
+VKDescriptorSetLayout mvpUBODSLayout;
+std::vector<VKBuffer> mvpUBOs;
+VKDescriptorPool descriptorPool;
+VKDescriptorSet set;
 /******************************* Vulkan Variables *****************************/
 std::vector<VkSemaphore> imageAvailableSemaphores;
 std::vector<VkSemaphore> renderingFinishedSemaphores;
@@ -77,6 +101,10 @@ size_t currentFrame = 0;
 /******************************************************************************/
 void RecreateSwapchain();
 void RecordCommandLists();
+void CleanUpCommandListResources();
+void UpdateMVPUBO(uint32_t currentImageIndex);
 /******************************* GLFW Callbacks *******************************/
 static void resize_callback(GLFWwindow* window, int width, int height);
+/******************************* ImGui Callbacks *******************************/
+static void ImGuiError(VkResult err);
 };

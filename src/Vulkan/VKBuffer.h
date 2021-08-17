@@ -14,6 +14,7 @@ public:
     void MapIndexBufferData(const std::vector<uint16_t>& indexData);
     void CopyBufferToDevice(VkCommandPool pool, VkBuffer dstBuffer, VkDeviceSize size);
     const VkBuffer& GetBuffer() { return m_Buffer; }
+    const VkDeviceMemory& GetBufferMemory() { return m_BufferMemory; }
 private:
     VkBuffer m_Buffer;
     VkDeviceMemory m_BufferMemory;
