@@ -1,7 +1,7 @@
 #include "Camera3D.h"
 
 // Constructor with vectors
-Camera3D::Camera3D(glm::vec3 position, glm::vec3 up, GLfloat yaw, GLfloat pitch) : Front(glm::vec3(0.0f, 0.0f, -1.0f)), MovementSpeed(SPEED), MouseSensitivity(SENSITIVTY), Zoom(ZOOM)
+Camera3D::Camera3D(glm::vec3 position, glm::vec3 up, float yaw, float pitch) : Front(glm::vec3(0.0f, 0.0f, -1.0f)), MovementSpeed(SPEED), MouseSensitivity(SENSITIVTY), Zoom(ZOOM)
 {
     this->Position = position;
     this->WorldUp = up;
@@ -11,7 +11,7 @@ Camera3D::Camera3D(glm::vec3 position, glm::vec3 up, GLfloat yaw, GLfloat pitch)
 }
 
 // Constructor with scalar values
-Camera3D::Camera3D(GLfloat posX, GLfloat posY, GLfloat posZ, GLfloat upX, GLfloat upY, GLfloat upZ, GLfloat yaw, GLfloat pitch) : Front(glm::vec3(0.0f, 0.0f, -1.0f)), MovementSpeed(SPEED), MouseSensitivity(SENSITIVTY), Zoom(ZOOM)
+Camera3D::Camera3D(float posX, float posY, float posZ, float upX, float upY, float upZ, float yaw, float pitch) : Front(glm::vec3(0.0f, 0.0f, -1.0f)), MovementSpeed(SPEED), MouseSensitivity(SENSITIVTY), Zoom(ZOOM)
 {
     this->Position = glm::vec3(posX, posY, posZ);
     this->WorldUp = glm::vec3(upX, upY, upZ);
@@ -20,16 +20,18 @@ Camera3D::Camera3D(GLfloat posX, GLfloat posY, GLfloat posZ, GLfloat upX, GLfloa
     this->updateCameraVectors();
 }
 
-void Camera3D::Update(Window& window)
+void Camera3D::Update(Window& window, float deltaTime)
 {
-    if (window.isKeyHeld(GLFW_KEY_W) || window.isKeyHeld(GLFW_KEY_UP))
-        ProcessKeyboard(FORWARD, window.deltaTime);
+    if (window.isKeyHeld(GLFW_KEY_W) || window.isKeyHeld(GLFW_KEY_UP)){
+        ProcessKeyboard(FORWARD, deltaTime);
+        std::cout << "Moving forward" << std::endl;
+    }
     else if (window.isKeyHeld(GLFW_KEY_S) || window.isKeyHeld(GLFW_KEY_DOWN))
-        ProcessKeyboard(BACKWARD, window.deltaTime);
+        ProcessKeyboard(BACKWARD, deltaTime);
     if (window.isKeyHeld(GLFW_KEY_D) || window.isKeyHeld(GLFW_KEY_RIGHT))
-        ProcessKeyboard(RIGHT, window.deltaTime);
+        ProcessKeyboard(RIGHT, deltaTime);
     else if (window.isKeyHeld(GLFW_KEY_A) || window.isKeyHeld(GLFW_KEY_LEFT))
-        ProcessKeyboard(LEFT, window.deltaTime);
+        ProcessKeyboard(LEFT, deltaTime);
 
     if (window.isMouseButtonHeld(GLFW_MOUSE_BUTTON_RIGHT))
     {
@@ -46,9 +48,10 @@ glm::mat4 Camera3D::GetViewMatrix()
 }
 
 // Processes input received from any keyboard-like input system. Accepts input parameter in the form of camera defined ENUM (to abstract it from windowing systems)
-void Camera3D::ProcessKeyboard(Camera_Movement direction, GLfloat deltaTime)
+void Camera3D::ProcessKeyboard(Camera_Movement direction, float deltaTime)
 {
-    GLfloat velocity = this->MovementSpeed * deltaTime;
+    float velocity = this->MovementSpeed * deltaTime;
+    std::cout << "Camera Velocity : " << velocity << std::endl;
     if (direction == FORWARD)
         this->Position += this->Front * velocity;
     if (direction == BACKWARD)
@@ -60,7 +63,7 @@ void Camera3D::ProcessKeyboard(Camera_Movement direction, GLfloat deltaTime)
 }
 
 // Processes input received from a mouse input system. Expects the offset value in both the x and y direction.
-void Camera3D::ProcessMouseMovement(GLfloat xoffset, GLfloat yoffset, GLboolean constrainPitch)
+void Camera3D::ProcessMouseMovement(float xoffset, float yoffset, bool constrainPitch)
 {
     xoffset *= this->MouseSensitivity;
     yoffset *= this->MouseSensitivity;
@@ -82,7 +85,7 @@ void Camera3D::ProcessMouseMovement(GLfloat xoffset, GLfloat yoffset, GLboolean 
 }
 
 // Processes input received from a mouse scroll-wheel event. Only requires input on the vertical wheel-axis
-void Camera3D::ProcessMouseScroll(GLfloat yoffset)
+void Camera3D::ProcessMouseScroll(float yoffset)
 {
     if (this->Zoom >= 1.0f && this->Zoom <= 45.0f)
         this->Zoom -= yoffset;

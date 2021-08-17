@@ -1,6 +1,7 @@
 // Vulkan Include
 #define GLFW_INCLUDE_VULKAN
 #include <GLFW/glfw3.h>
+// #define GLM_DEPTH_ZERO_TO_ONE
 
 // Std. Libraries
 #include <iostream>
@@ -103,8 +104,6 @@ void RecreateSwapchain();
 void RecordCommandLists();
 void CleanUpCommandListResources();
 void UpdateMVPUBO(uint32_t currentImageIndex);
-/******************************* GLFW Callbacks *******************************/
-static void resize_callback(GLFWwindow* window, int width, int height);
 /******************************* ImGui Callbacks *******************************/
 static void ImGuiError(VkResult err);
 };

@@ -17,8 +17,6 @@ void Application::InitWindow()
 {
     // Create the window
     window = new Window("Hello Vulkan again!", 800, 600);
-    glfwSetWindowUserPointer(window->getGLFWwindow(), this);
-    glfwSetFramebufferSizeCallback(window->getGLFWwindow(), resize_callback);
 }
 
 void Application::InitVulkan()
@@ -88,7 +86,7 @@ void Application::MainLoop()
     lastTime = glfwGetTime();;
     while (!window->closed()) {
         window->Update();
-        camera.Update(*window);
+        camera.Update(*window, delta);
 
         double currentTime = glfwGetTime();
         delta = currentTime - lastTime;
@@ -180,8 +178,8 @@ void Application::DrawFrame()
 
     result = vkQueuePresentKHR(VKLogicalDevice::GetDeviceManager()->GetPresentQueue(), &presentInfo);
 
-    if(result == VK_ERROR_OUT_OF_DATE_KHR || result == VK_SUBOPTIMAL_KHR || framebufferResized) {
-        framebufferResized = false;
+    if(result == VK_ERROR_OUT_OF_DATE_KHR || result == VK_SUBOPTIMAL_KHR || window->IsResized()) {
+        window->SetResizedFalse();
         RecreateSwapchain();
         return;
     }
@@ -306,21 +304,15 @@ void Application::UpdateMVPUBO(uint32_t currentImageIndex)
 {
     UniformBufferObject ubo{};
     ubo.model = glm::scale(glm::mat4(1.0f), glm::vec3(1.0f, delta * 10.0f + 0.2f, 0.0f));
-    ubo.view = glm::mat4(1.0f);//camera.GetViewMatrix();
-    ubo.proj = glm::mat4(1.0f); //glm::perspective(glm::radians(45.0f), swapchainManager.GetSwapExtent().width / (float) swapchainManager.GetSwapExtent().height, 0.1f, 100.0f);
-    ubo.proj[1][1] *= -1;
+    ubo.view = camera.GetViewMatrix();
+    ubo.proj = glm::mat4(1.0f);//glm::perspective(glm::radians(45.0f), 800.f / 600.0f, 0.01f, 100.0f);
+    ubo.proj = glm::mat4(1.0f);//glm::ortho(-200, 200, -150, 150, 0, 1);
+    // ubo.proj[1][1] *= -1;
 
     void* data;
     vkMapMemory(VKLogicalDevice::GetDeviceManager()->GetLogicalDevice(), mvpUBOs[currentImageIndex].GetBufferMemory(), 0, sizeof(ubo), 0, &data);
         memcpy(data, &ubo, sizeof(ubo));
     vkUnmapMemory(VKLogicalDevice::GetDeviceManager()->GetLogicalDevice(), mvpUBOs[currentImageIndex].GetBufferMemory());
-}
-
-/******************************* GLFW Callbacks *******************************/
-void Application::resize_callback(GLFWwindow* window, int width, int height)
-{
-    auto app = reinterpret_cast<Application*>(glfwGetWindowUserPointer(window));
-    app->framebufferResized = true;
 }
 /******************************* ImGui Callbacks *******************************/
 void Application::ImGuiError(VkResult err)

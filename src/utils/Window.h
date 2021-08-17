@@ -13,7 +13,7 @@
 
 static void glfw_initialisation_error(int error, const char* description);
 static void key_callback(GLFWwindow* window, int key, int scancode, int action, int mods);
-// static void window_resize_callback(GLFWwindow* window, int width, int height);
+static void window_resize_callback(GLFWwindow* window, int width, int height);
 static void mouse_button_callback(GLFWwindow* window, int button, int action, int mods);
 static void mouse_position_callback(GLFWwindow* window, double xpos, double ypos);
 
@@ -40,6 +40,8 @@ public:
     /// Gets the current window's pointer to it's native object.
     inline GLFWwindow* getGLFWwindow() const { return m_Window; }
 
+    bool IsResized() {return m_IsResized; }
+    void SetResizedFalse() { m_IsResized = false; }
     /// Tells if a particular key on the keyboard was pressed or not.
     bool isKeyPressed(unsigned int keycode);
     /// Tells if a particular key on the keyboard was released or not.
@@ -59,6 +61,7 @@ private:
     int m_Width,	m_Height;
     GLFWwindow*		m_Window;
     bool			m_Closed;
+    bool            m_IsResized;
 
     bool            m_HeldKeys[MAX_KEYS];
     bool            m_PressedKeys[MAX_KEYS];

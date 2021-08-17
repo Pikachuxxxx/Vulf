@@ -16,11 +16,11 @@ enum Camera_Movement {
 };
 
 // Default camera values
-const GLfloat YAW        = -90.0f;
-const GLfloat PITCH      =  0.0f;
-const GLfloat SPEED      =  5.0f;
-const GLfloat SENSITIVTY =  0.75f;
-const GLfloat ZOOM       =  45.0f;
+const float YAW        = -90.0f;
+const float PITCH      =  0.0f;
+const float SPEED      =  5.0f;
+const float SENSITIVTY =  0.75f;
+const float ZOOM       =  45.0f;
 
 class Camera3D
 {
@@ -32,27 +32,27 @@ public:
     glm::vec3 Right;
     glm::vec3 WorldUp;
     // Euler Angles
-    GLfloat Yaw;
-    GLfloat Pitch;
+    float Yaw;
+    float Pitch;
     // Camera options
-    GLfloat MovementSpeed;
-    GLfloat MouseSensitivity;
-    GLfloat Zoom;
+    float MovementSpeed;
+    float MouseSensitivity;
+    float Zoom;
 public:
     // Constructor with vectors
-    Camera3D(glm::vec3 position = glm::vec3(0.0f, 0.0f, 0.0f), glm::vec3 up = glm::vec3(0.0f, 1.0f, 0.0f), GLfloat yaw = YAW, GLfloat pitch = PITCH);
+    Camera3D(glm::vec3 position = glm::vec3(0.0f, 0.0f, 0.0f), glm::vec3 up = glm::vec3(0.0f, 1.0f, 0.0f), float yaw = YAW, float pitch = PITCH);
     // Constructor with scalar values
-    Camera3D(GLfloat posX, GLfloat posY, GLfloat posZ, GLfloat upX, GLfloat upY, GLfloat upZ, GLfloat yaw, GLfloat pitch);
+    Camera3D(float posX, float posY, float posZ, float upX, float upY, float upZ, float yaw, float pitch);
     // Update the camera movement in the world space
-    void Update(Window& window);
+    void Update(Window& window, float deltaTime);
     // Returns the view matrix calculated using Euler Angles and the LookAt Matrix
     glm::mat4 GetViewMatrix();
     // Processes input received from any keyboard-like input system. Accepts input parameter in the form of camera defined ENUM (to abstract it from windowing systems)
-    void ProcessKeyboard(Camera_Movement direction, GLfloat deltaTime);
+    void ProcessKeyboard(Camera_Movement direction, float deltaTime);
     // Processes input received from a mouse input system. Expects the offset value in both the x and y direction.
-    void ProcessMouseMovement(GLfloat xoffset, GLfloat yoffset, GLboolean constrainPitch = true);
+    void ProcessMouseMovement(float xoffset, float yoffset, bool constrainPitch = true);
     // Processes input received from a mouse scroll-wheel event. Only requires input on the vertical wheel-axis
-    void ProcessMouseScroll(GLfloat yoffset);
+    void ProcessMouseScroll(float yoffset);
 private:
     // Calculates the front vector from the Camera's (updated) Euler Angles
     void updateCameraVectors();

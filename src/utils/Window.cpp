@@ -48,7 +48,7 @@ bool Window::init()
     glfwSetWindowUserPointer(m_Window, this);
 
     // Window Callback Functions
-    // glfwSetFramebufferSizeCallback(m_Window, window_resize_callback);
+    glfwSetFramebufferSizeCallback(m_Window, window_resize_callback);
     glfwSetKeyCallback(m_Window, key_callback);
     glfwSetMouseButtonCallback(m_Window, mouse_button_callback);
     glfwSetCursorPosCallback(m_Window, mouse_position_callback);
@@ -156,12 +156,13 @@ void key_callback(GLFWwindow* window, int key, int scancode, int action, int mod
     }
 }
 
-// void window_resize_callback(GLFWwindow* window, int width, int height)
-// {
-//     Window* wind = (Window *) glfwGetWindowUserPointer(window);
-//     wind->m_Width = width;
-//     wind->m_Height = height;
-// }
+void window_resize_callback(GLFWwindow* window, int width, int height)
+{
+    Window* wind = (Window *) glfwGetWindowUserPointer(window);
+    wind->m_Width = width;
+    wind->m_Height = height;
+    wind->m_IsResized = true;
+}
 
 void mouse_button_callback(GLFWwindow* window, int button, int action, int mods)
 {
