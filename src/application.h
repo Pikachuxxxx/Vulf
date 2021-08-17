@@ -1,6 +1,7 @@
 // Vulkan Include
 #define GLFW_INCLUDE_VULKAN
 #include <GLFW/glfw3.h>
+// #define GLM_DEPTH_ZERO_TO_ONE
 
 // Std. Libraries
 #include <iostream>
@@ -15,8 +16,8 @@
 #include "vertex.h"
 
 // Helper includes
-// #include "utils/prettytable.h"
-// #include "utils/VulkanCheckResult.h"
+#include "utils/Window.h"
+#include "utils/Camera3D.h"
 
 #include "Vulkan/VKInstance.h"
 #include "Vulkan/VKDevice.h"
@@ -28,7 +29,24 @@
 #include "Vulkan/VKFramebuffer.h"
 #include "Vulkan/VKCmdPool.h"
 #include "Vulkan/VKCmdBuffer.h"
-#include "Vulkan/VKBuffer.h"
+#include "Vulkan/VKVertexBuffer.h"
+#include "Vulkan/VKIndexBuffer.h"
+#include "Vulkan/VKDescriptorSetLayout.h"
+#include "Vulkan/VKDescriptorPool.h"
+#include "Vulkan/VKDescriptorSet.h"
+
+// Imgui
+#include <imgui.h>
+#include <imgui_internal.h>
+#include <backends/imgui_impl_glfw.h>
+#include <backends/imgui_impl_vulkan.h>
+
+struct UniformBufferObject
+{
+    glm::mat4 model;
+    glm::mat4 view;
+    glm::mat4 proj;
+};
 
 const int MAX_FRAMES_IN_FLIGHT = 2;
 
@@ -37,15 +55,18 @@ class Application
 public:
     void Run();
 private:
-    GLFWwindow* window;
+    Window* window;
+    Camera3D camera;
     bool framebufferResized = false;
     double lastTime;
     double nbFrames = 0;
+    double delta = 0;
 /***************************** Vulkan Variables *******************************/
 private:
 /****************************** Application Flow ******************************/
     void InitWindow();
     void InitVulkan();
+    void InitImGui();
     void MainLoop();
     void DrawFrame();
     void CleanUp();
@@ -59,7 +80,19 @@ VKGraphicsPipeline graphicsPipeline;
 VKFramebuffer framebufferManager;
 VKCmdPool cmdPoolManager;
 VKCmdBuffer swapCmdBuffers;
-VKBuffer triangleBuffer;
+
+VKVertexBuffer triVBO;
+VKIndexBuffer triIBO;
+
+VKVertexBuffer quadVBO;
+VKIndexBuffer quadIBO;
+
+// Descriptor and ubniforms shit!
+//TODO: Abstract them into nice single class with a void buffer for uniform data
+VKDescriptorSetLayout mvpUBODSLayout;
+std::vector<VKBuffer> mvpUBOs;
+VKDescriptorPool descriptorPool;
+VKDescriptorSet set;
 /******************************* Vulkan Variables *****************************/
 std::vector<VkSemaphore> imageAvailableSemaphores;
 std::vector<VkSemaphore> renderingFinishedSemaphores;
@@ -68,7 +101,9 @@ std::vector<VkFence> imagesInFlight;
 size_t currentFrame = 0;
 /******************************************************************************/
 void RecreateSwapchain();
-/******************************* GLFW Callbacks *******************************/
-static void key_callback(GLFWwindow* window, int key, int scancode, int action, int mods);
-static void resize_callback(GLFWwindow* window, int width, int height);
+void RecordCommandLists();
+void CleanUpCommandListResources();
+void UpdateMVPUBO(uint32_t currentImageIndex);
+/******************************* ImGui Callbacks *******************************/
+static void ImGuiError(VkResult err);
 };

@@ -26,6 +26,7 @@ public:
     VkImageView& GetSwapImageViewAt(int index) {return m_SwapchainImageViews[index]; }
     std::vector<VkImage> GetSwapImages() {return m_SwapchainImages; }
     VkImage& GetSwapImageAt(int index) {return m_SwapchainImages[index]; }
+    uint32_t GetSwapImageCount() { return m_SwapchainImageCount; }
 private:
     VkSwapchainKHR m_SwapchainKHR;
     SwapchainProperties m_SurfaceProperties;

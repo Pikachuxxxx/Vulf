@@ -15,6 +15,8 @@ include_directories(
     "${CMAKE_SOURCE_DIR}/vendor/glfw/include"
     # GLM headers
     "${CMAKE_SOURCE_DIR}/vendor/glm"
+    # ImGui Headers
+    "${CMAKE_SOURCE_DIR}/vendor/ImGui"
     # Vulkan MacOS headers
     $ENV{VULKAN_SDK}/macOS/include
 )
@@ -35,6 +37,8 @@ include_directories(
     "${CMAKE_SOURCE_DIR}/vendor/glm"
     # Vulkan MacOS headers
     $ENV{VULKAN_SDK}/include
+    # ImGui Headers
+    "$(CMAKE_SOURCE_DIR)/vendor/ImGui"
 )
 
 link_directories(
@@ -62,14 +66,23 @@ file(GLOB_RECURSE SOURCE_FILES
     ${CMAKE_SOURCE_DIR}/src/*.cpp
 )
 
+file(GLOB_RECURSE VENDOR_SOURCE_FILES
+	${CMAKE_SOURCE_DIR}/vendor/imgui/*.c
+    ${CMAKE_SOURCE_DIR}/vendor/imgui/*.cpp
+)
+
 # Add source header files
 file(GLOB_RECURSE HEADER_FILES
 	${CMAKE_SOURCE_DIR}/src/*.h
     ${CMAKE_SOURCE_DIR}/src/*.hpp
 )
 
+# file(GLOB_RECURSE VENDOR_HEADER_FILES
+# 	${CMAKE_SOURCE_DIR}/vendor/imgui/*.h
+#     ${CMAKE_SOURCE_DIR}/vendor/imgui/*.hpp
+# )
 # Compile the source files for the executable
-add_executable(HelloVulkan ${HEADER_FILES} ${SOURCE_FILES})
+add_executable(HelloVulkan ${HEADER_FILES} ${SOURCE_FILES} ${VENDOR_SOURCE_FILES})
 
 if (APPLE)
 target_link_libraries(HelloVulkan glfw3 vulkan.1 "-framework CoreFoundation -framework CoreAudio -framework OpenAL -framework Cocoa -framework IOKit -framework CoreGraphics")

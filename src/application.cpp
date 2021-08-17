@@ -15,20 +15,13 @@ void Application::Run()
 
 void Application::InitWindow()
 {
-    glfwInit();
-
-    glfwWindowHint(GLFW_CLIENT_API, GLFW_NO_API);
-    glfwWindowHint(GLFW_RESIZABLE, GLFW_TRUE);
     // Create the window
-    window = glfwCreateWindow(800, 600, "Hello Vulkan again!", nullptr, nullptr);
-    glfwSetWindowUserPointer(window, this);
-    glfwSetKeyCallback(window, key_callback);
-    glfwSetFramebufferSizeCallback(window, resize_callback);
+    window = new Window("Hello Vulkan again!", 800, 600);
 }
 
 void Application::InitVulkan()
 {
-    VKInstance::GetInstanceManager()->Init("Hello Vulkan", window);
+    VKInstance::GetInstanceManager()->Init("Hello Vulkan", window->getGLFWwindow());
 
     VKLogicalDevice::GetDeviceManager()->Init();
 
@@ -37,7 +30,7 @@ void Application::InitVulkan()
     vertexShader.CreateShader("../src/shaders/spir-v/vert.spv", ShaderType::VERTEX_SHADER);
     fragmentShader.CreateShader("../src/shaders/spir-v/frag.spv", ShaderType::FRAGMENT_SHADER);
 
-    //fixedPipelineFuncs.SetVertexInputSCI();
+    fixedPipelineFuncs.SetVertexInputSCI();
     fixedPipelineFuncs.SetInputAssemblyStageInfo(Topology::TRIANGLES);
     fixedPipelineFuncs.SetViewportSCI(swapchainManager.GetSwapExtent());
     fixedPipelineFuncs.SetRasterizerSCI();
@@ -55,26 +48,8 @@ void Application::InitVulkan()
     framebufferManager.Create(renderPassManager.GetRenderPass(), swapchainManager.GetSwapImageViews(), swapchainManager.GetSwapExtent());
 
     cmdPoolManager.Init();
-
-    swapCmdBuffers.AllocateBuffers(cmdPoolManager.GetPool());
-
-    // Create the triangle vertex buffer
-    triangleBuffer.CreateBuffer(rainbowTriangleVertices);
-
-    auto cmdBuffers = swapCmdBuffers.GetBuffers();
-    auto framebuffers = framebufferManager.GetFramebuffers();
-    for (int i = 0; i < cmdBuffers.size(); i++)
-    {
-        swapCmdBuffers.RecordBuffer(cmdBuffers[i]);
-        renderPassManager.SetClearColor(0.85, 0.44, 0.48);
-        renderPassManager.BeginRenderPass(cmdBuffers[i], framebuffers[i], swapchainManager.GetSwapExtent());
-        graphicsPipeline.Bind(cmdBuffers[i]);
-        // Bind buffer to the commands
-        triangleBuffer.Bind(cmdBuffers[i]);
-        vkCmdDraw(cmdBuffers[i], 3, 1, 0, 0);
-        renderPassManager.EndRenderPass(cmdBuffers[i]);
-        swapCmdBuffers.EndRecordingBuffer(cmdBuffers[i]);
-    }
+    mvpUBODSLayout.CreateDescriptorSetLayout();
+    RecordCommandLists();
 
     // Create the synchronization stuff
     VkSemaphoreCreateInfo semaphoreInfo{};
@@ -85,7 +60,7 @@ void Application::InitVulkan()
     fenceInfo.sType = VK_STRUCTURE_TYPE_FENCE_CREATE_INFO;
     fenceInfo.flags = VK_FENCE_CREATE_SIGNALED_BIT;
     inFlightFences.resize(MAX_FRAMES_IN_FLIGHT);
-    imagesInFlight.resize(cmdBuffers.size(), VK_NULL_HANDLE);
+    imagesInFlight.resize(3, VK_NULL_HANDLE);
     for (size_t i = 0; i < MAX_FRAMES_IN_FLIGHT; i++)
     {
         if(VK_CALL(vkCreateSemaphore(VKLogicalDevice::GetDeviceManager()->GetLogicalDevice(), &semaphoreInfo, nullptr, &imageAvailableSemaphores[i])) ||
@@ -95,17 +70,45 @@ void Application::InitVulkan()
             throw std::runtime_error("Cannot make semaphore!");
         }
     }
+}
+
+void Application::InitImGui()
+{
+    // Setup Dear ImGui context
+    IMGUI_CHECKVERSION();
+    ImGui::CreateContext();
+    ImGuiIO& io = ImGui::GetIO(); (void)io;
+
+    // Setup Dear ImGui style
+    ImGui::StyleColorsDark();
+
+    // Setup Platform/Renderer bindings
+    ImGui_ImplGlfw_InitForVulkan(window->getGLFWwindow(), true);
+    ImGui_ImplVulkan_InitInfo init_info = {};
+    init_info.Instance = VKInstance::GetInstanceManager()->GetInstance();
+    init_info.PhysicalDevice = VKLogicalDevice::GetDeviceManager()->GetGPUManager().GetGPU();
+    init_info.Device = VKLogicalDevice::GetDeviceManager()->GetLogicalDevice();
+    init_info.QueueFamily = VKLogicalDevice::GetDeviceManager()->GetGPUManager().GetGraphicsFamilyIndex();
+    init_info.Queue = VKLogicalDevice::GetDeviceManager()->GetGraphicsQueue();
+    init_info.PipelineCache = VK_NULL_HANDLE;
+    init_info.DescriptorPool = descriptorPool.GetDescriptorPool();
+    init_info.Allocator = nullptr;
+    init_info.MinImageCount = swapchainManager.GetSwapImageCount();
+    init_info.ImageCount = swapchainManager.GetSwapImageCount();
+    init_info.CheckVkResultFn = ImGuiError;
+    // ImGui_ImplVulkan_Init(&init_info, wd->RenderPass);
 
 }
 
 void Application::MainLoop()
 {
     lastTime = glfwGetTime();;
-    while (!glfwWindowShouldClose(window)) {
-        glfwPollEvents();
+    while (!window->closed()) {
+        window->Update();
+        camera.Update(*window, delta);
 
         double currentTime = glfwGetTime();
-        double delta = currentTime - lastTime;
+        delta = currentTime - lastTime;
         nbFrames++;
         if ( delta >= 1.0 ){ // If last cout was more than 1 sec ago
 
@@ -113,14 +116,11 @@ void Application::MainLoop()
 
             std::stringstream ss;
             ss << " Hello Vulkan again! " << " [" << (unsigned int)fps << " FPS]";
-            std::cout << "\033[1;32m[VULKAN]\033[1;32m - SUCCESS : " << nbFrames <<  " \033[0m\n";
-
-            glfwSetWindowTitle(window, ss.str().c_str());
+            glfwSetWindowTitle(window->getGLFWwindow(), ss.str().c_str());
 
             nbFrames = 0;
             lastTime = currentTime;
         }
-
         /*
         // Changing the clear color every frame, whilst also waiting for the commands to finish before re-recording them
         auto cmdBuffers = swapCmdBuffers.GetBuffers();
@@ -163,6 +163,9 @@ void Application::DrawFrame()
         vkWaitForFences(VKLogicalDevice::GetDeviceManager()->GetLogicalDevice(), 1, &imagesInFlight[imageIndex], VK_TRUE, UINT64_MAX);
     imagesInFlight[imageIndex] = inFlightFences[currentFrame];
 
+    // Update the uniform buffer before submitting the commands
+    UpdateMVPUBO(imageIndex);
+
     //VK_LOG("Image index : ", imageIndex);
     // Submit the command buffer queue
     VkSubmitInfo submitInfo{};
@@ -194,8 +197,8 @@ void Application::DrawFrame()
 
     result = vkQueuePresentKHR(VKLogicalDevice::GetDeviceManager()->GetPresentQueue(), &presentInfo);
 
-    if(result == VK_ERROR_OUT_OF_DATE_KHR || result == VK_SUBOPTIMAL_KHR || framebufferResized) {
-        framebufferResized = false;
+    if(result == VK_ERROR_OUT_OF_DATE_KHR || result == VK_SUBOPTIMAL_KHR || window->IsResized()) {
+        window->SetResizedFalse();
         RecreateSwapchain();
         return;
     }
@@ -214,15 +217,14 @@ void Application::CleanUp()
         vkDestroySemaphore(VKLogicalDevice::GetDeviceManager()->GetLogicalDevice(), renderingFinishedSemaphores[i], nullptr);
         vkDestroyFence(VKLogicalDevice::GetDeviceManager()->GetLogicalDevice(), inFlightFences[i], nullptr);
     }
-    triangleBuffer.DestroyBuffer();
+    delete window;
+    window = nullptr;
+
     cmdPoolManager.Destroy();
-    framebufferManager.Destroy();
-    graphicsPipeline.Destroy();
-    renderPassManager.Destroy();
-    fixedPipelineFuncs.DestroyPipelineLayout();
+    mvpUBODSLayout.Destroy();
+    CleanUpCommandListResources();
     vertexShader.DestroyModule();
     fragmentShader.DestroyModule();
-    swapchainManager.Destroy();
     VKLogicalDevice::GetDeviceManager()->Destroy();
     VKInstance::GetInstanceManager()->Destroy();
 }
@@ -232,16 +234,15 @@ void Application::RecreateSwapchain()
     VK_LOG_SUCCESS("Recreating Swapchain..........");
     vkDeviceWaitIdle(VKLogicalDevice::GetDeviceManager()->GetLogicalDevice());
 
-    vkFreeCommandBuffers(VKLogicalDevice::GetDeviceManager()->GetLogicalDevice(), cmdPoolManager.GetPool(), static_cast<uint32_t>(swapCmdBuffers.GetBuffers().size()), swapCmdBuffers.GetBuffers().data());
-    cmdPoolManager.Destroy();
-    framebufferManager.Destroy();
-    graphicsPipeline.Destroy();
-    renderPassManager.Destroy();
-    fixedPipelineFuncs.DestroyPipelineLayout();
-    swapchainManager.Destroy();
+    CleanUpCommandListResources();
 
-    swapchainManager.Init(window);
-    fixedPipelineFuncs.SetVertexInputSCI();
+    RecordCommandLists();
+}
+
+void Application::RecordCommandLists()
+{
+    swapchainManager.Init(window->getGLFWwindow());
+
     fixedPipelineFuncs.SetInputAssemblyStageInfo(Topology::TRIANGLES);
     fixedPipelineFuncs.SetViewportSCI(swapchainManager.GetSwapExtent());
     fixedPipelineFuncs.SetRasterizerSCI();
@@ -249,7 +250,7 @@ void Application::RecreateSwapchain()
     fixedPipelineFuncs.SetDepthStencilSCI();
     fixedPipelineFuncs.SetColorBlendSCI();
     fixedPipelineFuncs.SetDynamicSCI();
-    fixedPipelineFuncs.SetPipelineLayout();
+    fixedPipelineFuncs.SetPipelineLayout(mvpUBODSLayout.GetLayout());
 
     renderPassManager.Init(swapchainManager.GetSwapFormat());
     std::vector<VkPipelineShaderStageCreateInfo>  shaderInfo = {vertexShader.GetShaderStageInfo(), fragmentShader.GetShaderStageInfo()};
@@ -258,32 +259,83 @@ void Application::RecreateSwapchain()
 
     framebufferManager.Create(renderPassManager.GetRenderPass(), swapchainManager.GetSwapImageViews(), swapchainManager.GetSwapExtent());
 
-    cmdPoolManager.Init();
-
     swapCmdBuffers.AllocateBuffers(cmdPoolManager.GetPool());
+
+    // Create the triangle vertex buffer
+    triVBO.Create(rainbowTriangleVertices, cmdPoolManager.GetPool());
+    triIBO.Create(rainbowTriangleIndices, cmdPoolManager.GetPool());
+
+    quadVBO.Create(whiteQuadVertices, cmdPoolManager.GetPool());
+    quadIBO.Create(whiteQuadIndices, cmdPoolManager.GetPool());
+
+    VkDeviceSize bufferSize = sizeof(UniformBufferObject);
+    mvpUBOs.resize(swapchainManager.GetSwapImageCount());
+    for (size_t i = 0; i < swapchainManager.GetSwapImageCount(); i++) {
+        mvpUBOs[i].CreateBuffer(bufferSize, VK_BUFFER_USAGE_UNIFORM_BUFFER_BIT, VK_MEMORY_PROPERTY_HOST_VISIBLE_BIT | VK_MEMORY_PROPERTY_HOST_COHERENT_BIT);
+    }
+
+    descriptorPool.CreatePool(swapchainManager.GetSwapImageCount());
+
+    set.CreateSets(swapchainManager.GetSwapImageCount(), descriptorPool.GetDescriptorPool(), mvpUBODSLayout.GetLayout(), mvpUBOs, bufferSize);
 
     auto cmdBuffers = swapCmdBuffers.GetBuffers();
     auto framebuffers = framebufferManager.GetFramebuffers();
-    for (int i = 0; i < cmdBuffers.size(); i++)
-    {
+    auto descriptorSets = set.GetSets();
+    for (int i = 0; i < cmdBuffers.size(); i++) {
         swapCmdBuffers.RecordBuffer(cmdBuffers[i]);
         renderPassManager.SetClearColor(0.85, 0.44, 0.48);
         renderPassManager.BeginRenderPass(cmdBuffers[i], framebuffers[i], swapchainManager.GetSwapExtent());
         graphicsPipeline.Bind(cmdBuffers[i]);
-        vkCmdDraw(cmdBuffers[i], 3, 1, 0, 0);
+        // Bind buffer to the comands
+        triVBO.Bind(cmdBuffers[i]);
+        triIBO.Bind(cmdBuffers[i]);
+        // Bind the descriptor sets
+        vkCmdBindDescriptorSets(cmdBuffers[i], VK_PIPELINE_BIND_POINT_GRAPHICS, fixedPipelineFuncs.GetPipelineLayout(), 0, 1, &descriptorSets[i], 0, nullptr);
+        // Issue the draw command
+        vkCmdDrawIndexed(cmdBuffers[i], 6, 1, 0, 0, 0);
+        // Drawing another white quad
+        quadVBO.Bind(cmdBuffers[i]);
+        quadIBO.Bind(cmdBuffers[i]);
+        vkCmdDrawIndexed(cmdBuffers[i], 6, 1, 0, 0, 0);
         renderPassManager.EndRenderPass(cmdBuffers[i]);
         swapCmdBuffers.EndRecordingBuffer(cmdBuffers[i]);
     }
 }
-/******************************* GLFW Callbacks *******************************/
-void Application::key_callback(GLFWwindow* window, int key, int scancode, int action, int mods)
+
+void Application::CleanUpCommandListResources()
 {
-    if(key == GLFW_KEY_ESCAPE && action == GLFW_PRESS)
-        glfwSetWindowShouldClose(window, GLFW_TRUE);
+    framebufferManager.Destroy();
+    triVBO.Destroy();
+    triIBO.Destroy();
+    quadVBO.Destroy();
+    quadIBO.Destroy();
+    for (size_t i = 0; i < swapchainManager.GetSwapImageCount(); i++) {
+        mvpUBOs[i].DestroyBuffer();
+    }
+    descriptorPool.Destroy();
+    graphicsPipeline.Destroy();
+    renderPassManager.Destroy();
+    fixedPipelineFuncs.DestroyPipelineLayout();
+    swapchainManager.Destroy();
 }
 
-void Application::resize_callback(GLFWwindow* window, int width, int height)
+void Application::UpdateMVPUBO(uint32_t currentImageIndex)
 {
-    auto app = reinterpret_cast<Application*>(glfwGetWindowUserPointer(window));
-    app->framebufferResized = true;
+    UniformBufferObject ubo{};
+    ubo.model = glm::scale(glm::mat4(1.0f), glm::vec3(1.0f, delta * 10.0f + 0.2f, 0.0f));
+    ubo.view = camera.GetViewMatrix();
+    ubo.proj = glm::mat4(1.0f);//glm::perspective(glm::radians(45.0f), 800.f / 600.0f, 0.01f, 100.0f);
+    ubo.proj = glm::mat4(1.0f);//glm::ortho(-200, 200, -150, 150, 0, 1);
+    // ubo.proj[1][1] *= -1;
+
+    void* data;
+    vkMapMemory(VKLogicalDevice::GetDeviceManager()->GetLogicalDevice(), mvpUBOs[currentImageIndex].GetBufferMemory(), 0, sizeof(ubo), 0, &data);
+        memcpy(data, &ubo, sizeof(ubo));
+    vkUnmapMemory(VKLogicalDevice::GetDeviceManager()->GetLogicalDevice(), mvpUBOs[currentImageIndex].GetBufferMemory());
+}
+/******************************* ImGui Callbacks *******************************/
+void Application::ImGuiError(VkResult err)
+{
+    if(VK_CALL(err))
+        throw std::runtime_error("ImGui Error!");
 }

@@ -26,6 +26,7 @@ public:
     VkPhysicalDevice& GetGPU() { return m_GPU; }
     QueueFamilyIndices& GetQueueFamilyIndices() { return m_QueueFamilyIndices; }
     uint32_t FindMemoryTypeIndex(uint32_t typeBitFieldFilter, VkMemoryPropertyFlags flags);
+    uint32_t GetGraphicsFamilyIndex() { return m_QueueFamilyIndices.graphicsFamily.value(); }
 private:
     VkPhysicalDevice m_GPU;
     VkPhysicalDeviceProperties deviceProperties;

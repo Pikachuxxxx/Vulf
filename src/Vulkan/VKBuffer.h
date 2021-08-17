@@ -8,11 +8,14 @@ class VKBuffer
 {
 public:
     VKBuffer() = default;
-    void CreateBuffer(const std::vector<Vertex> vertexData);
+    void CreateBuffer(VkDeviceSize size, VkBufferUsageFlags usage, VkMemoryPropertyFlags properties);
     void DestroyBuffer();
-    void Bind(VkCommandBuffer& cmdBuffers);
-    const VkBuffer& GetBuffer() { return m_VertexBuffer; }
+    void MapVertexBufferData(const std::vector<Vertex>& vertexData);
+    void MapIndexBufferData(const std::vector<uint16_t>& indexData);
+    void CopyBufferToDevice(VkCommandPool pool, VkBuffer dstBuffer, VkDeviceSize size);
+    const VkBuffer& GetBuffer() { return m_Buffer; }
+    const VkDeviceMemory& GetBufferMemory() { return m_BufferMemory; }
 private:
-    VkBuffer m_VertexBuffer;
-    VkDeviceMemory m_VertexBufferMemory;
+    VkBuffer m_Buffer;
+    VkDeviceMemory m_BufferMemory;
 };

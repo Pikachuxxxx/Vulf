@@ -126,11 +126,12 @@ void VKFixedPipelineFuncs::SetColorBlendSCI()
 
 void VKFixedPipelineFuncs::SetDynamicSCI() { }
 
-void VKFixedPipelineFuncs::SetPipelineLayout()
+void VKFixedPipelineFuncs::SetPipelineLayout(VkDescriptorSetLayout& layout)
 {
+
     layoutCI.sType = VK_STRUCTURE_TYPE_PIPELINE_LAYOUT_CREATE_INFO;
-    layoutCI.setLayoutCount = 0;
-    layoutCI.pSetLayouts = nullptr;
+    layoutCI.setLayoutCount = 1;
+    layoutCI.pSetLayouts = &layout;
     layoutCI.pushConstantRangeCount = 0;
     layoutCI.pPushConstantRanges = nullptr;
 
