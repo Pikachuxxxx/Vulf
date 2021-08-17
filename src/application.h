@@ -31,22 +31,13 @@
 #include "Vulkan/VKCmdBuffer.h"
 #include "Vulkan/VKVertexBuffer.h"
 #include "Vulkan/VKIndexBuffer.h"
-#include "Vulkan/VKDescriptorSetLayout.h"
-#include "Vulkan/VKDescriptorPool.h"
-#include "Vulkan/VKDescriptorSet.h"
+#include "Vulkan/VKUniformBuffer.h"
 
 // Imgui
 #include <imgui.h>
 #include <imgui_internal.h>
 #include <backends/imgui_impl_glfw.h>
 #include <backends/imgui_impl_vulkan.h>
-
-struct UniformBufferObject
-{
-    glm::mat4 model;
-    glm::mat4 view;
-    glm::mat4 proj;
-};
 
 const int MAX_FRAMES_IN_FLIGHT = 2;
 
@@ -87,12 +78,8 @@ VKIndexBuffer triIBO;
 VKVertexBuffer quadVBO;
 VKIndexBuffer quadIBO;
 
-// Descriptor and ubniforms shit!
-//TODO: Abstract them into nice single class with a void buffer for uniform data
-VKDescriptorSetLayout mvpUBODSLayout;
-std::vector<VKBuffer> mvpUBOs;
-VKDescriptorPool descriptorPool;
-VKDescriptorSet set;
+// Descriptor and uniforms shit!
+VKUniformBuffer mvpUniformBuffer;
 /******************************* Vulkan Variables *****************************/
 std::vector<VkSemaphore> imageAvailableSemaphores;
 std::vector<VkSemaphore> renderingFinishedSemaphores;

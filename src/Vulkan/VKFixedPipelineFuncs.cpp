@@ -74,7 +74,7 @@ void VKFixedPipelineFuncs::SetRasterizerSCI()
     // TODO: Add arguments to set polygonMode functionality
     m_RasterizerSCI.polygonMode = VK_POLYGON_MODE_FILL;
     m_RasterizerSCI.cullMode = VK_CULL_MODE_NONE;
-    m_RasterizerSCI.frontFace = VK_FRONT_FACE_CLOCKWISE;
+    m_RasterizerSCI.frontFace = VK_FRONT_FACE_COUNTER_CLOCKWISE;//VK_FRONT_FACE_CLOCKWISE;
     m_RasterizerSCI.depthBiasEnable = VK_FALSE;
     m_RasterizerSCI.depthBiasConstantFactor = 0.0f;
     m_RasterizerSCI.depthBiasClamp = 0.0f;

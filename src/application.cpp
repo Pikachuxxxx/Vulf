@@ -29,7 +29,6 @@ void Application::InitVulkan()
     fragmentShader.CreateShader("./src/shaders/spir-v/frag.spv", ShaderType::FRAGMENT_SHADER);
 
     cmdPoolManager.Init();
-    mvpUBODSLayout.CreateDescriptorSetLayout();
     RecordCommandLists();
 
     // Create the synchronization stuff
@@ -72,7 +71,7 @@ void Application::InitImGui()
     init_info.QueueFamily = VKLogicalDevice::GetDeviceManager()->GetGPUManager().GetGraphicsFamilyIndex();
     init_info.Queue = VKLogicalDevice::GetDeviceManager()->GetGraphicsQueue();
     init_info.PipelineCache = VK_NULL_HANDLE;
-    init_info.DescriptorPool = descriptorPool.GetDescriptorPool();
+    init_info.DescriptorPool = mvpUniformBuffer.GetDescriptorPool();
     init_info.Allocator = nullptr;
     init_info.MinImageCount = swapchainManager.GetSwapImageCount();
     init_info.ImageCount = swapchainManager.GetSwapImageCount();
@@ -202,7 +201,6 @@ void Application::CleanUp()
     window = nullptr;
 
     cmdPoolManager.Destroy();
-    mvpUBODSLayout.Destroy();
     CleanUpCommandListResources();
     vertexShader.DestroyModule();
     fragmentShader.DestroyModule();
@@ -231,7 +229,11 @@ void Application::RecordCommandLists()
     fixedPipelineFuncs.SetDepthStencilSCI();
     fixedPipelineFuncs.SetColorBlendSCI();
     fixedPipelineFuncs.SetDynamicSCI();
-    fixedPipelineFuncs.SetPipelineLayout(mvpUBODSLayout.GetLayout());
+
+    // Create the uniform buffer
+    mvpUniformBuffer.CreateUniformBuffer(swapchainManager.GetSwapImageCount());
+    auto layout = mvpUniformBuffer.GetDescriptorSetLayout();
+    fixedPipelineFuncs.SetPipelineLayout(layout);
 
     renderPassManager.Init(swapchainManager.GetSwapFormat());
     std::vector<VkPipelineShaderStageCreateInfo>  shaderInfo = {vertexShader.GetShaderStageInfo(), fragmentShader.GetShaderStageInfo()};
@@ -249,19 +251,9 @@ void Application::RecordCommandLists()
     quadVBO.Create(whiteQuadVertices, cmdPoolManager.GetPool());
     quadIBO.Create(whiteQuadIndices, cmdPoolManager.GetPool());
 
-    VkDeviceSize bufferSize = sizeof(UniformBufferObject);
-    mvpUBOs.resize(swapchainManager.GetSwapImageCount());
-    for (size_t i = 0; i < swapchainManager.GetSwapImageCount(); i++) {
-        mvpUBOs[i].CreateBuffer(bufferSize, VK_BUFFER_USAGE_UNIFORM_BUFFER_BIT, VK_MEMORY_PROPERTY_HOST_VISIBLE_BIT | VK_MEMORY_PROPERTY_HOST_COHERENT_BIT);
-    }
-
-    descriptorPool.CreatePool(swapchainManager.GetSwapImageCount());
-
-    set.CreateSets(swapchainManager.GetSwapImageCount(), descriptorPool.GetDescriptorPool(), mvpUBODSLayout.GetLayout(), mvpUBOs, bufferSize);
-
     auto cmdBuffers = swapCmdBuffers.GetBuffers();
     auto framebuffers = framebufferManager.GetFramebuffers();
-    auto descriptorSets = set.GetSets();
+    auto descriptorSets = mvpUniformBuffer.GetSets();
     for (int i = 0; i < cmdBuffers.size(); i++) {
         swapCmdBuffers.RecordBuffer(cmdBuffers[i]);
         renderPassManager.SetClearColor(0.85, 0.44, 0.48);
@@ -290,10 +282,7 @@ void Application::CleanUpCommandListResources()
     triIBO.Destroy();
     quadVBO.Destroy();
     quadIBO.Destroy();
-    for (size_t i = 0; i < swapchainManager.GetSwapImageCount(); i++) {
-        mvpUBOs[i].DestroyBuffer();
-    }
-    descriptorPool.Destroy();
+    mvpUniformBuffer.Destroy();
     graphicsPipeline.Destroy();
     renderPassManager.Destroy();
     fixedPipelineFuncs.DestroyPipelineLayout();
@@ -303,16 +292,13 @@ void Application::CleanUpCommandListResources()
 void Application::UpdateMVPUBO(uint32_t currentImageIndex)
 {
     UniformBufferObject ubo{};
-    ubo.model = glm::scale(glm::mat4(1.0f), glm::vec3(1.0f, delta * 10.0f + 0.2f, 0.0f));
-    ubo.view = camera.GetViewMatrix();
-    ubo.proj = glm::mat4(1.0f);//glm::perspective(glm::radians(45.0f), 800.f / 600.0f, 0.01f, 100.0f);
-    ubo.proj = glm::mat4(1.0f);//glm::ortho(-200, 200, -150, 150, 0, 1);
-    // ubo.proj[1][1] *= -1;
+    ubo.model = glm::rotate(glm::mat4(1.0f), glm::radians(90.0f), glm::vec3(1.0f, 0.0f, 0.0f));
+    ubo.view = camera.GetViewMatrix();//glm::mat4(1.0f);//
+    ubo.proj = glm::perspective(glm::radians(45.0f), (float)swapchainManager.GetSwapExtent().width / swapchainManager.GetSwapExtent().height, 0.01f, 100.0f);
+    // ubo.proj = glm::mat4(1.0f);
+    ubo.proj[1][1] *= -1;
 
-    void* data;
-    vkMapMemory(VKLogicalDevice::GetDeviceManager()->GetLogicalDevice(), mvpUBOs[currentImageIndex].GetBufferMemory(), 0, sizeof(ubo), 0, &data);
-        memcpy(data, &ubo, sizeof(ubo));
-    vkUnmapMemory(VKLogicalDevice::GetDeviceManager()->GetLogicalDevice(), mvpUBOs[currentImageIndex].GetBufferMemory());
+    mvpUniformBuffer.UpdateBuffer(ubo, currentImageIndex);
 }
 /******************************* ImGui Callbacks *******************************/
 void Application::ImGuiError(VkResult err)
