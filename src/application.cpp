@@ -54,34 +54,11 @@ void Application::InitVulkan()
     swapCmdBuffers.AllocateBuffers(cmdPoolManager.GetPool());
 
     // Create the triangle vertex buffer
-    VkDeviceSize vertexDataSize = sizeof(rainbowTriangleVertices[0]) * rainbowTriangleVertices.size();
-    triangleStagingBuffer.CreateBuffer(vertexDataSize, VK_BUFFER_USAGE_TRANSFER_SRC_BIT, VK_MEMORY_PROPERTY_HOST_VISIBLE_BIT | VK_MEMORY_PROPERTY_HOST_COHERENT_BIT);
-    triangleStagingBuffer.MapVertexBufferData(rainbowTriangleVertices);
-    triangleVertexBuffer.CreateBuffer(vertexDataSize, VK_BUFFER_USAGE_TRANSFER_DST_BIT | VK_BUFFER_USAGE_VERTEX_BUFFER_BIT, VK_MEMORY_PROPERTY_DEVICE_LOCAL_BIT);
-    triangleStagingBuffer.CopyBufferToDevice(cmdPoolManager.GetPool(), triangleVertexBuffer.GetBuffer(), vertexDataSize);
-    triangleStagingBuffer.DestroyBuffer();
-    // Index buffer for the quad
-    VkDeviceSize indexDataSize = sizeof(rainbowTriangleIndices[0]) * rainbowTriangleIndices.size();
-    triangleStagingIndexBuffer.CreateBuffer(indexDataSize, VK_BUFFER_USAGE_TRANSFER_SRC_BIT, VK_MEMORY_PROPERTY_HOST_VISIBLE_BIT | VK_MEMORY_PROPERTY_HOST_COHERENT_BIT);
-    triangleStagingIndexBuffer.MapIndexBufferData(rainbowTriangleIndices);
-    triangleIndexBuffer.CreateBuffer(indexDataSize, VK_BUFFER_USAGE_TRANSFER_DST_BIT | VK_BUFFER_USAGE_INDEX_BUFFER_BIT, VK_MEMORY_PROPERTY_DEVICE_LOCAL_BIT);
-    triangleStagingIndexBuffer.CopyBufferToDevice(cmdPoolManager.GetPool(), triangleIndexBuffer.GetBuffer(), indexDataSize);
-    triangleStagingIndexBuffer.DestroyBuffer();
+    triVBO.Create(rainbowTriangleVertices, cmdPoolManager.GetPool());
+    triIBO.Create(rainbowTriangleIndices, cmdPoolManager.GetPool());
 
-    // Create the white quad vertex buffer
-    vertexDataSize = sizeof(whiteQuadVertices[0]) * whiteQuadVertices.size();
-    whiteQuadStagingBuffer.CreateBuffer(vertexDataSize, VK_BUFFER_USAGE_TRANSFER_SRC_BIT, VK_MEMORY_PROPERTY_HOST_VISIBLE_BIT | VK_MEMORY_PROPERTY_HOST_COHERENT_BIT);
-    whiteQuadStagingBuffer.MapVertexBufferData(whiteQuadVertices);
-    whiteQuadVertexBuffer.CreateBuffer(vertexDataSize, VK_BUFFER_USAGE_TRANSFER_DST_BIT | VK_BUFFER_USAGE_VERTEX_BUFFER_BIT, VK_MEMORY_PROPERTY_DEVICE_LOCAL_BIT);
-    whiteQuadStagingBuffer.CopyBufferToDevice(cmdPoolManager.GetPool(), whiteQuadVertexBuffer.GetBuffer(), vertexDataSize);
-    whiteQuadStagingBuffer.DestroyBuffer();
-    // Index buffer for the white quad
-    indexDataSize = sizeof(whiteQuadIndices[0]) * whiteQuadIndices.size();
-    whiteQuadStagingIndexBuffer.CreateBuffer(indexDataSize, VK_BUFFER_USAGE_TRANSFER_SRC_BIT, VK_MEMORY_PROPERTY_HOST_VISIBLE_BIT | VK_MEMORY_PROPERTY_HOST_COHERENT_BIT);
-    whiteQuadStagingIndexBuffer.MapIndexBufferData(whiteQuadIndices);
-    whiteQuadIndexBuffer.CreateBuffer(indexDataSize, VK_BUFFER_USAGE_TRANSFER_DST_BIT | VK_BUFFER_USAGE_INDEX_BUFFER_BIT, VK_MEMORY_PROPERTY_DEVICE_LOCAL_BIT);
-    whiteQuadStagingIndexBuffer.CopyBufferToDevice(cmdPoolManager.GetPool(), whiteQuadIndexBuffer.GetBuffer(), indexDataSize);
-    whiteQuadStagingIndexBuffer.DestroyBuffer();
+    quadVBO.Create(whiteQuadVertices, cmdPoolManager.GetPool());
+    quadIBO.Create(whiteQuadIndices, cmdPoolManager.GetPool());
 
     auto cmdBuffers = swapCmdBuffers.GetBuffers();
     auto framebuffers = framebufferManager.GetFramebuffers();
@@ -92,12 +69,12 @@ void Application::InitVulkan()
         renderPassManager.BeginRenderPass(cmdBuffers[i], framebuffers[i], swapchainManager.GetSwapExtent());
         graphicsPipeline.Bind(cmdBuffers[i]);
         // Bind buffer to the comands
-        triangleVertexBuffer.BindVertexBuffer(cmdBuffers[i]);
-        triangleIndexBuffer.BindIndexBuffer(cmdBuffers[i]);
+        triVBO.Bind(cmdBuffers[i]);
+        triIBO.Bind(cmdBuffers[i]);
         vkCmdDrawIndexed(cmdBuffers[i], 6, 1, 0, 0, 0);
         // Drawing another white quad
-        whiteQuadVertexBuffer.BindVertexBuffer(cmdBuffers[i]);
-        whiteQuadIndexBuffer.BindIndexBuffer(cmdBuffers[i]);
+        quadVBO.Bind(cmdBuffers[i]);
+        quadIBO.Bind(cmdBuffers[i]);
         vkCmdDrawIndexed(cmdBuffers[i], 6, 1, 0, 0, 0);
         renderPassManager.EndRenderPass(cmdBuffers[i]);
 		swapCmdBuffers.EndRecordingBuffer(cmdBuffers[i]);
@@ -242,10 +219,10 @@ void Application::CleanUp()
     delete window;
     cmdPoolManager.Destroy();
     framebufferManager.Destroy();
-    triangleVertexBuffer.DestroyBuffer();
-    triangleIndexBuffer.DestroyBuffer();
-    whiteQuadVertexBuffer.DestroyBuffer();
-    whiteQuadIndexBuffer.DestroyBuffer();
+    triVBO.Destroy();
+    triIBO.Destroy();
+    quadVBO.Destroy();
+    quadIBO.Destroy();
     graphicsPipeline.Destroy();
     renderPassManager.Destroy();
     fixedPipelineFuncs.DestroyPipelineLayout();
@@ -262,10 +239,10 @@ void Application::RecreateSwapchain()
     vkDeviceWaitIdle(VKLogicalDevice::GetDeviceManager()->GetLogicalDevice());
 
     framebufferManager.Destroy();
-    triangleVertexBuffer.DestroyBuffer();
-    triangleIndexBuffer.DestroyBuffer();
-    whiteQuadVertexBuffer.DestroyBuffer();
-    whiteQuadIndexBuffer.DestroyBuffer();
+    triVBO.Destroy();
+    triIBO.Destroy();
+    quadVBO.Destroy();
+    quadIBO.Destroy();
     graphicsPipeline.Destroy();
     renderPassManager.Destroy();
     fixedPipelineFuncs.DestroyPipelineLayout();
@@ -289,34 +266,11 @@ void Application::RecreateSwapchain()
     framebufferManager.Create(renderPassManager.GetRenderPass(), swapchainManager.GetSwapImageViews(), swapchainManager.GetSwapExtent());
 
     // Create the triangle vertex buffer
-    VkDeviceSize vertexDataSize = sizeof(rainbowTriangleVertices[0]) * rainbowTriangleVertices.size();
-    triangleStagingBuffer.CreateBuffer(vertexDataSize, VK_BUFFER_USAGE_TRANSFER_SRC_BIT, VK_MEMORY_PROPERTY_HOST_VISIBLE_BIT | VK_MEMORY_PROPERTY_HOST_COHERENT_BIT);
-    triangleStagingBuffer.MapVertexBufferData(rainbowTriangleVertices);
-    triangleVertexBuffer.CreateBuffer(vertexDataSize, VK_BUFFER_USAGE_TRANSFER_DST_BIT | VK_BUFFER_USAGE_VERTEX_BUFFER_BIT, VK_MEMORY_PROPERTY_DEVICE_LOCAL_BIT);
-    triangleStagingBuffer.CopyBufferToDevice(cmdPoolManager.GetPool(), triangleVertexBuffer.GetBuffer(), vertexDataSize);
-    triangleStagingBuffer.DestroyBuffer();
-    // Index buffer for the quad
-    VkDeviceSize indexDataSize = sizeof(rainbowTriangleIndices[0]) * rainbowTriangleIndices.size();
-    triangleStagingIndexBuffer.CreateBuffer(indexDataSize, VK_BUFFER_USAGE_TRANSFER_SRC_BIT, VK_MEMORY_PROPERTY_HOST_VISIBLE_BIT | VK_MEMORY_PROPERTY_HOST_COHERENT_BIT);
-    triangleStagingIndexBuffer.MapIndexBufferData(rainbowTriangleIndices);
-    triangleIndexBuffer.CreateBuffer(indexDataSize, VK_BUFFER_USAGE_TRANSFER_DST_BIT | VK_BUFFER_USAGE_INDEX_BUFFER_BIT, VK_MEMORY_PROPERTY_DEVICE_LOCAL_BIT);
-    triangleStagingIndexBuffer.CopyBufferToDevice(cmdPoolManager.GetPool(), triangleIndexBuffer.GetBuffer(), indexDataSize);
-    triangleStagingIndexBuffer.DestroyBuffer();
+    triVBO.Create(rainbowTriangleVertices, cmdPoolManager.GetPool());
+    triIBO.Create(rainbowTriangleIndices, cmdPoolManager.GetPool());
 
-    // Create the white quad vertex buffer
-    vertexDataSize = sizeof(whiteQuadVertices[0]) * whiteQuadVertices.size();
-    whiteQuadStagingBuffer.CreateBuffer(vertexDataSize, VK_BUFFER_USAGE_TRANSFER_SRC_BIT, VK_MEMORY_PROPERTY_HOST_VISIBLE_BIT | VK_MEMORY_PROPERTY_HOST_COHERENT_BIT);
-    whiteQuadStagingBuffer.MapVertexBufferData(whiteQuadVertices);
-    whiteQuadVertexBuffer.CreateBuffer(vertexDataSize, VK_BUFFER_USAGE_TRANSFER_DST_BIT | VK_BUFFER_USAGE_VERTEX_BUFFER_BIT, VK_MEMORY_PROPERTY_DEVICE_LOCAL_BIT);
-    whiteQuadStagingBuffer.CopyBufferToDevice(cmdPoolManager.GetPool(), whiteQuadVertexBuffer.GetBuffer(), vertexDataSize);
-    whiteQuadStagingBuffer.DestroyBuffer();
-    // Index buffer for the white quad
-    indexDataSize = sizeof(whiteQuadIndices[0]) * whiteQuadIndices.size();
-    whiteQuadStagingIndexBuffer.CreateBuffer(indexDataSize, VK_BUFFER_USAGE_TRANSFER_SRC_BIT, VK_MEMORY_PROPERTY_HOST_VISIBLE_BIT | VK_MEMORY_PROPERTY_HOST_COHERENT_BIT);
-    whiteQuadStagingIndexBuffer.MapIndexBufferData(whiteQuadIndices);
-    whiteQuadIndexBuffer.CreateBuffer(indexDataSize, VK_BUFFER_USAGE_TRANSFER_DST_BIT | VK_BUFFER_USAGE_INDEX_BUFFER_BIT, VK_MEMORY_PROPERTY_DEVICE_LOCAL_BIT);
-    whiteQuadStagingIndexBuffer.CopyBufferToDevice(cmdPoolManager.GetPool(), whiteQuadIndexBuffer.GetBuffer(), indexDataSize);
-    whiteQuadStagingIndexBuffer.DestroyBuffer();
+    quadVBO.Create(whiteQuadVertices, cmdPoolManager.GetPool());
+    quadIBO.Create(whiteQuadIndices, cmdPoolManager.GetPool());
 
     auto cmdBuffers = swapCmdBuffers.GetBuffers();
     auto framebuffers = framebufferManager.GetFramebuffers();
@@ -327,15 +281,15 @@ void Application::RecreateSwapchain()
         renderPassManager.BeginRenderPass(cmdBuffers[i], framebuffers[i], swapchainManager.GetSwapExtent());
         graphicsPipeline.Bind(cmdBuffers[i]);
         // Bind buffer to the comands
-        triangleVertexBuffer.BindVertexBuffer(cmdBuffers[i]);
-        triangleIndexBuffer.BindIndexBuffer(cmdBuffers[i]);
+        triVBO.Bind(cmdBuffers[i]);
+        triIBO.Bind(cmdBuffers[i]);
         vkCmdDrawIndexed(cmdBuffers[i], 6, 1, 0, 0, 0);
         // Drawing another white quad
-        whiteQuadVertexBuffer.BindVertexBuffer(cmdBuffers[i]);
-        whiteQuadIndexBuffer.BindIndexBuffer(cmdBuffers[i]);
+        quadVBO.Bind(cmdBuffers[i]);
+        quadIBO.Bind(cmdBuffers[i]);
         vkCmdDrawIndexed(cmdBuffers[i], 6, 1, 0, 0, 0);
         renderPassManager.EndRenderPass(cmdBuffers[i]);
-		swapCmdBuffers.EndRecordingBuffer(cmdBuffers[i]);
+        swapCmdBuffers.EndRecordingBuffer(cmdBuffers[i]);
     }
 }
 /******************************* GLFW Callbacks *******************************/

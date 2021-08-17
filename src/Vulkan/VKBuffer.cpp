@@ -79,18 +79,6 @@ void VKBuffer::CopyBufferToDevice(VkCommandPool pool, VkBuffer dstBuffer, VkDevi
     vkFreeCommandBuffers(VKLogicalDevice::GetDeviceManager()->GetLogicalDevice(), pool, 1, &commandBuffer);
 }
 
-void VKBuffer::BindVertexBuffer(VkCommandBuffer& cmdBuffers)
-{
-    VkBuffer vertexBuffers[] = {m_Buffer};
-    VkDeviceSize offsets[] = {0};
-    vkCmdBindVertexBuffers(cmdBuffers, 0, 1, vertexBuffers, offsets);
-}
-
-void VKBuffer::BindIndexBuffer(VkCommandBuffer& cmdBuffers)
-{
-    vkCmdBindIndexBuffer(cmdBuffers, m_Buffer, 0, VK_INDEX_TYPE_UINT16);
-}
-
 void VKBuffer::DestroyBuffer()
 {
     vkDestroyBuffer(VKLogicalDevice::GetDeviceManager()->GetLogicalDevice(), m_Buffer, nullptr);

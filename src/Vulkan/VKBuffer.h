@@ -13,8 +13,6 @@ public:
     void MapVertexBufferData(const std::vector<Vertex>& vertexData);
     void MapIndexBufferData(const std::vector<uint16_t>& indexData);
     void CopyBufferToDevice(VkCommandPool pool, VkBuffer dstBuffer, VkDeviceSize size);
-    void BindVertexBuffer(VkCommandBuffer& cmdBuffers);
-    void BindIndexBuffer(VkCommandBuffer& cmdBuffers);
     const VkBuffer& GetBuffer() { return m_Buffer; }
 private:
     VkBuffer m_Buffer;

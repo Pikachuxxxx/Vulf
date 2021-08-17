@@ -28,9 +28,11 @@
 #include "Vulkan/VKFramebuffer.h"
 #include "Vulkan/VKCmdPool.h"
 #include "Vulkan/VKCmdBuffer.h"
-#include "Vulkan/VKBuffer.h"
+#include "Vulkan/VKVertexBuffer.h"
+#include "Vulkan/VKIndexBuffer.h"
 
 const int MAX_FRAMES_IN_FLIGHT = 2;
+
 
 class Application
 {
@@ -61,15 +63,11 @@ VKFramebuffer framebufferManager;
 VKCmdPool cmdPoolManager;
 VKCmdBuffer swapCmdBuffers;
 
-VKBuffer triangleStagingBuffer;
-VKBuffer triangleVertexBuffer;
-VKBuffer triangleStagingIndexBuffer;
-VKBuffer triangleIndexBuffer;
+VKVertexBuffer triVBO;
+VKIndexBuffer triIBO;
 
-VKBuffer whiteQuadStagingBuffer;
-VKBuffer whiteQuadVertexBuffer;
-VKBuffer whiteQuadStagingIndexBuffer;
-VKBuffer whiteQuadIndexBuffer;
+VKVertexBuffer quadVBO;
+VKIndexBuffer quadIBO;
 /******************************* Vulkan Variables *****************************/
 std::vector<VkSemaphore> imageAvailableSemaphores;
 std::vector<VkSemaphore> renderingFinishedSemaphores;
