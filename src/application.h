@@ -49,6 +49,7 @@ private:
 /****************************** Application Flow ******************************/
     void InitWindow();
     void InitVulkan();
+    void RecordCommandLists();
     void MainLoop();
     void DrawFrame();
     void CleanUp();

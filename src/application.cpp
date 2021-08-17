@@ -27,12 +27,39 @@ void Application::InitVulkan()
 
     VKLogicalDevice::GetDeviceManager()->Init();
 
-    swapchainManager.Init(window->getGLFWwindow());
-
     vertexShader.CreateShader("./src/shaders/spir-v/vert.spv", ShaderType::VERTEX_SHADER);
     fragmentShader.CreateShader("./src/shaders/spir-v/frag.spv", ShaderType::FRAGMENT_SHADER);
 
-    // fixedPipelineFuncs.SetVertexInputSCI();
+    cmdPoolManager.Init();
+
+    RecordCommandLists();
+
+    // Create the synchronization stuff
+    VkSemaphoreCreateInfo semaphoreInfo{};
+    semaphoreInfo.sType = VK_STRUCTURE_TYPE_SEMAPHORE_CREATE_INFO;
+    imageAvailableSemaphores.resize(MAX_FRAMES_IN_FLIGHT);
+    renderingFinishedSemaphores.resize(MAX_FRAMES_IN_FLIGHT);
+    VkFenceCreateInfo fenceInfo{};
+    fenceInfo.sType = VK_STRUCTURE_TYPE_FENCE_CREATE_INFO;
+    fenceInfo.flags = VK_FENCE_CREATE_SIGNALED_BIT;
+    inFlightFences.resize(MAX_FRAMES_IN_FLIGHT);
+    imagesInFlight.resize(3, VK_NULL_HANDLE);
+    for (size_t i = 0; i < MAX_FRAMES_IN_FLIGHT; i++)
+    {
+        if(VK_CALL(vkCreateSemaphore(VKLogicalDevice::GetDeviceManager()->GetLogicalDevice(), &semaphoreInfo, nullptr, &imageAvailableSemaphores[i])) ||
+        VK_CALL(vkCreateSemaphore(VKLogicalDevice::GetDeviceManager()->GetLogicalDevice(), &semaphoreInfo, nullptr, &renderingFinishedSemaphores[i])) ||
+        VK_CALL(vkCreateFence(VKLogicalDevice::GetDeviceManager()->GetLogicalDevice(), &fenceInfo, nullptr, &inFlightFences[i])))
+        {
+            throw std::runtime_error("Cannot make semaphore!");
+        }
+    }
+
+}
+
+void Application::RecordCommandLists()
+{
+    swapchainManager.Init(window->getGLFWwindow());
+
     fixedPipelineFuncs.SetInputAssemblyStageInfo(Topology::TRIANGLES);
     fixedPipelineFuncs.SetViewportSCI(swapchainManager.GetSwapExtent());
     fixedPipelineFuncs.SetRasterizerSCI();
@@ -48,8 +75,6 @@ void Application::InitVulkan()
     graphicsPipeline.Create(shaderInfo, fixedPipelineFuncs, renderPassManager.GetRenderPass());
 
     framebufferManager.Create(renderPassManager.GetRenderPass(), swapchainManager.GetSwapImageViews(), swapchainManager.GetSwapExtent());
-
-    cmdPoolManager.Init();
 
     swapCmdBuffers.AllocateBuffers(cmdPoolManager.GetPool());
 
@@ -79,28 +104,8 @@ void Application::InitVulkan()
         renderPassManager.EndRenderPass(cmdBuffers[i]);
 		swapCmdBuffers.EndRecordingBuffer(cmdBuffers[i]);
     }
-
-    // Create the synchronization stuff
-    VkSemaphoreCreateInfo semaphoreInfo{};
-    semaphoreInfo.sType = VK_STRUCTURE_TYPE_SEMAPHORE_CREATE_INFO;
-    imageAvailableSemaphores.resize(MAX_FRAMES_IN_FLIGHT);
-    renderingFinishedSemaphores.resize(MAX_FRAMES_IN_FLIGHT);
-    VkFenceCreateInfo fenceInfo{};
-    fenceInfo.sType = VK_STRUCTURE_TYPE_FENCE_CREATE_INFO;
-    fenceInfo.flags = VK_FENCE_CREATE_SIGNALED_BIT;
-    inFlightFences.resize(MAX_FRAMES_IN_FLIGHT);
-    imagesInFlight.resize(cmdBuffers.size(), VK_NULL_HANDLE);
-    for (size_t i = 0; i < MAX_FRAMES_IN_FLIGHT; i++)
-    {
-        if(VK_CALL(vkCreateSemaphore(VKLogicalDevice::GetDeviceManager()->GetLogicalDevice(), &semaphoreInfo, nullptr, &imageAvailableSemaphores[i])) ||
-        VK_CALL(vkCreateSemaphore(VKLogicalDevice::GetDeviceManager()->GetLogicalDevice(), &semaphoreInfo, nullptr, &renderingFinishedSemaphores[i])) ||
-        VK_CALL(vkCreateFence(VKLogicalDevice::GetDeviceManager()->GetLogicalDevice(), &fenceInfo, nullptr, &inFlightFences[i])))
-        {
-            throw std::runtime_error("Cannot make semaphore!");
-        }
-    }
-
 }
+
 
 void Application::MainLoop()
 {
@@ -248,49 +253,7 @@ void Application::RecreateSwapchain()
     fixedPipelineFuncs.DestroyPipelineLayout();
     swapchainManager.Destroy();
 
-    swapchainManager.Init(window->getGLFWwindow());
-    fixedPipelineFuncs.SetInputAssemblyStageInfo(Topology::TRIANGLES);
-    fixedPipelineFuncs.SetViewportSCI(swapchainManager.GetSwapExtent());
-    fixedPipelineFuncs.SetRasterizerSCI();
-    fixedPipelineFuncs.SetMultiSampleSCI();
-    fixedPipelineFuncs.SetDepthStencilSCI();
-    fixedPipelineFuncs.SetColorBlendSCI();
-    fixedPipelineFuncs.SetDynamicSCI();
-    fixedPipelineFuncs.SetPipelineLayout();
-
-    renderPassManager.Init(swapchainManager.GetSwapFormat());
-    std::vector<VkPipelineShaderStageCreateInfo>  shaderInfo = {vertexShader.GetShaderStageInfo(), fragmentShader.GetShaderStageInfo()};
-
-    graphicsPipeline.Create(shaderInfo, fixedPipelineFuncs, renderPassManager.GetRenderPass());
-
-    framebufferManager.Create(renderPassManager.GetRenderPass(), swapchainManager.GetSwapImageViews(), swapchainManager.GetSwapExtent());
-
-    // Create the triangle vertex buffer
-    triVBO.Create(rainbowTriangleVertices, cmdPoolManager.GetPool());
-    triIBO.Create(rainbowTriangleIndices, cmdPoolManager.GetPool());
-
-    quadVBO.Create(whiteQuadVertices, cmdPoolManager.GetPool());
-    quadIBO.Create(whiteQuadIndices, cmdPoolManager.GetPool());
-
-    auto cmdBuffers = swapCmdBuffers.GetBuffers();
-    auto framebuffers = framebufferManager.GetFramebuffers();
-    for (int i = 0; i < cmdBuffers.size(); i++)
-    {
-        swapCmdBuffers.RecordBuffer(cmdBuffers[i]);
-        renderPassManager.SetClearColor(0.85, 0.44, 0.48);
-        renderPassManager.BeginRenderPass(cmdBuffers[i], framebuffers[i], swapchainManager.GetSwapExtent());
-        graphicsPipeline.Bind(cmdBuffers[i]);
-        // Bind buffer to the comands
-        triVBO.Bind(cmdBuffers[i]);
-        triIBO.Bind(cmdBuffers[i]);
-        vkCmdDrawIndexed(cmdBuffers[i], 6, 1, 0, 0, 0);
-        // Drawing another white quad
-        quadVBO.Bind(cmdBuffers[i]);
-        quadIBO.Bind(cmdBuffers[i]);
-        vkCmdDrawIndexed(cmdBuffers[i], 6, 1, 0, 0, 0);
-        renderPassManager.EndRenderPass(cmdBuffers[i]);
-        swapCmdBuffers.EndRecordingBuffer(cmdBuffers[i]);
-    }
+    RecordCommandLists();
 }
 /******************************* GLFW Callbacks *******************************/
 void Application::key_callback(GLFWwindow* window, int key, int scancode, int action, int mods)
