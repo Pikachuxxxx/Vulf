@@ -222,6 +222,8 @@ void Application::CleanUp()
         vkDestroyFence(VKLogicalDevice::GetDeviceManager()->GetLogicalDevice(), inFlightFences[i], nullptr);
     }
     delete window;
+    window = nullptr;
+    
     cmdPoolManager.Destroy();
     framebufferManager.Destroy();
     triVBO.Destroy();
@@ -256,12 +258,6 @@ void Application::RecreateSwapchain()
     RecordCommandLists();
 }
 /******************************* GLFW Callbacks *******************************/
-void Application::key_callback(GLFWwindow* window, int key, int scancode, int action, int mods)
-{
-    if(key == GLFW_KEY_ESCAPE && action == GLFW_PRESS)
-        glfwSetWindowShouldClose(window, GLFW_TRUE);
-}
-
 void Application::resize_callback(GLFWwindow* window, int width, int height)
 {
     auto app = reinterpret_cast<Application*>(glfwGetWindowUserPointer(window));

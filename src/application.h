@@ -49,7 +49,6 @@ private:
 /****************************** Application Flow ******************************/
     void InitWindow();
     void InitVulkan();
-    void RecordCommandLists();
     void MainLoop();
     void DrawFrame();
     void CleanUp();
@@ -77,7 +76,7 @@ std::vector<VkFence> imagesInFlight;
 size_t currentFrame = 0;
 /******************************************************************************/
 void RecreateSwapchain();
+void RecordCommandLists();
 /******************************* GLFW Callbacks *******************************/
-static void key_callback(GLFWwindow* window, int key, int scancode, int action, int mods);
 static void resize_callback(GLFWwindow* window, int width, int height);
 };
