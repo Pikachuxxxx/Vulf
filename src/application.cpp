@@ -29,7 +29,7 @@ void Application::InitVulkan()
     fragmentShader.CreateShader("./src/shaders/spir-v/frag.spv", ShaderType::FRAGMENT_SHADER);
 
     cmdPoolManager.Init();
-    RecordCommandLists();
+    RecreateCommandPipeline();
 
     // Create the synchronization stuff
     VkSemaphoreCreateInfo semaphoreInfo{};
@@ -76,8 +76,9 @@ void Application::InitImGui()
     init_info.MinImageCount = swapchainManager.GetSwapImageCount();
     init_info.ImageCount = swapchainManager.GetSwapImageCount();
     init_info.CheckVkResultFn = ImGuiError;
-    // ImGui_ImplVulkan_Init(&init_info, wd->RenderPass);
 
+    // Create a render pass for ImGUi
+    // ImGui_ImplVulkan_Init(&init_info, wd->RenderPass);
 }
 
 void Application::MainLoop()
@@ -117,6 +118,8 @@ void Application::MainLoop()
     		swapCmdBuffers.EndRecordingBuffer(cmdBuffers[i]);
         }
         */
+        vkDeviceWaitIdle(VKLogicalDevice::GetDeviceManager()->GetLogicalDevice());
+        RecordCommands();
         DrawFrame();
     }
     vkDeviceWaitIdle(VKLogicalDevice::GetDeviceManager()->GetLogicalDevice());
@@ -215,10 +218,10 @@ void Application::RecreateSwapchain()
 
     CleanUpCommandListResources();
 
-    RecordCommandLists();
+    RecreateCommandPipeline();
 }
 
-void Application::RecordCommandLists()
+void Application::RecreateCommandPipeline()
 {
     swapchainManager.Init(window->getGLFWwindow());
 
@@ -251,12 +254,19 @@ void Application::RecordCommandLists()
     quadVBO.Create(whiteQuadVertices, cmdPoolManager.GetPool());
     quadIBO.Create(whiteQuadIndices, cmdPoolManager.GetPool());
 
+    // Record the commands
+    RecordCommands();
+}
+
+void Application::RecordCommands()
+{
     auto cmdBuffers = swapCmdBuffers.GetBuffers();
     auto framebuffers = framebufferManager.GetFramebuffers();
     auto descriptorSets = mvpUniformBuffer.GetSets();
     for (int i = 0; i < cmdBuffers.size(); i++) {
         swapCmdBuffers.RecordBuffer(cmdBuffers[i]);
-        renderPassManager.SetClearColor(0.85, 0.44, 0.48);
+        // renderPassManager.SetClearColor(0.85, 0.44, 0.48);
+        renderPassManager.SetClearColor(abs(cos(glfwGetTime())), 0.44, 0.48);
         renderPassManager.BeginRenderPass(cmdBuffers[i], framebuffers[i], swapchainManager.GetSwapExtent());
         graphicsPipeline.Bind(cmdBuffers[i]);
         // Bind buffer to the comands
@@ -293,9 +303,8 @@ void Application::UpdateMVPUBO(uint32_t currentImageIndex)
 {
     UniformBufferObject ubo{};
     ubo.model = glm::rotate(glm::mat4(1.0f), glm::radians(90.0f), glm::vec3(1.0f, 0.0f, 0.0f));
-    ubo.view = camera.GetViewMatrix();//glm::mat4(1.0f);//
+    ubo.view = camera.GetViewMatrix();
     ubo.proj = glm::perspective(glm::radians(45.0f), (float)swapchainManager.GetSwapExtent().width / swapchainManager.GetSwapExtent().height, 0.01f, 100.0f);
-    // ubo.proj = glm::mat4(1.0f);
     ubo.proj[1][1] *= -1;
 
     mvpUniformBuffer.UpdateBuffer(ubo, currentImageIndex);

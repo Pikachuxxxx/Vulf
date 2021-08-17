@@ -88,7 +88,8 @@ std::vector<VkFence> imagesInFlight;
 size_t currentFrame = 0;
 /******************************************************************************/
 void RecreateSwapchain();
-void RecordCommandLists();
+void RecreateCommandPipeline();
+void RecordCommands();
 void CleanUpCommandListResources();
 void UpdateMVPUBO(uint32_t currentImageIndex);
 /******************************* ImGui Callbacks *******************************/
