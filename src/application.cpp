@@ -59,7 +59,8 @@ void Application::InitImGui()
     IMGUI_CHECKVERSION();
     ImGui::CreateContext();
     ImGuiIO& io = ImGui::GetIO(); (void)io;
-
+    io.ConfigFlags |= ImGuiConfigFlags_DockingEnable;
+    io.ConfigFlags |= ImGuiConfigFlags_ViewportsEnable;
     // Setup Dear ImGui style
     ImGui::StyleColorsDark();
 
@@ -225,7 +226,12 @@ void Application::MainLoop()
         ImGui::NewFrame();
         OnImGui();
         ImGui::Render();
-
+        // Update and Render additional Platform Windows
+        if (ImGui::GetIO().ConfigFlags & ImGuiConfigFlags_ViewportsEnable)
+        {
+            ImGui::UpdatePlatformWindows();
+            ImGui::RenderPlatformWindowsDefault();
+        }
 
         vkDeviceWaitIdle(VKLogicalDevice::GetDeviceManager()->GetLogicalDevice());
         RecordCommands();
@@ -411,7 +417,7 @@ void Application::RecordCommands()
         RPinfo.renderArea.extent.width = swapchainManager.GetSwapExtent().width;
         RPinfo.renderArea.extent.height = swapchainManager.GetSwapExtent().height;
         RPinfo.clearValueCount = 1;
-        VkClearValue clearColor = { {{1.0, 1.0, 1.0, 1.0f}} };
+        VkClearValue clearColor = { {{0.0, 1.0, 1.0, 1.0f}} };
         RPinfo.pClearValues = &clearColor;
         vkCmdBeginRenderPass(imguiCmdBuffers.GetBufferAt(i), &RPinfo, VK_SUBPASS_CONTENTS_INLINE);
 
