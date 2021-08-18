@@ -471,8 +471,8 @@ void Application::ImGuiError(VkResult err)
 void Application::OnImGui()
 {
     ImGui::ShowDemoWindow();
-    char* buf = new char[256];
-    float f;
+    static char* buf = new char[256];
+    static float f;
     ImGui::Begin("Yeah Bitch!");
     {
         ImGui::Text("Hello, world %d", 123);
@@ -482,6 +482,9 @@ void Application::OnImGui()
         }
         ImGui::InputText("string", buf, IM_ARRAYSIZE(buf));
         ImGui::SliderFloat("float", &f, 0.0f, 1.0f);
+        static ImVec4 color;
+        ImGui::ColorEdit4("Mycolor#2", (float*)&color, ImGuiColorEditFlags_NoInputs | ImGuiColorEditFlags_NoLabel);
+
     }
     ImGui::End();
 }
