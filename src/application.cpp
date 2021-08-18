@@ -9,6 +9,7 @@ void Application::Run()
 {
     InitWindow();
     InitVulkan();
+    InitImGui();
     MainLoop();
     CleanUp();
 }
@@ -62,6 +63,76 @@ void Application::InitImGui()
     // Setup Dear ImGui style
     ImGui::StyleColorsDark();
 
+    // ImGui Specific Command pool
+    VkDescriptorPoolSize pool_sizes[] =
+    {
+        { VK_DESCRIPTOR_TYPE_SAMPLER, 1000 },
+        { VK_DESCRIPTOR_TYPE_COMBINED_IMAGE_SAMPLER, 1000 },
+        { VK_DESCRIPTOR_TYPE_SAMPLED_IMAGE, 1000 },
+        { VK_DESCRIPTOR_TYPE_STORAGE_IMAGE, 1000 },
+        { VK_DESCRIPTOR_TYPE_UNIFORM_TEXEL_BUFFER, 1000 },
+        { VK_DESCRIPTOR_TYPE_STORAGE_TEXEL_BUFFER, 1000 },
+        { VK_DESCRIPTOR_TYPE_UNIFORM_BUFFER, 1000 },
+        { VK_DESCRIPTOR_TYPE_STORAGE_BUFFER, 1000 },
+        { VK_DESCRIPTOR_TYPE_UNIFORM_BUFFER_DYNAMIC, 1000 },
+        { VK_DESCRIPTOR_TYPE_STORAGE_BUFFER_DYNAMIC, 1000 },
+        { VK_DESCRIPTOR_TYPE_INPUT_ATTACHMENT, 1000 }
+    };
+    VkDescriptorPoolCreateInfo pool_info = {};
+    pool_info.sType = VK_STRUCTURE_TYPE_DESCRIPTOR_POOL_CREATE_INFO;
+    pool_info.flags = VK_DESCRIPTOR_POOL_CREATE_FREE_DESCRIPTOR_SET_BIT;
+    pool_info.maxSets = 1000 * IM_ARRAYSIZE(pool_sizes);
+    pool_info.poolSizeCount = (uint32_t)IM_ARRAYSIZE(pool_sizes);
+    pool_info.pPoolSizes = pool_sizes;
+    if(VK_CALL(vkCreateDescriptorPool(VKLogicalDevice::GetDeviceManager()->GetLogicalDevice(), &pool_info, nullptr, &imguiDescriptorPool)))
+        throw std::runtime_error("Cannot create ImGui command pool!");
+    else VK_LOG_SUCCESS("Imgui Command Pool succesfully created!");
+
+    // Create a render pass (last one in the application) for ImGUi
+    // ImGui Attachment Description
+    VkAttachmentDescription imguiAttachmentDesc = {};
+    imguiAttachmentDesc.format = swapchainManager.GetSwapFormat();
+    imguiAttachmentDesc.samples = VK_SAMPLE_COUNT_1_BIT;
+    imguiAttachmentDesc.loadOp = VK_ATTACHMENT_LOAD_OP_LOAD;
+    imguiAttachmentDesc.storeOp = VK_ATTACHMENT_STORE_OP_STORE;
+    imguiAttachmentDesc.stencilLoadOp = VK_ATTACHMENT_LOAD_OP_DONT_CARE;
+    imguiAttachmentDesc.stencilStoreOp = VK_ATTACHMENT_STORE_OP_DONT_CARE;
+    imguiAttachmentDesc.initialLayout = VK_IMAGE_LAYOUT_COLOR_ATTACHMENT_OPTIMAL;
+    imguiAttachmentDesc.finalLayout = VK_IMAGE_LAYOUT_PRESENT_SRC_KHR; // Since UI is the last render pass, now this will be used for presentation
+
+    // ImGui color attachment reference to be used by the attachment and this is described by the attachment Description
+    VkAttachmentReference imguiColorAttachmentRef = {};
+    imguiColorAttachmentRef.attachment = 0;
+    imguiColorAttachmentRef.layout = VK_IMAGE_LAYOUT_COLOR_ATTACHMENT_OPTIMAL;
+
+    // Create a subpass using the attachment reference
+    VkSubpassDescription imguiSubpassDesc{};
+    imguiSubpassDesc.pipelineBindPoint = VK_PIPELINE_BIND_POINT_GRAPHICS;
+    imguiSubpassDesc.colorAttachmentCount = 1;
+    imguiSubpassDesc.pColorAttachments = &imguiColorAttachmentRef;
+
+    // Create the sub pass dependency to communicate between different subpasses, we describe the dependencies between them
+    VkSubpassDependency imguiDependency{};
+    imguiDependency.srcSubpass = VK_SUBPASS_EXTERNAL;
+    imguiDependency.dstSubpass = 0;
+    imguiDependency.srcStageMask = VK_PIPELINE_STAGE_COLOR_ATTACHMENT_OUTPUT_BIT;
+    imguiDependency.dstStageMask = VK_PIPELINE_STAGE_COLOR_ATTACHMENT_OUTPUT_BIT;
+    imguiDependency.srcAccessMask = 0;
+    imguiDependency.dstAccessMask = VK_ACCESS_COLOR_ATTACHMENT_WRITE_BIT;
+
+    // Now create the imgui renderPass
+    VkRenderPassCreateInfo imguiRPInfo{};
+    imguiRPInfo.sType = VK_STRUCTURE_TYPE_RENDER_PASS_CREATE_INFO;
+    imguiRPInfo.attachmentCount = 1;
+    imguiRPInfo.pAttachments = &imguiAttachmentDesc;
+    imguiRPInfo.subpassCount = 1;
+    imguiRPInfo.pSubpasses = &imguiSubpassDesc;
+    imguiRPInfo.dependencyCount = 1;
+    imguiRPInfo.pDependencies = &imguiDependency;
+    if(VK_CALL(vkCreateRenderPass(VKLogicalDevice::GetDeviceManager()->GetLogicalDevice(), &imguiRPInfo, nullptr, &imguiRenderPass)))
+        throw std::runtime_error("Cannot create imgui render pass");
+    else VK_LOG_SUCCESS("ImGUi Renderpass succesfully created !");
+
     // Setup Platform/Renderer bindings
     ImGui_ImplGlfw_InitForVulkan(window->getGLFWwindow(), true);
     ImGui_ImplVulkan_InitInfo init_info = {};
@@ -71,14 +142,43 @@ void Application::InitImGui()
     init_info.QueueFamily = VKLogicalDevice::GetDeviceManager()->GetGPUManager().GetGraphicsFamilyIndex();
     init_info.Queue = VKLogicalDevice::GetDeviceManager()->GetGraphicsQueue();
     init_info.PipelineCache = VK_NULL_HANDLE;
-    init_info.DescriptorPool = mvpUniformBuffer.GetDescriptorPool();
+    init_info.DescriptorPool = imguiDescriptorPool;
     init_info.Allocator = nullptr;
-    init_info.MinImageCount = swapchainManager.GetSwapImageCount();
+    init_info.MinImageCount = 2; // IDK why?
     init_info.ImageCount = swapchainManager.GetSwapImageCount();
     init_info.CheckVkResultFn = ImGuiError;
+    ImGui_ImplVulkan_Init(&init_info, imguiRenderPass);
 
-    // Create a render pass for ImGUi
-    // ImGui_ImplVulkan_Init(&init_info, wd->RenderPass);
+    // Get the command buffers for imgui
+    imguiCmdBuffer = cmdPoolManager.AllocateBuffer();
+
+    if(VK_CALL(vkResetCommandPool(DEVICE, cmdPoolManager.GetPool(), 0)))
+        throw std::runtime_error("Canot reset imgui command pool!");
+    else VK_LOG_SUCCESS("succesfully reset ImGui Command Pool");
+
+    VkCommandBufferBeginInfo begin_info = {};
+    begin_info.sType = VK_STRUCTURE_TYPE_COMMAND_BUFFER_BEGIN_INFO;
+    begin_info.flags |= VK_COMMAND_BUFFER_USAGE_ONE_TIME_SUBMIT_BIT;
+    vkBeginCommandBuffer(imguiCmdBuffer, &begin_info);
+
+    ImGui_ImplVulkan_CreateFontsTexture(imguiCmdBuffer);
+
+    VkSubmitInfo end_info = {};
+    end_info.sType = VK_STRUCTURE_TYPE_SUBMIT_INFO;
+    end_info.commandBufferCount = 1;
+    end_info.pCommandBuffers = &imguiCmdBuffer;
+    vkEndCommandBuffer(imguiCmdBuffer);
+
+    if(VK_CALL(vkQueueSubmit(VKLogicalDevice::GetDeviceManager()->GetGraphicsQueue(), 1, &end_info, VK_NULL_HANDLE)))
+        throw std::runtime_error("Cannot submit imgui command buffer!");
+    else VK_LOG_SUCCESS("succesfully submitted ImGui command buffer!");
+
+    vkDeviceWaitIdle(DEVICE);
+    ImGui_ImplVulkan_DestroyFontUploadObjects();
+
+    vkFreeCommandBuffers(VKLogicalDevice::GetDeviceManager()->GetLogicalDevice(), cmdPoolManager.GetPool(), 1, &imguiCmdBuffer);
+
+    // RecordCommands();
 }
 
 void Application::MainLoop()
@@ -118,6 +218,15 @@ void Application::MainLoop()
     		swapCmdBuffers.EndRecordingBuffer(cmdBuffers[i]);
         }
         */
+
+        ImGui_ImplVulkan_SetMinImageCount(2);
+        ImGui_ImplVulkan_NewFrame();
+        ImGui_ImplGlfw_NewFrame();
+        ImGui::NewFrame();
+        OnImGui();
+        ImGui::Render();
+
+
         vkDeviceWaitIdle(VKLogicalDevice::GetDeviceManager()->GetLogicalDevice());
         RecordCommands();
         DrawFrame();
@@ -158,8 +267,9 @@ void Application::DrawFrame()
     submitInfo.waitSemaphoreCount = 1;
     submitInfo.pWaitSemaphores = waitSemaphore;
     submitInfo.pWaitDstStageMask = waitStages;
-    submitInfo.commandBufferCount = 1;
-    submitInfo.pCommandBuffers = &(swapCmdBuffers.GetBufferAt(imageIndex));
+    submitInfo.commandBufferCount = 2;
+    VkCommandBuffer buffers[] = {swapCmdBuffers.GetBufferAt(imageIndex), imguiCmdBuffers.GetBufferAt(imageIndex)};
+    submitInfo.pCommandBuffers = buffers;
     VkSemaphore signalSemaphores[] = {renderingFinishedSemaphores[currentFrame]};
     submitInfo.signalSemaphoreCount = 1;
     submitInfo.pSignalSemaphores = signalSemaphores;
@@ -203,6 +313,9 @@ void Application::CleanUp()
     delete window;
     window = nullptr;
 
+    // Clearn Up ImGui
+    CleanUpImGuiResources();
+
     cmdPoolManager.Destroy();
     CleanUpCommandListResources();
     vertexShader.DestroyModule();
@@ -219,6 +332,7 @@ void Application::RecreateSwapchain()
     CleanUpCommandListResources();
 
     RecreateCommandPipeline();
+    RecordCommands();
 }
 
 void Application::RecreateCommandPipeline()
@@ -246,6 +360,7 @@ void Application::RecreateCommandPipeline()
     framebufferManager.Create(renderPassManager.GetRenderPass(), swapchainManager.GetSwapImageViews(), swapchainManager.GetSwapExtent());
 
     swapCmdBuffers.AllocateBuffers(cmdPoolManager.GetPool());
+    imguiCmdBuffers.AllocateBuffers(cmdPoolManager.GetPool());
 
     // Create the triangle vertex buffer
     triVBO.Create(rainbowTriangleVertices, cmdPoolManager.GetPool());
@@ -255,7 +370,7 @@ void Application::RecreateCommandPipeline()
     quadIBO.Create(whiteQuadIndices, cmdPoolManager.GetPool());
 
     // Record the commands
-    RecordCommands();
+    // RecordCommands();
 }
 
 void Application::RecordCommands()
@@ -282,6 +397,28 @@ void Application::RecordCommands()
         vkCmdDrawIndexed(cmdBuffers[i], 6, 1, 0, 0, 0);
         renderPassManager.EndRenderPass(cmdBuffers[i]);
 		swapCmdBuffers.EndRecordingBuffer(cmdBuffers[i]);
+
+        // ImGui Commands recording
+        VkCommandBufferBeginInfo info = {};
+        info.sType = VK_STRUCTURE_TYPE_COMMAND_BUFFER_BEGIN_INFO;
+        info.flags |= VK_COMMAND_BUFFER_USAGE_ONE_TIME_SUBMIT_BIT;
+        vkBeginCommandBuffer(imguiCmdBuffers.GetBufferAt(i), &info);
+
+        VkRenderPassBeginInfo RPinfo = {};
+        RPinfo.sType = VK_STRUCTURE_TYPE_RENDER_PASS_BEGIN_INFO;
+        RPinfo.renderPass = imguiRenderPass;
+        RPinfo.framebuffer = framebuffers[i];
+        RPinfo.renderArea.extent.width = swapchainManager.GetSwapExtent().width;
+        RPinfo.renderArea.extent.height = swapchainManager.GetSwapExtent().height;
+        RPinfo.clearValueCount = 1;
+        VkClearValue clearColor = { {{1.0, 1.0, 1.0, 1.0f}} };
+        RPinfo.pClearValues = &clearColor;
+        vkCmdBeginRenderPass(imguiCmdBuffers.GetBufferAt(i), &RPinfo, VK_SUBPASS_CONTENTS_INLINE);
+
+        ImGui_ImplVulkan_RenderDrawData(ImGui::GetDrawData(), imguiCmdBuffers.GetBufferAt(i));
+
+        vkCmdEndRenderPass(imguiCmdBuffers.GetBufferAt(i));
+        vkEndCommandBuffer(imguiCmdBuffers.GetBufferAt(i));
     }
 }
 
@@ -309,9 +446,42 @@ void Application::UpdateMVPUBO(uint32_t currentImageIndex)
 
     mvpUniformBuffer.UpdateBuffer(ubo, currentImageIndex);
 }
+
+void Application::CleanUpImGuiResources()
+{
+    // ImGUi render pass
+    vkDestroyRenderPass(VKLogicalDevice::GetDeviceManager()->GetLogicalDevice(), imguiRenderPass, nullptr);
+
+    // Resources to destroy when the program ends
+    ImGui_ImplVulkan_Shutdown();
+    // ImGui_ImplGlfw_Shutdown();
+    ImGui::DestroyContext();
+
+    // Imgui Descriptor pool
+    vkDestroyDescriptorPool(VKLogicalDevice::GetDeviceManager()->GetLogicalDevice(), imguiDescriptorPool, nullptr);
+
+}
 /******************************* ImGui Callbacks *******************************/
 void Application::ImGuiError(VkResult err)
 {
     if(VK_CALL(err))
         throw std::runtime_error("ImGui Error!");
+}
+
+void Application::OnImGui()
+{
+    ImGui::ShowDemoWindow();
+    char* buf = new char[256];
+    float f;
+    ImGui::Begin("Yeah Bitch!");
+    {
+        ImGui::Text("Hello, world %d", 123);
+        if (ImGui::Button("Save"))
+        {
+            ImGui::Text("Hello, world %d", 123);
+        }
+        ImGui::InputText("string", buf, IM_ARRAYSIZE(buf));
+        ImGui::SliderFloat("float", &f, 0.0f, 1.0f);
+    }
+    ImGui::End();
 }

@@ -15,6 +15,21 @@ void VKCmdPool::Init()
     else VK_LOG_SUCCESS("Command pool created succesfully!");
 }
 
+VkCommandBuffer VKCmdPool::AllocateBuffer()
+{
+    VkCommandBufferAllocateInfo allocInfo{};
+    allocInfo.sType = VK_STRUCTURE_TYPE_COMMAND_BUFFER_ALLOCATE_INFO;
+    allocInfo.commandPool = m_CommandPool;
+    allocInfo.level = VK_COMMAND_BUFFER_LEVEL_PRIMARY;
+    allocInfo.commandBufferCount = 1;
+    VkCommandBuffer cmdBuffer;
+    if(VK_CALL(vkAllocateCommandBuffers(VKLogicalDevice::GetDeviceManager()->GetLogicalDevice(), &allocInfo, &cmdBuffer)))
+        throw std::runtime_error("Cannot create command buffer!");
+    else VK_LOG_SUCCESS("Command Buffer (1) succesfully Allocated!");
+
+    return cmdBuffer;
+}
+
 void VKCmdPool::Destroy()
 {
     vkDestroyCommandPool(VKLogicalDevice::GetDeviceManager()->GetLogicalDevice(), m_CommandPool, nullptr);

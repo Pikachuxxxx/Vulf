@@ -61,6 +61,7 @@ private:
     void MainLoop();
     void DrawFrame();
     void CleanUp();
+    void OnImGui();
 /***************************** Vulkan Encapsulation ***************************/
 VKSwapchain swapchainManager;
 VKShader vertexShader;
@@ -80,6 +81,15 @@ VKIndexBuffer quadIBO;
 
 // Descriptor and uniforms shit!
 VKUniformBuffer mvpUniformBuffer;
+
+// Imgui Render pass
+VkRenderPass imguiRenderPass;
+// VKCmdPool imguiCmdPool;
+// ImGui Descriptor pool
+VkDescriptorPool imguiDescriptorPool;
+VkCommandBuffer imguiCmdBuffer;
+VKCmdBuffer imguiCmdBuffers;
+
 /******************************* Vulkan Variables *****************************/
 std::vector<VkSemaphore> imageAvailableSemaphores;
 std::vector<VkSemaphore> renderingFinishedSemaphores;
@@ -92,6 +102,7 @@ void RecreateCommandPipeline();
 void RecordCommands();
 void CleanUpCommandListResources();
 void UpdateMVPUBO(uint32_t currentImageIndex);
+void CleanUpImGuiResources();
 /******************************* ImGui Callbacks *******************************/
 static void ImGuiError(VkResult err);
 };
