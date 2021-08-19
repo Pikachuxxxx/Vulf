@@ -332,7 +332,7 @@ void Application::RecreateCommandPipeline()
 {
     swapchainManager.Init(window->getGLFWwindow());
 
-    fixedPipelineFuncs.SetInputAssemblyStageInfo(Topology::TRIANGLES);
+    fixedPipelineFuncs.SetInputAssemblyStageInfo(Topology::POINTS);
     fixedPipelineFuncs.SetViewportSCI(swapchainManager.GetSwapExtent());
     fixedPipelineFuncs.SetRasterizerSCI();
     fixedPipelineFuncs.SetMultiSampleSCI();
@@ -445,7 +445,7 @@ void Application::CleanUpCommandListResources()
 void Application::UpdateMVPUBO(uint32_t currentImageIndex)
 {
     UniformBufferObject ubo{};
-    ubo.model = glm::rotate(glm::mat4(1.0f), glm::radians(90.0f), glm::vec3(1.0f, 0.0f, 0.0f));
+    ubo.model = glm::rotate(glm::mat4(1.0f), glm::radians(0.0f), glm::vec3(1.0f, 0.0f, 0.0f));
     ubo.view = camera.GetViewMatrix();
     ubo.proj = glm::perspective(glm::radians(45.0f), (float)swapchainManager.GetSwapExtent().width / swapchainManager.GetSwapExtent().height, 0.01f, 100.0f);
     ubo.proj[1][1] *= -1;
