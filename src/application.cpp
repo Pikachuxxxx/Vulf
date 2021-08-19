@@ -4,6 +4,9 @@
 
 #include <sstream>
 
+// TibyObj
+#define TINYOBJLOADER_IMPLEMENTATION
+#include <tinyobj/tiny_obj_loader.h>
 /**************************** Application Flow ********************************/
 void Application::Run()
 {
@@ -203,24 +206,8 @@ void Application::MainLoop()
             nbFrames = 0;
             lastTime = currentTime;
         }
-        /*
-        // Changing the clear color every frame, whilst also waiting for the commands to finish before re-recording them
-        auto cmdBuffers = swapCmdBuffers.GetBuffers();
-        auto framebuffers = framebufferManager.GetFramebuffers();
-        for (int i = 0; i < cmdBuffers.size(); i++)
-        {
-            vkDeviceWaitIdle(VKLogicalDevice::GetDeviceManager()->GetLogicalDevice());
-            swapCmdBuffers.RecordBuffer(cmdBuffers[i]);
-            renderPassManager.SetClearColor(abs(cos(glfwGetTime())), 0.44, 0.48);
-            renderPassManager.BeginRenderPass(cmdBuffers[i], framebuffers[i], swapchainManager.GetSwapExtent());
-            graphicsPipeline.Bind(cmdBuffers[i]);
-            vkCmdDraw(cmdBuffers[i], 3, 1, 0, 0);
-            renderPassManager.EndRenderPass(cmdBuffers[i]);
-    		swapCmdBuffers.EndRecordingBuffer(cmdBuffers[i]);
-        }
-        */
 
-        ImGui_ImplVulkan_SetMinImageCount(2);
+        ImGui_ImplVulkan_SetMinImageCount(MAX_FRAMES_IN_FLIGHT);
         ImGui_ImplVulkan_NewFrame();
         ImGui_ImplGlfw_NewFrame();
         ImGui::NewFrame();
@@ -375,6 +362,12 @@ void Application::RecreateCommandPipeline()
     quadVBO.Create(whiteQuadVertices, cmdPoolManager.GetPool());
     quadIBO.Create(whiteQuadIndices, cmdPoolManager.GetPool());
 
+    // Budda vbo and  ibo
+    LoadModel("./data/models/happy.obj", buddaVertices, buddaIndices);
+    std::cout << "Verts " << buddaVertices.size() << std::endl;
+    buddaVBO.Create(buddaVertices, cmdPoolManager.GetPool());
+    buddaIBO.Create(buddaIndices, cmdPoolManager.GetPool());
+
     // Record the commands
     // RecordCommands();
 }
@@ -387,7 +380,6 @@ void Application::RecordCommands()
     for (int i = 0; i < cmdBuffers.size(); i++) {
         swapCmdBuffers.RecordBuffer(cmdBuffers[i]);
         // renderPassManager.SetClearColor(0.85, 0.44, 0.48);
-        renderPassManager.SetClearColor(abs(cos(glfwGetTime())), 0.44, 0.48);
         renderPassManager.BeginRenderPass(cmdBuffers[i], framebuffers[i], swapchainManager.GetSwapExtent());
         graphicsPipeline.Bind(cmdBuffers[i]);
         // Bind buffer to the comands
@@ -401,6 +393,12 @@ void Application::RecordCommands()
         quadVBO.Bind(cmdBuffers[i]);
         quadIBO.Bind(cmdBuffers[i]);
         vkCmdDrawIndexed(cmdBuffers[i], 6, 1, 0, 0, 0);
+
+        // Draw the budda model
+        buddaVBO.Bind(cmdBuffers[i]);
+        buddaIBO.Bind(cmdBuffers[i]);
+        vkCmdDrawIndexed(cmdBuffers[i], buddaIndices.size(), 1, 0, 0, 0);
+
         renderPassManager.EndRenderPass(cmdBuffers[i]);
 		swapCmdBuffers.EndRecordingBuffer(cmdBuffers[i]);
 
@@ -416,9 +414,9 @@ void Application::RecordCommands()
         RPinfo.framebuffer = framebuffers[i];
         RPinfo.renderArea.extent.width = swapchainManager.GetSwapExtent().width;
         RPinfo.renderArea.extent.height = swapchainManager.GetSwapExtent().height;
-        RPinfo.clearValueCount = 1;
+        RPinfo.clearValueCount = 0;
         VkClearValue clearColor = { {{0.0, 1.0, 1.0, 1.0f}} };
-        RPinfo.pClearValues = &clearColor;
+        RPinfo.pClearValues = nullptr;
         vkCmdBeginRenderPass(imguiCmdBuffers.GetBufferAt(i), &RPinfo, VK_SUBPASS_CONTENTS_INLINE);
 
         ImGui_ImplVulkan_RenderDrawData(ImGui::GetDrawData(), imguiCmdBuffers.GetBufferAt(i));
@@ -435,6 +433,8 @@ void Application::CleanUpCommandListResources()
     triIBO.Destroy();
     quadVBO.Destroy();
     quadIBO.Destroy();
+    buddaVBO.Destroy();
+    buddaIBO.Destroy();
     mvpUniformBuffer.Destroy();
     graphicsPipeline.Destroy();
     renderPassManager.Destroy();
@@ -477,20 +477,55 @@ void Application::ImGuiError(VkResult err)
 void Application::OnImGui()
 {
     ImGui::ShowDemoWindow();
-    static char* buf = new char[256];
-    static float f;
     ImGui::Begin("Yeah Bitch!");
     {
         ImGui::Text("Hello, world %d", 123);
-        if (ImGui::Button("Save"))
-        {
-            ImGui::Text("Hello, world %d", 123);
-        }
-        ImGui::InputText("string", buf, IM_ARRAYSIZE(buf));
-        ImGui::SliderFloat("float", &f, 0.0f, 1.0f);
-        static ImVec4 color;
-        ImGui::ColorEdit4("Mycolor#2", (float*)&color, ImGuiColorEditFlags_NoInputs | ImGuiColorEditFlags_NoLabel);
-
+        static ImVec4 color = {0.84, 0.44, 0.48, 1.0f};;
+        ImGui::Text("Background Color"); ImGui::SameLine(); ImGui::ColorEdit4("Mycolor#2", (float*)&color, ImGuiColorEditFlags_NoInputs | ImGuiColorEditFlags_NoLabel);
+        clearColor[0] = color.x;
+        clearColor[1] = color.y;
+        clearColor[2] = color.z;
+        clearColor[3] = color.w;
+        renderPassManager.SetClearColor(clearColor);
     }
     ImGui::End();
+}
+
+void Application::LoadModel(std::string path, std::vector<Vertex>& vertices, std::vector<uint16_t>& indices)
+{
+    tinyobj::attrib_t attrib;
+    std::vector<tinyobj::shape_t> shapes;
+    std::vector<tinyobj::material_t> materials;
+    std::string warn, err;
+
+    if (!tinyobj::LoadObj(&attrib, &shapes, &materials, &warn, &err, path.c_str())) {
+        throw std::runtime_error(warn + err);
+    }
+    std::cout << "Beginning to load model at path : " << path << std::endl;
+    std::unordered_map<Vertex, uint16_t> uniqueVertices{};
+
+    for (const auto& shape : shapes) {
+        for (const auto& index : shape.mesh.indices) {
+            Vertex vertex{};
+
+            vertex.position = {
+                attrib.vertices[3 * index.vertex_index + 0],
+                attrib.vertices[3 * index.vertex_index + 1],
+                attrib.vertices[3 * index.vertex_index + 2]
+            };
+
+            vertex.texCoord = {
+                0.0f, 0.0f
+            };
+            vertex.color = {1.0f, 1.0f, 1.0f};
+
+            if (uniqueVertices.count(vertex) == 0) {
+                uniqueVertices[vertex] = static_cast<uint16_t>(vertices.size());
+                vertices.push_back(vertex);
+            }
+
+            indices.push_back(uniqueVertices[vertex]);
+        }
+    }
+
 }

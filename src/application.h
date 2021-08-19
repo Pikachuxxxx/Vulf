@@ -5,15 +5,28 @@
 
 // Std. Libraries
 #include <iostream>
+#include <fstream>
 #include <stdexcept>
-#include <cstdlib>
-#include <optional>
-#include <vector>
-#include <set>
-#include <cstdint>
 #include <algorithm>
+#include <chrono>
+#include <vector>
+#include <cstring>
+#include <cstdlib>
+#include <cstdint>
+#include <array>
+#include <optional>
+#include <set>
+#include <unordered_map>
 
 #include "vertex.h"
+
+namespace std {
+    template<> struct hash<Vertex> {
+        size_t operator()(Vertex const& vertex) const {
+            return ((hash<glm::vec3>()(vertex.position) ^ (hash<glm::vec3>()(vertex.color) << 1)) >> 1) ^ (hash<glm::vec2>()(vertex.texCoord) << 1);
+        }
+    };
+}
 
 // Helper includes
 #include "utils/Window.h"
@@ -39,6 +52,7 @@
 #include <backends/imgui_impl_glfw.h>
 #include <backends/imgui_impl_vulkan.h>
 
+
 const int MAX_FRAMES_IN_FLIGHT = 2;
 
 class Application
@@ -62,6 +76,7 @@ private:
     void DrawFrame();
     void CleanUp();
     void OnImGui();
+    void LoadModel(std::string path, std::vector<Vertex>& vertices, std::vector<uint16_t>& indices);
 /***************************** Vulkan Encapsulation ***************************/
 VKSwapchain swapchainManager;
 VKShader vertexShader;
@@ -79,6 +94,12 @@ VKIndexBuffer triIBO;
 VKVertexBuffer quadVBO;
 VKIndexBuffer quadIBO;
 
+// Happy budda model
+std::vector<Vertex> buddaVertices;
+std::vector<uint16_t> buddaIndices;
+VKVertexBuffer buddaVBO;
+VKIndexBuffer buddaIBO;
+
 // Descriptor and uniforms shit!
 VKUniformBuffer mvpUniformBuffer;
 
@@ -89,7 +110,7 @@ VkRenderPass imguiRenderPass;
 VkDescriptorPool imguiDescriptorPool;
 VkCommandBuffer imguiCmdBuffer;
 VKCmdBuffer imguiCmdBuffers;
-
+float clearColor[4] = {0.84, 0.44, 0.48, 1.0f};
 /******************************* Vulkan Variables *****************************/
 std::vector<VkSemaphore> imageAvailableSemaphores;
 std::vector<VkSemaphore> renderingFinishedSemaphores;

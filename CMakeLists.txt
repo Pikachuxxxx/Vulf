@@ -17,6 +17,8 @@ include_directories(
     "${CMAKE_SOURCE_DIR}/vendor/glm"
     # ImGui Headers
     "${CMAKE_SOURCE_DIR}/vendor/ImGui"
+    # The entire vendor folder
+    "${CMAKE_SOURCE_DIR}/vendor"
     # Vulkan MacOS headers
     $ENV{VULKAN_SDK}/macOS/include
 )

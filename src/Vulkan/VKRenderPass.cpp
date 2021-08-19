@@ -62,7 +62,7 @@ void VKRenderPass::BeginRenderPass(VkCommandBuffer& cmdBuffer, VkFramebuffer& fr
 	beginInfo.renderArea.offset = { 0, 0 };
 	beginInfo.renderArea.extent = swapextent;
 	beginInfo.clearValueCount = 1;
-	VkClearValue clearColor = { {{m_ClearColor[0], m_ClearColor[1], m_ClearColor[2], 1.0f}} };
+	VkClearValue clearColor = { {{m_ClearColor[0], m_ClearColor[1], m_ClearColor[2], m_ClearColor[3]}} };
 	beginInfo.pClearValues = &clearColor;
 
 	vkCmdBeginRenderPass(cmdBuffer, &beginInfo, VK_SUBPASS_CONTENTS_INLINE);
