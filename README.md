@@ -8,9 +8,15 @@ This is a simple Vulkan Sandbox to learn the basics of the Vulkan API from the t
     - Create Renderpasses in one go
     - Create reusable command buffers
     - Easy to use VertexBuffer, IndexBuffer and UniformBuffer objects
-    - Model loading + Cramped up Texute mapping in uniform buffers
+    - Model loading + Cramped up Texture mapping in uniform buffers(This needs refactoring to be more user friendly)
 - Simple Camera system to move around the scene
 - **ImGui Integration** that works out of the box and helps you integrate into your Vulkan app in a matter of few minutes
+
+#### TODO Features:
+- Better Descriptor sets API for uniform buffers
+- Automatic Uniform buffer management using SPIRV-Reflect
+- Better renderpass and subpass management API for postFX + default PostFX effects ready to use
+- Multithreaded Command buffer recording and execution model
 
 This sandbox has a very simple and brief ImGui integration that makes it easy to use while extending your potentially modified version of Alexander Overvoorde's hello triangle Application (I had a hard time undestanding the tutorials of [frguthmann](https://frguthmann.github.io/posts/vulkan_imgui/) and [SaschaWillems](https://github.com/SaschaWillems/Vulkan/blob/master/examples/imgui/main.cpp) examples on the web while extending from the hello triangle, since none of them actually use Alexander Overvoorde's hello triangle), it doesn't use any `ImGui_Impl_VulkanH` functions, only uses the ImguiImplVulknan backend files to make the integration as smooth and simple as possible with existing rendering.
 

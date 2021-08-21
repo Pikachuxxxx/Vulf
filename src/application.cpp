@@ -349,7 +349,7 @@ void Application::RecreateCommandPipeline()
     wireframeFixedPipelineFuncs.SetDynamicSCI();
 
     // Create the texture
-    gridTexture.CreateTexture("./data/textures/checker.png", cmdPoolManager);
+    gridTexture.CreateTexture("./data/textures/TestGrid_1024.png", cmdPoolManager);
 
     // Create the uniform buffer
     mvpUniformBuffer.CreateUniformBuffer(swapchainManager.GetSwapImageCount(), gridTexture);
