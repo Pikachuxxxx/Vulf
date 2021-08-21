@@ -6,7 +6,7 @@
 // TODO: Add more primitive types
 enum class Topology
 {
-    POINTS, LINES, TRIANGLES
+    POINTS, LINES, TRIANGLES, LINE_STRIP
 };
 
 class VKFixedPipelineFuncs
@@ -23,9 +23,9 @@ public:
     const VkPipelineDynamicStateCreateInfo& GetDynmaicSCI() { return m_DynamicSCI; }
     const VkPipelineLayout& GetPipelineLayout() { return m_PipelineLayout; }
     void SetVertexInputSCI(uint32_t bindID = 0, uint32_t stride = 0);
-    void SetInputAssemblyStageInfo(Topology topology);
+    void SetInputAssemblyStageInfo(VkPrimitiveTopology topology);
     void SetViewportSCI(const VkExtent2D& swapchainExtent);
-    void SetRasterizerSCI();
+    void SetRasterizerSCI(bool enableWireFrameMode);
     void SetMultiSampleSCI();
     void SetDepthStencilSCI();
     void SetColorBlendSCI();

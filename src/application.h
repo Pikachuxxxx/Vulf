@@ -45,6 +45,7 @@ namespace std {
 #include "Vulkan/VKVertexBuffer.h"
 #include "Vulkan/VKIndexBuffer.h"
 #include "Vulkan/VKUniformBuffer.h"
+#include "Vulkan/VKTexture.h"
 
 // Imgui
 #include <imgui.h>
@@ -82,8 +83,10 @@ VKSwapchain swapchainManager;
 VKShader vertexShader;
 VKShader fragmentShader;
 VKFixedPipelineFuncs fixedPipelineFuncs;
+VKFixedPipelineFuncs wireframeFixedPipelineFuncs;
 VKRenderPass renderPassManager;
 VKGraphicsPipeline graphicsPipeline;
+VKGraphicsPipeline wireframeGraphicsPipeline;
 VKFramebuffer framebufferManager;
 VKCmdPool cmdPoolManager;
 VKCmdBuffer swapCmdBuffers;
@@ -111,6 +114,10 @@ VkDescriptorPool imguiDescriptorPool;
 VkCommandBuffer imguiCmdBuffer;
 VKCmdBuffer imguiCmdBuffers;
 float clearColor[4] = {0.84, 0.44, 0.48, 1.0f};
+bool enableWireframe = false;
+
+//Grid image texure
+VKTexture gridTexture;
 /******************************* Vulkan Variables *****************************/
 std::vector<VkSemaphore> imageAvailableSemaphores;
 std::vector<VkSemaphore> renderingFinishedSemaphores;

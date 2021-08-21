@@ -332,23 +332,36 @@ void Application::RecreateCommandPipeline()
 {
     swapchainManager.Init(window->getGLFWwindow());
 
-    fixedPipelineFuncs.SetInputAssemblyStageInfo(Topology::POINTS);
+    fixedPipelineFuncs.SetInputAssemblyStageInfo(VK_PRIMITIVE_TOPOLOGY_TRIANGLE_LIST);
     fixedPipelineFuncs.SetViewportSCI(swapchainManager.GetSwapExtent());
-    fixedPipelineFuncs.SetRasterizerSCI();
+    fixedPipelineFuncs.SetRasterizerSCI(false);
     fixedPipelineFuncs.SetMultiSampleSCI();
     fixedPipelineFuncs.SetDepthStencilSCI();
     fixedPipelineFuncs.SetColorBlendSCI();
     fixedPipelineFuncs.SetDynamicSCI();
 
+    wireframeFixedPipelineFuncs.SetInputAssemblyStageInfo(VK_PRIMITIVE_TOPOLOGY_TRIANGLE_LIST);
+    wireframeFixedPipelineFuncs.SetViewportSCI(swapchainManager.GetSwapExtent());
+    wireframeFixedPipelineFuncs.SetRasterizerSCI(true);
+    wireframeFixedPipelineFuncs.SetMultiSampleSCI();
+    wireframeFixedPipelineFuncs.SetDepthStencilSCI();
+    wireframeFixedPipelineFuncs.SetColorBlendSCI();
+    wireframeFixedPipelineFuncs.SetDynamicSCI();
+
+    // Create the texture
+    gridTexture.CreateTexture("./data/textures/checker.png", cmdPoolManager);
+
     // Create the uniform buffer
-    mvpUniformBuffer.CreateUniformBuffer(swapchainManager.GetSwapImageCount());
+    mvpUniformBuffer.CreateUniformBuffer(swapchainManager.GetSwapImageCount(), gridTexture);
     auto layout = mvpUniformBuffer.GetDescriptorSetLayout();
     fixedPipelineFuncs.SetPipelineLayout(layout);
+    wireframeFixedPipelineFuncs.SetPipelineLayout(layout);
 
     renderPassManager.Init(swapchainManager.GetSwapFormat());
     std::vector<VkPipelineShaderStageCreateInfo>  shaderInfo = {vertexShader.GetShaderStageInfo(), fragmentShader.GetShaderStageInfo()};
 
     graphicsPipeline.Create(shaderInfo, fixedPipelineFuncs, renderPassManager.GetRenderPass());
+    wireframeGraphicsPipeline.Create(shaderInfo, wireframeFixedPipelineFuncs, renderPassManager.GetRenderPass());
 
     framebufferManager.Create(renderPassManager.GetRenderPass(), swapchainManager.GetSwapImageViews(), swapchainManager.GetSwapExtent());
 
@@ -356,17 +369,18 @@ void Application::RecreateCommandPipeline()
     imguiCmdBuffers.AllocateBuffers(cmdPoolManager.GetPool());
 
     // Create the triangle vertex buffer
-    triVBO.Create(rainbowTriangleVertices, cmdPoolManager.GetPool());
-    triIBO.Create(rainbowTriangleIndices, cmdPoolManager.GetPool());
+    triVBO.Create(rainbowTriangleVertices, cmdPoolManager);
+    triIBO.Create(rainbowTriangleIndices, cmdPoolManager);
 
-    quadVBO.Create(whiteQuadVertices, cmdPoolManager.GetPool());
-    quadIBO.Create(whiteQuadIndices, cmdPoolManager.GetPool());
+    quadVBO.Create(whiteQuadVertices, cmdPoolManager);
+    quadIBO.Create(whiteQuadIndices, cmdPoolManager);
 
     // Budda vbo and  ibo
-    LoadModel("./data/models/happy.obj", buddaVertices, buddaIndices);
+    LoadModel("./data/models/quad.obj", buddaVertices, buddaIndices);
     std::cout << "Verts " << buddaVertices.size() << std::endl;
-    buddaVBO.Create(buddaVertices, cmdPoolManager.GetPool());
-    buddaIBO.Create(buddaIndices, cmdPoolManager.GetPool());
+    buddaVBO.Create(buddaVertices, cmdPoolManager);
+    buddaIBO.Create(buddaIndices, cmdPoolManager);
+
 
     // Record the commands
     // RecordCommands();
@@ -381,12 +395,19 @@ void Application::RecordCommands()
         swapCmdBuffers.RecordBuffer(cmdBuffers[i]);
         // renderPassManager.SetClearColor(0.85, 0.44, 0.48);
         renderPassManager.BeginRenderPass(cmdBuffers[i], framebuffers[i], swapchainManager.GetSwapExtent());
-        graphicsPipeline.Bind(cmdBuffers[i]);
+        if(!enableWireframe)
+            graphicsPipeline.Bind(cmdBuffers[i]);
+        else
+            wireframeGraphicsPipeline.Bind(cmdBuffers[i]);
         // Bind buffer to the comands
         triVBO.Bind(cmdBuffers[i]);
         triIBO.Bind(cmdBuffers[i]);
         // Bind the descriptor sets
-        vkCmdBindDescriptorSets(cmdBuffers[i], VK_PIPELINE_BIND_POINT_GRAPHICS, fixedPipelineFuncs.GetPipelineLayout(), 0, 1, &descriptorSets[i], 0, nullptr);
+        if(!enableWireframe)
+            vkCmdBindDescriptorSets(cmdBuffers[i], VK_PIPELINE_BIND_POINT_GRAPHICS, fixedPipelineFuncs.GetPipelineLayout(), 0, 1, &descriptorSets[i], 0, nullptr);
+        else
+            vkCmdBindDescriptorSets(cmdBuffers[i], VK_PIPELINE_BIND_POINT_GRAPHICS, wireframeFixedPipelineFuncs.GetPipelineLayout(), 0, 1, &descriptorSets[i], 0, nullptr);
+
         // Issue the draw command
         vkCmdDrawIndexed(cmdBuffers[i], 6, 1, 0, 0, 0);
         // Drawing another white quad
@@ -398,6 +419,7 @@ void Application::RecordCommands()
         buddaVBO.Bind(cmdBuffers[i]);
         buddaIBO.Bind(cmdBuffers[i]);
         vkCmdDrawIndexed(cmdBuffers[i], buddaIndices.size(), 1, 0, 0, 0);
+        // vkCmdDraw(cmdBuffers[i], buddaVertices.size(), 0, 0, 0);
 
         renderPassManager.EndRenderPass(cmdBuffers[i]);
 		swapCmdBuffers.EndRecordingBuffer(cmdBuffers[i]);
@@ -429,6 +451,7 @@ void Application::RecordCommands()
 void Application::CleanUpCommandListResources()
 {
     framebufferManager.Destroy();
+    gridTexture.Destroy();
     triVBO.Destroy();
     triIBO.Destroy();
     quadVBO.Destroy();
@@ -437,15 +460,17 @@ void Application::CleanUpCommandListResources()
     buddaIBO.Destroy();
     mvpUniformBuffer.Destroy();
     graphicsPipeline.Destroy();
+    wireframeGraphicsPipeline.Destroy();
     renderPassManager.Destroy();
     fixedPipelineFuncs.DestroyPipelineLayout();
+    wireframeFixedPipelineFuncs.DestroyPipelineLayout();
     swapchainManager.Destroy();
 }
 
 void Application::UpdateMVPUBO(uint32_t currentImageIndex)
 {
     UniformBufferObject ubo{};
-    ubo.model = glm::rotate(glm::mat4(1.0f), glm::radians(0.0f), glm::vec3(1.0f, 0.0f, 0.0f));
+    ubo.model = glm::rotate(glm::mat4(1.0f), glm::radians(90.0f), glm::vec3(1.0f, 0.0f, 0.0f));
     ubo.view = camera.GetViewMatrix();
     ubo.proj = glm::perspective(glm::radians(45.0f), (float)swapchainManager.GetSwapExtent().width / swapchainManager.GetSwapExtent().height, 0.01f, 100.0f);
     ubo.proj[1][1] *= -1;
@@ -487,6 +512,7 @@ void Application::OnImGui()
         clearColor[2] = color.z;
         clearColor[3] = color.w;
         renderPassManager.SetClearColor(clearColor);
+        ImGui::Checkbox("Wireframe Mode ", &enableWireframe);
     }
     ImGui::End();
 }
@@ -527,5 +553,4 @@ void Application::LoadModel(std::string path, std::vector<Vertex>& vertices, std
             indices.push_back(uniqueVertices[vertex]);
         }
     }
-
 }

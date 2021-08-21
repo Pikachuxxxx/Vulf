@@ -4,6 +4,8 @@
 #include <vector>
 #include "../vertex.h"
 
+#include "VKCmdPool.h"
+
 class VKBuffer
 {
 public:
@@ -12,7 +14,8 @@ public:
     void DestroyBuffer();
     void MapVertexBufferData(const std::vector<Vertex>& vertexData);
     void MapIndexBufferData(const std::vector<uint16_t>& indexData);
-    void CopyBufferToDevice(VkCommandPool pool, VkBuffer dstBuffer, VkDeviceSize size);
+    void MapImage(unsigned char* imageData, VkDeviceSize imageSize);
+    void CopyBufferToDevice(VKCmdPool pool, VkBuffer dstBuffer, VkDeviceSize size);
     const VkBuffer& GetBuffer() { return m_Buffer; }
     const VkDeviceMemory& GetBufferMemory() { return m_BufferMemory; }
 private:

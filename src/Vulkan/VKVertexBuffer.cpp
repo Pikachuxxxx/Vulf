@@ -1,6 +1,6 @@
 #include "VKVertexBuffer.h"
 
-void VKVertexBuffer::Create(std::vector<Vertex> vertices, VkCommandPool pool)
+void VKVertexBuffer::Create(std::vector<Vertex> vertices, VKCmdPool pool)
 {
     VkDeviceSize vertexDataSize = sizeof(vertices[0]) * vertices.size();
     m_StagingBuffer.CreateBuffer(vertexDataSize, VK_BUFFER_USAGE_TRANSFER_SRC_BIT, VK_MEMORY_PROPERTY_HOST_VISIBLE_BIT | VK_MEMORY_PROPERTY_HOST_COHERENT_BIT);

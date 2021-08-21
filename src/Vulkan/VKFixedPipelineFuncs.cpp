@@ -23,22 +23,24 @@ void VKFixedPipelineFuncs::SetVertexInputSCI(uint32_t bindID, uint32_t stride)
     m_VertexInputSCI.pVertexAttributeDescriptions = attributeDescriptions.data();
 }
 
-void VKFixedPipelineFuncs::SetInputAssemblyStageInfo(Topology topology)
+void VKFixedPipelineFuncs::SetInputAssemblyStageInfo(VkPrimitiveTopology topology)
 {
     m_InputAssemblySCI = {};
     m_InputAssemblySCI.sType = VK_STRUCTURE_TYPE_PIPELINE_INPUT_ASSEMBLY_STATE_CREATE_INFO;
 
-    switch (topology) {
-        case Topology::POINTS:
-            m_InputAssemblySCI.topology = VK_PRIMITIVE_TOPOLOGY_POINT_LIST;
-            break;
-        case Topology::TRIANGLES:
-            m_InputAssemblySCI.topology = VK_PRIMITIVE_TOPOLOGY_TRIANGLE_LIST;
-            break;
-        case Topology::LINES:
-            m_InputAssemblySCI.topology = VK_PRIMITIVE_TOPOLOGY_LINE_LIST;
-            break;
-    }
+    // switch (topology) {
+    //     case Topology::POINTS:
+    //         m_InputAssemblySCI.topology = VK_PRIMITIVE_TOPOLOGY_POINT_LIST;
+    //         break;
+    //     case Topology::TRIANGLES:
+    //         m_InputAssemblySCI.topology = VK_PRIMITIVE_TOPOLOGY_TRIANGLE_LIST;
+    //         break;
+    //     case Topology::LINES:
+    //         m_InputAssemblySCI.topology = VK_PRIMITIVE_TOPOLOGY_LINE_LIST;
+    //         break;
+    //     case Topology::LINE_STRIP:
+            m_InputAssemblySCI.topology = topology;
+    // }
     m_InputAssemblySCI.primitiveRestartEnable = VK_FALSE;
 }
 
@@ -65,14 +67,17 @@ void VKFixedPipelineFuncs::SetViewportSCI(const VkExtent2D& swapchainExtent)
     m_ViewportSCI.pScissors = &scissor;
 }
 
-void VKFixedPipelineFuncs::SetRasterizerSCI()
+void VKFixedPipelineFuncs::SetRasterizerSCI(bool enableWireFrameMode)
 {
     m_RasterizerSCI = {};
     m_RasterizerSCI.sType = VK_STRUCTURE_TYPE_PIPELINE_RASTERIZATION_STATE_CREATE_INFO;
     m_RasterizerSCI.depthClampEnable = VK_FALSE;
     m_RasterizerSCI.rasterizerDiscardEnable = VK_FALSE;
     // TODO: Add arguments to set polygonMode functionality
-    m_RasterizerSCI.polygonMode = VK_POLYGON_MODE_FILL;
+    if(enableWireFrameMode)
+        m_RasterizerSCI.polygonMode = VK_POLYGON_MODE_LINE;
+    else
+        m_RasterizerSCI.polygonMode = VK_POLYGON_MODE_FILL;
     m_RasterizerSCI.cullMode = VK_CULL_MODE_NONE;
     m_RasterizerSCI.frontFace = VK_FRONT_FACE_COUNTER_CLOCKWISE;//VK_FRONT_FACE_CLOCKWISE;
     m_RasterizerSCI.depthBiasEnable = VK_FALSE;

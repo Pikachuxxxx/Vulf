@@ -5,6 +5,7 @@
 #include <vector>
 
 #include "VKBuffer.h"
+#include "VKTexture.h"
 
 struct UniformBufferObject
 {
@@ -19,7 +20,7 @@ public:
     VKUniformBuffer() = default;
     void Destroy();
     void UpdateBuffer(UniformBufferObject buffer, uint32_t index);
-    void CreateUniformBuffer(uint32_t swapImagesCount);
+    void CreateUniformBuffer(uint32_t swapImagesCount, VKTexture& texture);
     void CreateDescriptorSetLayout();
     void CreatePool();
     void CreateSets();
@@ -28,6 +29,7 @@ public:
     const std::vector<VkDescriptorSet>& GetSets() { return m_DescriptorSets; }
     const VkDescriptorPool& GetDescriptorPool() { return m_DescriptorPool; }
 private:
+    VKTexture m_Texture;
     VkDescriptorSetLayout m_UBODescriptorSetLayout;
     // Uniform buffer for each swap chain image, which is usually 3
     std::vector<VKBuffer> m_UniformBuffers;
