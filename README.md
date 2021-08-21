@@ -8,7 +8,7 @@ This is a simple Vulkan Sandbox to learn the basics of the Vulkan API from the t
     - Create Renderpasses in one go
     - Create reusable command buffers
     - Easy to use VertexBuffer, IndexBuffer and UniformBuffer objects
-    - Model loading
+    - Model loading + Cramped up Texute mapping in uniform buffers
 - Simple Camera system to move around the scene
 - **ImGui Integration** that works out of the box and helps you integrate into your Vulkan app in a matter of few minutes
 
@@ -17,6 +17,7 @@ This sandbox has a very simple and brief ImGui integration that makes it easy to
 ## Screenshots
 ![](demo/democam.png)
 ![](demo/demomodel.png)
+![](demo/texmapping.png)
 
 ### ImGUI Integration in a nutshell
 - Create a descriptor pool with different size as provided in [frguthmann](https://frguthmann.github.io/posts/vulkan_imgui/) tutorial, next use a single time command buffer to upload the font to GPU using a single queueSubmit. Next create multiple command buffers for each swapchain image and use ImGUI spedicif renderpass also explained how to do by frguthmann and in the DrawFrame submit 2 commandBuffers combined in an array and Voila you have Dear ImGui!
