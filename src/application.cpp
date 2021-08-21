@@ -419,7 +419,7 @@ void Application::RecordCommands()
         buddaVBO.Bind(cmdBuffers[i]);
         buddaIBO.Bind(cmdBuffers[i]);
         vkCmdDrawIndexed(cmdBuffers[i], buddaIndices.size(), 1, 0, 0, 0);
-        // vkCmdDraw(cmdBuffers[i], buddaVertices.size(), 0, 0, 0);
+        vkCmdDraw(cmdBuffers[i], buddaVertices.size(), 0, 0, 0);
 
         renderPassManager.EndRenderPass(cmdBuffers[i]);
 		swapCmdBuffers.EndRecordingBuffer(cmdBuffers[i]);

@@ -18,7 +18,7 @@ void VKTexture::CreateTexture(const std::string& path, VKCmdPool& cmdPool)
 
     m_ImageStagingBuffer.MapImage(imageData, imageSize);
 
-    // stbi_image_free(imageData);
+    stbi_image_free(imageData);
     // Now us a image to copy staging buffer data to it, image is faster for GPU to acces pixel data
     // (hence we make a VkImage abd Memory for it apart frm staging buffer and it's memory)
     VkImageCreateInfo imageInfo{};
@@ -29,7 +29,7 @@ void VKTexture::CreateTexture(const std::string& path, VKCmdPool& cmdPool)
     imageInfo.extent.depth = 1;
     imageInfo.mipLevels = 1; // Currently we do not support mipmaps yet!
     imageInfo.arrayLayers = 1;
-    imageInfo.format = VK_FORMAT_R8G8B8A8_SRGB;
+    imageInfo.format = VK_FORMAT_R8G8B8A8_UNORM;
     imageInfo.tiling = VK_IMAGE_TILING_OPTIMAL; // Because of staging bufffer the linearity of it not necessay as we won't be interacting with it at all
     imageInfo.initialLayout = VK_IMAGE_LAYOUT_UNDEFINED;
     imageInfo.usage = VK_IMAGE_USAGE_TRANSFER_DST_BIT | VK_IMAGE_USAGE_SAMPLED_BIT;
@@ -63,16 +63,16 @@ void VKTexture::CreateTexture(const std::string& path, VKCmdPool& cmdPool)
  *      Transfer destination → shader reading: shader reads should wait on transfer writes, specifically the shader reads in the fragment shader, because that's where we're going to use the texture
  */
     // change the image layout
-    TransitionImageLayout(VK_FORMAT_R8G8B8A8_SRGB, VK_IMAGE_LAYOUT_UNDEFINED, VK_IMAGE_LAYOUT_TRANSFER_DST_OPTIMAL, cmdPool);
+    TransitionImageLayout(VK_FORMAT_R8G8B8A8_UNORM, VK_IMAGE_LAYOUT_UNDEFINED, VK_IMAGE_LAYOUT_TRANSFER_DST_OPTIMAL, cmdPool);
 
     // Copy the image to the buffer
     cmdPool.CopyBufferToImage(m_ImageStagingBuffer.GetBuffer(), m_TextureImage, m_Width, m_Height);
 
     // Change the formate such that we can sample it from the shader
-    TransitionImageLayout( VK_FORMAT_R8G8B8A8_SRGB, VK_IMAGE_LAYOUT_TRANSFER_DST_OPTIMAL, VK_IMAGE_LAYOUT_SHADER_READ_ONLY_OPTIMAL, cmdPool);
+    TransitionImageLayout( VK_FORMAT_R8G8B8A8_UNORM, VK_IMAGE_LAYOUT_TRANSFER_DST_OPTIMAL, VK_IMAGE_LAYOUT_SHADER_READ_ONLY_OPTIMAL, cmdPool);
 
     // Create the image view for the texture (since a image can onl be accesed through a view)
-    m_TextureImageView = CreateImageView(m_TextureImage, VK_FORMAT_R8G8B8A8_SRGB);
+    m_TextureImageView = CreateImageView(m_TextureImage, VK_FORMAT_R8G8B8A8_UNORM);
 
     // Create the sampler for image view
     VkSamplerCreateInfo samplerInfo{};

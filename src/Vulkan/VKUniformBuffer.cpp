@@ -130,7 +130,6 @@ void VKUniformBuffer::UpdateDescriptorSetConfig()
         descriptorWrites[1].pImageInfo = &imageInfo;
 
         vkUpdateDescriptorSets(VKLogicalDevice::GetDeviceManager()->GetLogicalDevice(), static_cast<uint32_t>(descriptorWrites.size()), descriptorWrites.data(), 0, nullptr);
-
     }
 }
 
@@ -145,6 +144,7 @@ void VKUniformBuffer::UpdateBuffer(UniformBufferObject buffer, uint32_t index)
 
 void VKUniformBuffer::Destroy()
 {
+    // m_Texture.Destroy();
     vkDestroyDescriptorPool(VKLogicalDevice::GetDeviceManager()->GetLogicalDevice(), m_DescriptorPool, nullptr);
     for (size_t i = 0; i < m_UniformBuffers.size(); i++)
         m_UniformBuffers[i].DestroyBuffer();
