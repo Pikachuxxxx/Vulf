@@ -30,7 +30,7 @@ public:
     void SetDepthStencilSCI();
     void SetColorBlendSCI();
     void SetDynamicSCI();
-    void SetPipelineLayout(VkDescriptorSetLayout& layout);
+    void SetPipelineLayout(VkDescriptorSetLayout& layout, VkPushConstantRange& pushConstants);
     void DestroyPipelineLayout();
 private:
     VkPipelineVertexInputStateCreateInfo m_VertexInputSCI;

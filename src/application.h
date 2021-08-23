@@ -31,6 +31,7 @@ namespace std {
 // Helper includes
 #include "utils/Window.h"
 #include "utils/Camera3D.h"
+#include "utils/Transform.h"
 
 #include "Vulkan/VKInstance.h"
 #include "Vulkan/VKDevice.h"
@@ -52,6 +53,8 @@ namespace std {
 #include <imgui_internal.h>
 #include <backends/imgui_impl_glfw.h>
 #include <backends/imgui_impl_vulkan.h>
+// ImGuizmo
+#include <ImGuizmo/ImGuizmo.h>
 
 
 const int MAX_FRAMES_IN_FLIGHT = 2;
@@ -118,6 +121,12 @@ bool enableWireframe = false;
 
 //Grid image texure
 VKTexture gridTexture;
+// Model Push contant data
+struct DefaultPushConstantData
+{
+    alignas(16) glm::mat4 model;
+}modelPCData;
+Transform modelTransform;
 /******************************* Vulkan Variables *****************************/
 std::vector<VkSemaphore> imageAvailableSemaphores;
 std::vector<VkSemaphore> renderingFinishedSemaphores;

@@ -211,6 +211,7 @@ void Application::MainLoop()
         ImGui_ImplVulkan_NewFrame();
         ImGui_ImplGlfw_NewFrame();
         ImGui::NewFrame();
+        ImGuizmo::BeginFrame();
         OnImGui();
         ImGui::Render();
         // Update and Render additional Platform Windows
@@ -351,11 +352,17 @@ void Application::RecreateCommandPipeline()
     // Create the texture
     gridTexture.CreateTexture("./data/textures/TestGrid_1024.png", cmdPoolManager);
 
+    // Create the push contants
+    VkPushConstantRange modelPushConstant;
+    modelPushConstant.stageFlags = VK_SHADER_STAGE_VERTEX_BIT | VK_SHADER_STAGE_FRAGMENT_BIT;
+    modelPushConstant.offset = 0;
+    modelPushConstant.size = sizeof(DefaultPushConstantData);
+
     // Create the uniform buffer
     mvpUniformBuffer.CreateUniformBuffer(swapchainManager.GetSwapImageCount(), gridTexture);
     auto layout = mvpUniformBuffer.GetDescriptorSetLayout();
-    fixedPipelineFuncs.SetPipelineLayout(layout);
-    wireframeFixedPipelineFuncs.SetPipelineLayout(layout);
+    fixedPipelineFuncs.SetPipelineLayout(layout, modelPushConstant);
+    wireframeFixedPipelineFuncs.SetPipelineLayout(layout, modelPushConstant);
 
     renderPassManager.Init(swapchainManager.GetSwapFormat());
     std::vector<VkPipelineShaderStageCreateInfo>  shaderInfo = {vertexShader.GetShaderStageInfo(), fragmentShader.GetShaderStageInfo()};
@@ -391,7 +398,7 @@ void Application::RecordCommands()
     auto cmdBuffers = swapCmdBuffers.GetBuffers();
     auto framebuffers = framebufferManager.GetFramebuffers();
     auto descriptorSets = mvpUniformBuffer.GetSets();
-    for (int i = 0; i < cmdBuffers.size(); i++) {
+    for (int i = 0; i <  cmdBuffers.size(); i++) {
         swapCmdBuffers.RecordBuffer(cmdBuffers[i]);
         // renderPassManager.SetClearColor(0.85, 0.44, 0.48);
         renderPassManager.BeginRenderPass(cmdBuffers[i], framebuffers[i], swapchainManager.GetSwapExtent());
@@ -402,6 +409,12 @@ void Application::RecordCommands()
         // Bind buffer to the comands
         triVBO.Bind(cmdBuffers[i]);
         triIBO.Bind(cmdBuffers[i]);
+
+        // Bind the push contants
+        modelPCData.model = glm::rotate(glm::mat4(1.0f), glm::radians(90.0f), glm::vec3(1.0f, 0.0f, 0.0f));
+        vkCmdPushConstants(cmdBuffers[i], fixedPipelineFuncs.GetPipelineLayout(), VK_SHADER_STAGE_VERTEX_BIT | VK_SHADER_STAGE_FRAGMENT_BIT, 0, sizeof(DefaultPushConstantData), &modelPCData);
+
+
         // Bind the descriptor sets
         if(!enableWireframe)
             vkCmdBindDescriptorSets(cmdBuffers[i], VK_PIPELINE_BIND_POINT_GRAPHICS, fixedPipelineFuncs.GetPipelineLayout(), 0, 1, &descriptorSets[i], 0, nullptr);
@@ -414,6 +427,9 @@ void Application::RecordCommands()
         quadVBO.Bind(cmdBuffers[i]);
         quadIBO.Bind(cmdBuffers[i]);
         vkCmdDrawIndexed(cmdBuffers[i], 6, 1, 0, 0, 0);
+
+        modelPCData.model = glm::rotate(glm::mat4(1.0f), glm::radians(0.0f), glm::vec3(1.0f, 0.0f, 0.0f));
+        vkCmdPushConstants(cmdBuffers[i], fixedPipelineFuncs.GetPipelineLayout(), VK_SHADER_STAGE_VERTEX_BIT | VK_SHADER_STAGE_FRAGMENT_BIT, 0, sizeof(DefaultPushConstantData), &modelPCData);
 
         // Draw the budda model
         buddaVBO.Bind(cmdBuffers[i]);
@@ -470,7 +486,7 @@ void Application::CleanUpCommandListResources()
 void Application::UpdateMVPUBO(uint32_t currentImageIndex)
 {
     UniformBufferObject ubo{};
-    ubo.model = glm::rotate(glm::mat4(1.0f), glm::radians(90.0f), glm::vec3(1.0f, 0.0f, 0.0f));
+    // ubo.model = glm::rotate(glm::mat4(1.0f), glm::radians(90.0f), glm::vec3(1.0f, 0.0f, 0.0f));
     ubo.view = camera.GetViewMatrix();
     ubo.proj = glm::perspective(glm::radians(45.0f), (float)swapchainManager.GetSwapExtent().width / swapchainManager.GetSwapExtent().height, 0.01f, 100.0f);
     ubo.proj[1][1] *= -1;

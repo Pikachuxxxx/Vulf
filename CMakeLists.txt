@@ -71,6 +71,12 @@ file(GLOB_RECURSE SOURCE_FILES
 file(GLOB_RECURSE VENDOR_SOURCE_FILES
 	${CMAKE_SOURCE_DIR}/vendor/imgui/*.c
     ${CMAKE_SOURCE_DIR}/vendor/imgui/*.cpp
+    ${CMAKE_SOURCE_DIR}/vendor/imgui/*.c
+    ${CMAKE_SOURCE_DIR}/vendor/imgui/*.cpp
+    ${CMAKE_SOURCE_DIR}/vendor/ImGuizmo/ImCurveEdit.cpp
+    ${CMAKE_SOURCE_DIR}/vendor/ImGuizmo/ImGradient.cpp
+    ${CMAKE_SOURCE_DIR}/vendor/ImGuizmo/ImGuizmo.cpp
+    ${CMAKE_SOURCE_DIR}/vendor/ImGuizmo/ImSequencer.cpp
 )
 
 # Add source header files

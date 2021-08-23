@@ -131,14 +131,14 @@ void VKFixedPipelineFuncs::SetColorBlendSCI()
 
 void VKFixedPipelineFuncs::SetDynamicSCI() { }
 
-void VKFixedPipelineFuncs::SetPipelineLayout(VkDescriptorSetLayout& layout)
+void VKFixedPipelineFuncs::SetPipelineLayout(VkDescriptorSetLayout& layout, VkPushConstantRange& pushConstants)
 {
 
     layoutCI.sType = VK_STRUCTURE_TYPE_PIPELINE_LAYOUT_CREATE_INFO;
     layoutCI.setLayoutCount = 1;
     layoutCI.pSetLayouts = &layout;
-    layoutCI.pushConstantRangeCount = 0;
-    layoutCI.pPushConstantRanges = nullptr;
+    layoutCI.pushConstantRangeCount = 1;
+    layoutCI.pPushConstantRanges = &pushConstants;
 
     if(VK_CALL(vkCreatePipelineLayout(VKLogicalDevice::GetDeviceManager()->GetLogicalDevice(), &layoutCI, nullptr, &m_PipelineLayout)))
         throw std::runtime_error("Cannot create pipeline layout");
