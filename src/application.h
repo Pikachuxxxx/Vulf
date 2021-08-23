@@ -32,6 +32,7 @@ namespace std {
 #include "utils/Window.h"
 #include "utils/Camera3D.h"
 #include "utils/Transform.h"
+#include "utils/cube.h"
 
 #include "Vulkan/VKInstance.h"
 #include "Vulkan/VKDevice.h"
@@ -80,6 +81,7 @@ private:
     void DrawFrame();
     void CleanUp();
     void OnImGui();
+    void OnUpdate(double dt);
     void LoadModel(std::string path, std::vector<Vertex>& vertices, std::vector<uint16_t>& indices);
 /***************************** Vulkan Encapsulation ***************************/
 VKSwapchain swapchainManager;
@@ -106,6 +108,8 @@ std::vector<uint16_t> buddaIndices;
 VKVertexBuffer buddaVBO;
 VKIndexBuffer buddaIBO;
 
+VKVertexBuffer cubeVBO;
+
 // Descriptor and uniforms shit!
 VKUniformBuffer mvpUniformBuffer;
 
@@ -127,6 +131,7 @@ struct DefaultPushConstantData
     alignas(16) glm::mat4 model;
 }modelPCData;
 Transform modelTransform;
+ImGuizmo::OPERATION globalOperation = ImGuizmo::TRANSLATE;
 /******************************* Vulkan Variables *****************************/
 std::vector<VkSemaphore> imageAvailableSemaphores;
 std::vector<VkSemaphore> renderingFinishedSemaphores;

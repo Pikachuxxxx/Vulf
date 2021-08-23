@@ -207,11 +207,20 @@ void Application::MainLoop()
             lastTime = currentTime;
         }
 
+        OnUpdate(delta);
+
         ImGui_ImplVulkan_SetMinImageCount(MAX_FRAMES_IN_FLIGHT);
         ImGui_ImplVulkan_NewFrame();
         ImGui_ImplGlfw_NewFrame();
         ImGui::NewFrame();
+        // ImGuizmo Initializaiton
         ImGuizmo::BeginFrame();
+        ImGuiIO& io = ImGui::GetIO();
+        ImGuizmo::SetRect(0, 0, swapchainManager.GetSwapExtent().width, swapchainManager.GetSwapExtent().height);
+        float windowWidth = (float)ImGui::GetWindowWidth();
+        float windowHeight = (float)ImGui::GetWindowHeight();
+        // ImGuizmo::SetRect(ImGui::GetWindowPos().x, ImGui::GetWindowPos().y, windowWidth, windowHeight);
+        // ImGuizmo::SetRect(0, 0, io.DisplaySize.x, io.DisplaySize.y);
         OnImGui();
         ImGui::Render();
         // Update and Render additional Platform Windows
@@ -388,6 +397,7 @@ void Application::RecreateCommandPipeline()
     buddaVBO.Create(buddaVertices, cmdPoolManager);
     buddaIBO.Create(buddaIndices, cmdPoolManager);
 
+    cubeVBO.Create(cubeVertices, cmdPoolManager);
 
     // Record the commands
     // RecordCommands();
@@ -428,14 +438,17 @@ void Application::RecordCommands()
         quadIBO.Bind(cmdBuffers[i]);
         vkCmdDrawIndexed(cmdBuffers[i], 6, 1, 0, 0, 0);
 
-        modelPCData.model = glm::rotate(glm::mat4(1.0f), glm::radians(0.0f), glm::vec3(1.0f, 0.0f, 0.0f));
+        cubeVBO.Bind(cmdBuffers[i]);
+        vkCmdDraw(cmdBuffers[i], 36, 1, 0, 0);
+
+        modelPCData.model = modelTransform.transformMatrix;//glm::rotate(glm::mat4(1.0f), glm::radians(0.0f), glm::vec3(1.0f, 0.0f, 0.0f));
         vkCmdPushConstants(cmdBuffers[i], fixedPipelineFuncs.GetPipelineLayout(), VK_SHADER_STAGE_VERTEX_BIT | VK_SHADER_STAGE_FRAGMENT_BIT, 0, sizeof(DefaultPushConstantData), &modelPCData);
 
         // Draw the budda model
         buddaVBO.Bind(cmdBuffers[i]);
         buddaIBO.Bind(cmdBuffers[i]);
-        vkCmdDrawIndexed(cmdBuffers[i], buddaIndices.size(), 1, 0, 0, 0);
-        vkCmdDraw(cmdBuffers[i], buddaVertices.size(), 0, 0, 0);
+        // vkCmdDrawIndexed(cmdBuffers[i], buddaIndices.size(), 1, 0, 0, 0);
+        vkCmdDraw(cmdBuffers[i], buddaVertices.size(), 1, 0, 0);
 
         renderPassManager.EndRenderPass(cmdBuffers[i]);
 		swapCmdBuffers.EndRecordingBuffer(cmdBuffers[i]);
@@ -468,6 +481,7 @@ void Application::CleanUpCommandListResources()
 {
     framebufferManager.Destroy();
     gridTexture.Destroy();
+    cubeVBO.Destroy();
     triVBO.Destroy();
     triIBO.Destroy();
     quadVBO.Destroy();
@@ -517,6 +531,12 @@ void Application::ImGuiError(VkResult err)
 
 void Application::OnImGui()
 {
+    ImGuiIO& io = ImGui::GetIO();
+    ImGuizmo::SetRect(swapchainManager.GetSwapExtent().width / 2, 0, swapchainManager.GetSwapExtent().width, swapchainManager.GetSwapExtent().height);
+    float windowWidth = (float)ImGui::GetWindowWidth();
+    float windowHeight = (float)ImGui::GetWindowHeight();
+    modelTransform = modelTransform.AttachGuizmo(globalOperation, camera.GetViewRHMatrix(), glm::perspectiveRH(glm::radians(45.0f), (float)swapchainManager.GetSwapExtent().width / swapchainManager.GetSwapExtent().height, 0.01f, 100.0f));
+
     ImGui::ShowDemoWindow();
     ImGui::Begin("Yeah Bitch!");
     {
@@ -529,9 +549,32 @@ void Application::OnImGui()
         clearColor[3] = color.w;
         renderPassManager.SetClearColor(clearColor);
         ImGui::Checkbox("Wireframe Mode ", &enableWireframe);
+        const char* items[] = { "Translate", "Rotate", "Scale"};
+        static const char* current_item = NULL;
+
+        if (ImGui::BeginCombo("Guizmo Mode##combo", current_item)) // The second parameter is the label previewed before opening the combo.
+        {
+            for (int n = 0; n < IM_ARRAYSIZE(items); n++)
+            {
+                bool is_selected = (current_item == items[n]); // You can store your selection however you want, outside or inside your objects
+                if (ImGui::Selectable(items[n], is_selected))
+                    current_item = items[n];
+                if (is_selected)
+                    ImGui::SetItemDefaultFocus();   // You may set the initial focus when opening the combo (scrolling + for keyboard navigation support)
+            }
+            ImGui::EndCombo();
+        }
+            // if(!strcmp(current_item, "Translate"))
+            //     globalOperation = ImGuizmo::TRANSLATE;
+            // else if(!strcmp(current_item, "Rotate"))
+            //     globalOperation = ImGuizmo::ROTATE;
+            // else if(!strcmp(current_item, "Scale"))
+            //     globalOperation = ImGuizmo::SCALE;
     }
     ImGui::End();
 }
+
+void Application::OnUpdate(double dt) { }
 
 void Application::LoadModel(std::string path, std::vector<Vertex>& vertices, std::vector<uint16_t>& indices)
 {
