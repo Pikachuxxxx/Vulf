@@ -431,13 +431,14 @@ void Application::RecordCommands()
         else
             vkCmdBindDescriptorSets(cmdBuffers[i], VK_PIPELINE_BIND_POINT_GRAPHICS, wireframeFixedPipelineFuncs.GetPipelineLayout(), 0, 1, &descriptorSets[i], 0, nullptr);
 
-        // Issue the draw command
-        vkCmdDrawIndexed(cmdBuffers[i], 6, 1, 0, 0, 0);
+        // Issue the draw command for the super big quad
+        // vkCmdDrawIndexed(cmdBuffers[i], 6, 1, 0, 0, 0);
         // Drawing another white quad
         quadVBO.Bind(cmdBuffers[i]);
         quadIBO.Bind(cmdBuffers[i]);
-        vkCmdDrawIndexed(cmdBuffers[i], 6, 1, 0, 0, 0);
+        // vkCmdDrawIndexed(cmdBuffers[i], 6, 1, 0, 0, 0);
 
+        // Draw the quad
         cubeVBO.Bind(cmdBuffers[i]);
         vkCmdDraw(cmdBuffers[i], 36, 1, 0, 0);
 
@@ -448,7 +449,7 @@ void Application::RecordCommands()
         buddaVBO.Bind(cmdBuffers[i]);
         buddaIBO.Bind(cmdBuffers[i]);
         // vkCmdDrawIndexed(cmdBuffers[i], buddaIndices.size(), 1, 0, 0, 0);
-        vkCmdDraw(cmdBuffers[i], buddaVertices.size(), 1, 0, 0);
+        // vkCmdDraw(cmdBuffers[i], buddaVertices.size(), 1, 0, 0);
 
         renderPassManager.EndRenderPass(cmdBuffers[i]);
 		swapCmdBuffers.EndRecordingBuffer(cmdBuffers[i]);
@@ -505,7 +506,13 @@ void Application::UpdateMVPUBO(uint32_t currentImageIndex)
     ubo.proj = glm::perspective(glm::radians(45.0f), (float)swapchainManager.GetSwapExtent().width / swapchainManager.GetSwapExtent().height, 0.01f, 100.0f);
     ubo.proj[1][1] *= -1;
 
+    LightUniformBufferObject lightUBO;
+    lightUBO.objectColor = objectColor;
+    lightUBO.lightColor = lightColor;
+    lightUBO.lightPos = lightPos;
+
     mvpUniformBuffer.UpdateBuffer(ubo, currentImageIndex);
+    mvpUniformBuffer.UpdateLightBuffer(lightUBO, currentImageIndex);
 }
 
 void Application::CleanUpImGuiResources()
@@ -541,7 +548,7 @@ void Application::OnImGui()
     ImGui::Begin("Yeah Bitch!");
     {
         ImGui::Text("Hello, world %d", 123);
-        static ImVec4 color = {0.84, 0.44, 0.48, 1.0f};;
+        static ImVec4 color = {0.24, 0.24, 0.24, 1.0f};
         ImGui::Text("Background Color"); ImGui::SameLine(); ImGui::ColorEdit4("Mycolor#2", (float*)&color, ImGuiColorEditFlags_NoInputs | ImGuiColorEditFlags_NoLabel);
         clearColor[0] = color.x;
         clearColor[1] = color.y;
@@ -570,6 +577,14 @@ void Application::OnImGui()
             //     globalOperation = ImGuizmo::ROTATE;
             // else if(!strcmp(current_item, "Scale"))
             //     globalOperation = ImGuizmo::SCALE;
+    }
+    ImGui::End();
+
+    ImGui::Begin("Example Bug");
+    {
+        ImGui::ColorEdit4("Object Color", &objectColor.r);
+        ImGui::ColorEdit4("Light Color", &lightColor.r);
+        ImGui::DragFloat3("Light Position", &lightPos.x, 0.1f);
     }
     ImGui::End();
 }

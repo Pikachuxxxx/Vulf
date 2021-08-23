@@ -12,7 +12,7 @@ void VKUniformBuffer::CreateUniformBuffer(uint32_t swapImagesCount, VKTexture& t
     m_UniformBuffers.resize(swapImagesCount);
 
     for (size_t i = 0; i < swapImagesCount; i++)
-        m_UniformBuffers[i].CreateBuffer(sizeof(UniformBufferObject), VK_BUFFER_USAGE_UNIFORM_BUFFER_BIT, VK_MEMORY_PROPERTY_HOST_VISIBLE_BIT | VK_MEMORY_PROPERTY_HOST_COHERENT_BIT);
+        m_UniformBuffers[i].CreateBuffer((sizeof(UniformBufferObject) + sizeof(LightUniformBufferObject)), VK_BUFFER_USAGE_UNIFORM_BUFFER_BIT, VK_MEMORY_PROPERTY_HOST_VISIBLE_BIT | VK_MEMORY_PROPERTY_HOST_COHERENT_BIT);
 
     // Create the pool
     CreatePool();
@@ -43,7 +43,14 @@ void VKUniformBuffer::CreateDescriptorSetLayout()
     samplerLayoutBinding.pImmutableSamplers = nullptr;
     samplerLayoutBinding.stageFlags = VK_SHADER_STAGE_FRAGMENT_BIT;
 
-    std::array<VkDescriptorSetLayoutBinding, 2> bindings = {uboLayoutBinding, samplerLayoutBinding};
+    // Lighting data
+    VkDescriptorSetLayoutBinding lightLayoutBinding{};
+    lightLayoutBinding.binding = 2;
+    lightLayoutBinding.descriptorType = VK_DESCRIPTOR_TYPE_UNIFORM_BUFFER;
+    lightLayoutBinding.descriptorCount = 1;
+    lightLayoutBinding.stageFlags = VK_SHADER_STAGE_FRAGMENT_BIT;
+
+    std::array<VkDescriptorSetLayoutBinding, 3> bindings = {uboLayoutBinding, samplerLayoutBinding, lightLayoutBinding};
 
     VkDescriptorSetLayoutCreateInfo layoutInfo{};
     layoutInfo.sType = VK_STRUCTURE_TYPE_DESCRIPTOR_SET_LAYOUT_CREATE_INFO;
@@ -63,11 +70,13 @@ void VKUniformBuffer::CreatePool()
     // poolSize.type = VK_DESCRIPTOR_TYPE_UNIFORM_BUFFER;
     // poolSize.descriptorCount = static_cast<uint32_t>(m_UniformBuffers.size());
 
-    std::array<VkDescriptorPoolSize, 2> poolSizes{};
+    std::array<VkDescriptorPoolSize, 3> poolSizes{};
     poolSizes[0].type = VK_DESCRIPTOR_TYPE_UNIFORM_BUFFER;
     poolSizes[0].descriptorCount = static_cast<uint32_t>(m_UniformBuffers.size());
     poolSizes[1].type = VK_DESCRIPTOR_TYPE_COMBINED_IMAGE_SAMPLER;
     poolSizes[1].descriptorCount = static_cast<uint32_t>(m_UniformBuffers.size());
+    poolSizes[2].type = VK_DESCRIPTOR_TYPE_UNIFORM_BUFFER;
+    poolSizes[2].descriptorCount = static_cast<uint32_t>(m_UniformBuffers.size());
 
     VkDescriptorPoolCreateInfo poolInfo{};
     poolInfo.sType = VK_STRUCTURE_TYPE_DESCRIPTOR_POOL_CREATE_INFO;
@@ -108,7 +117,12 @@ void VKUniformBuffer::UpdateDescriptorSetConfig()
         imageInfo.imageView = m_Texture.GetTextureImageView();
         imageInfo.sampler = m_Texture.GetTextureImageSampler();
 
-        std::array<VkWriteDescriptorSet, 2> descriptorWrites{};
+        VkDescriptorBufferInfo lightBufferInfo{};
+        lightBufferInfo.buffer = m_UniformBuffers[i].GetBuffer();
+        lightBufferInfo.offset = sizeof(UniformBufferObject);
+        lightBufferInfo.range = sizeof(LightUniformBufferObject);
+
+        std::array<VkWriteDescriptorSet, 3> descriptorWrites{};
 
         // VkWriteDescriptorSet descriptorWrite{};
         descriptorWrites[0].sType = VK_STRUCTURE_TYPE_WRITE_DESCRIPTOR_SET;
@@ -129,6 +143,16 @@ void VKUniformBuffer::UpdateDescriptorSetConfig()
         descriptorWrites[1].descriptorCount = 1;
         descriptorWrites[1].pImageInfo = &imageInfo;
 
+        descriptorWrites[2].sType = VK_STRUCTURE_TYPE_WRITE_DESCRIPTOR_SET;
+        descriptorWrites[2].dstSet = m_DescriptorSets[i];
+        descriptorWrites[2].dstBinding = 2;
+        descriptorWrites[2].dstArrayElement = 0;
+        descriptorWrites[2].descriptorType = VK_DESCRIPTOR_TYPE_UNIFORM_BUFFER;
+        descriptorWrites[2].descriptorCount = 1;
+        descriptorWrites[2].pBufferInfo = &lightBufferInfo;
+        descriptorWrites[2].pImageInfo = nullptr; // Optional
+        descriptorWrites[2].pTexelBufferView = nullptr; // Optional
+
         vkUpdateDescriptorSets(VKLogicalDevice::GetDeviceManager()->GetLogicalDevice(), static_cast<uint32_t>(descriptorWrites.size()), descriptorWrites.data(), 0, nullptr);
     }
 }
@@ -137,7 +161,15 @@ void VKUniformBuffer::UpdateDescriptorSetConfig()
 void VKUniformBuffer::UpdateBuffer(UniformBufferObject buffer, uint32_t index)
 {
     void* data;
-    vkMapMemory(VKLogicalDevice::GetDeviceManager()->GetLogicalDevice(), m_UniformBuffers[index].GetBufferMemory(), 0, sizeof(buffer), 0, &data);
+    vkMapMemory(VKLogicalDevice::GetDeviceManager()->GetLogicalDevice(), m_UniformBuffers[index].GetBufferMemory(), 0, sizeof(UniformBufferObject), 0, &data);
+    memcpy(data, &buffer, sizeof(buffer));
+    vkUnmapMemory(VKLogicalDevice::GetDeviceManager()->GetLogicalDevice(), m_UniformBuffers[index].GetBufferMemory());
+}
+
+void VKUniformBuffer::UpdateLightBuffer(LightUniformBufferObject buffer, uint32_t index)
+{
+    void* data;
+    vkMapMemory(VKLogicalDevice::GetDeviceManager()->GetLogicalDevice(), m_UniformBuffers[index].GetBufferMemory(), sizeof(UniformBufferObject), sizeof(LightUniformBufferObject), 0, &data);
     memcpy(data, &buffer, sizeof(buffer));
     vkUnmapMemory(VKLogicalDevice::GetDeviceManager()->GetLogicalDevice(), m_UniformBuffers[index].GetBufferMemory());
 }

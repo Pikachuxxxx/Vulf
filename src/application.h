@@ -120,7 +120,7 @@ VkRenderPass imguiRenderPass;
 VkDescriptorPool imguiDescriptorPool;
 VkCommandBuffer imguiCmdBuffer;
 VKCmdBuffer imguiCmdBuffers;
-float clearColor[4] = {0.84, 0.44, 0.48, 1.0f};
+float clearColor[4] = {0.24, 0.24, 0.24, 1.0f};
 bool enableWireframe = false;
 
 //Grid image texure
@@ -132,6 +132,11 @@ struct DefaultPushConstantData
 }modelPCData;
 Transform modelTransform;
 ImGuizmo::OPERATION globalOperation = ImGuizmo::TRANSLATE;
+/******************************************************************************/
+// Light settings
+glm::vec3 objectColor = glm::vec3(1.0f, 0.5f, 0.32f);
+glm::vec3 lightColor = glm::vec3(1.0f, 1.0f, 1.0f);
+glm::vec3 lightPos = glm::vec3(0.4, 0.5, 1.0f);
 /******************************* Vulkan Variables *****************************/
 std::vector<VkSemaphore> imageAvailableSemaphores;
 std::vector<VkSemaphore> renderingFinishedSemaphores;

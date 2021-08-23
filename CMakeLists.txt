@@ -99,6 +99,8 @@ if(WIN32)
 target_link_libraries(HelloVulkan glfw3 vulkan-1)
 endif()
 
+add_custom_command(OUTPUT ${CMAKE_SOURCE_DIR}/src/shaders/spir-v/frag.spv COMMAND ${CMAKE_SOURCE_DIR}/src/shaders/glsl/compile-glsl.sh)
+
 # Run the binary built using 'make run' command
 add_custom_target(run
     COMMAND HelloVulkan

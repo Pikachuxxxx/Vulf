@@ -14,12 +14,20 @@ struct UniformBufferObject
     alignas(16) glm::mat4 proj;
 };
 
+struct LightUniformBufferObject
+{
+    alignas(16) glm::vec3 objectColor;
+    alignas(16) glm::vec3 lightColor;
+    alignas(16) glm::vec3 lightPos;
+};
+
 class VKUniformBuffer
 {
 public:
     VKUniformBuffer() = default;
     void Destroy();
     void UpdateBuffer(UniformBufferObject buffer, uint32_t index);
+    void UpdateLightBuffer(LightUniformBufferObject buffer, uint32_t index);
     void CreateUniformBuffer(uint32_t swapImagesCount, VKTexture& texture);
     void CreateDescriptorSetLayout();
     void CreatePool();
