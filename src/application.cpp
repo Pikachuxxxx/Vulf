@@ -438,12 +438,12 @@ void Application::RecordCommands()
         quadIBO.Bind(cmdBuffers[i]);
         // vkCmdDrawIndexed(cmdBuffers[i], 6, 1, 0, 0, 0);
 
-        // Draw the quad
+        // Draw the Cube
+        modelPCData.model = modelTransform.transformMatrix;//glm::rotate(glm::mat4(1.0f), glm::radians(0.0f), glm::vec3(1.0f, 0.0f, 0.0f));
+        vkCmdPushConstants(cmdBuffers[i], fixedPipelineFuncs.GetPipelineLayout(), VK_SHADER_STAGE_VERTEX_BIT | VK_SHADER_STAGE_FRAGMENT_BIT, 0, sizeof(DefaultPushConstantData), &modelPCData);
         cubeVBO.Bind(cmdBuffers[i]);
         vkCmdDraw(cmdBuffers[i], 36, 1, 0, 0);
 
-        modelPCData.model = modelTransform.transformMatrix;//glm::rotate(glm::mat4(1.0f), glm::radians(0.0f), glm::vec3(1.0f, 0.0f, 0.0f));
-        vkCmdPushConstants(cmdBuffers[i], fixedPipelineFuncs.GetPipelineLayout(), VK_SHADER_STAGE_VERTEX_BIT | VK_SHADER_STAGE_FRAGMENT_BIT, 0, sizeof(DefaultPushConstantData), &modelPCData);
 
         // Draw the budda model
         buddaVBO.Bind(cmdBuffers[i]);
@@ -557,7 +557,7 @@ void Application::OnImGui()
         renderPassManager.SetClearColor(clearColor);
         ImGui::Checkbox("Wireframe Mode ", &enableWireframe);
         const char* items[] = { "Translate", "Rotate", "Scale"};
-        static const char* current_item = NULL;
+        static const char* current_item = "Translate";
 
         if (ImGui::BeginCombo("Guizmo Mode##combo", current_item)) // The second parameter is the label previewed before opening the combo.
         {
@@ -571,12 +571,12 @@ void Application::OnImGui()
             }
             ImGui::EndCombo();
         }
-            // if(!strcmp(current_item, "Translate"))
-            //     globalOperation = ImGuizmo::TRANSLATE;
-            // else if(!strcmp(current_item, "Rotate"))
-            //     globalOperation = ImGuizmo::ROTATE;
-            // else if(!strcmp(current_item, "Scale"))
-            //     globalOperation = ImGuizmo::SCALE;
+            if(!strcmp(current_item, "Translate"))
+                globalOperation = ImGuizmo::TRANSLATE;
+            else if(!strcmp(current_item, "Rotate"))
+                globalOperation = ImGuizmo::ROTATE;
+            else if(!strcmp(current_item, "Scale"))
+                globalOperation = ImGuizmo::SCALE;
     }
     ImGui::End();
 
