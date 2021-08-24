@@ -166,21 +166,21 @@ VKAPI_ATTR VkBool32 VKAPI_CALL VKInstance::DebugCallback(VkDebugUtilsMessageSeve
     if(message_severity == VK_DEBUG_UTILS_MESSAGE_SEVERITY_ERROR_BIT_EXT)
     {
         std::cout << "\033[1;31m *****************************************************************" << std::endl;
-        std::cout << "\033[1;32m[VULKAN] \033[1;31m - ERROR : \033[0m \nmessage ID : " << callback_data->messageIdNumber << "\nID Name : " << callback_data->pMessageIdName << "\nMessage : " << callback_data->pMessage  << std::endl;
+        std::cout << "\033[1;32m[VULKAN] \033[1;31m - Validation ERROR : \033[0m \nmessage ID : " << callback_data->messageIdNumber << "\nID Name : " << callback_data->pMessageIdName << "\nMessage : " << callback_data->pMessage  << std::endl;
         std::cout << "\033[1;31m *****************************************************************" << std::endl;
     };
     // Warnings may hint at unexpected / non-spec API usage
     if(message_severity == VK_DEBUG_UTILS_MESSAGE_SEVERITY_WARNING_BIT_EXT)
     {
         std::cout << "\033[1;33m *****************************************************************" << std::endl;
-        std::cout << "\033[1;32m[VULKAN] \033[1;33m - WARNING : \033[0m \nmessage ID : " << callback_data->messageIdNumber << "\nID Name : " << callback_data->pMessageIdName << "\nMessage : " << callback_data->pMessage  << std::endl;
+        std::cout << "\033[1;32m[VULKAN] \033[1;33m - Validation WARNING : \033[0m \nmessage ID : " << callback_data->messageIdNumber << "\nID Name : " << callback_data->pMessageIdName << "\nMessage : " << callback_data->pMessage  << std::endl;
         std::cout << "\033[1;33m *****************************************************************" << std::endl;
     };
     // Informal messages that may become handy during debugging
     if(message_severity == VK_DEBUG_UTILS_MESSAGE_SEVERITY_INFO_BIT_EXT)
     {
         std::cout << "\033[1;36m *****************************************************************" << std::endl;
-        std::cout << "\033[1;32m[VULKAN] \033[1;36m - INFO : \033[0m \nmessage ID : " << callback_data->messageIdNumber << "\nID Name : " << callback_data->pMessageIdName << "\nMessage : " << callback_data->pMessage  << std::endl;
+        std::cout << "\033[1;32m[VULKAN] \033[1;36m - Validation INFO : \033[0m \nmessage ID : " << callback_data->messageIdNumber << "\nID Name : " << callback_data->pMessageIdName << "\nMessage : " << callback_data->pMessage  << std::endl;
         std::cout << "\033[1;36m *****************************************************************" << std::endl;
     }
     // Diagnostic info from the Vulkan loader and layers

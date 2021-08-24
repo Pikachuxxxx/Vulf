@@ -18,8 +18,8 @@ enum Camera_Movement {
 // Default camera values
 const float YAW        = -90.0f;
 const float PITCH      =  0.0f;
-const float SPEED      =  5.0f;
-const float SENSITIVTY =  0.75f;
+const float SPEED      =  0.01f;
+const float SENSITIVTY =  0.50f;
 const float ZOOM       =  45.0f;
 
 class Camera3D
@@ -47,6 +47,7 @@ public:
     void Update(Window& window, float deltaTime);
     // Returns the view matrix calculated using Euler Angles and the LookAt Matrix
     glm::mat4 GetViewMatrix();
+    glm::mat4 GetViewRHMatrix();
     // Processes input received from any keyboard-like input system. Accepts input parameter in the form of camera defined ENUM (to abstract it from windowing systems)
     void ProcessKeyboard(Camera_Movement direction, float deltaTime);
     // Processes input received from a mouse input system. Expects the offset value in both the x and y direction.

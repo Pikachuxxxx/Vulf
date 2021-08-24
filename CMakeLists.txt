@@ -17,6 +17,8 @@ include_directories(
     "${CMAKE_SOURCE_DIR}/vendor/glm"
     # ImGui Headers
     "${CMAKE_SOURCE_DIR}/vendor/ImGui"
+    # The entire vendor folder
+    "${CMAKE_SOURCE_DIR}/vendor"
     # Vulkan MacOS headers
     $ENV{VULKAN_SDK}/macOS/include
 )
@@ -69,6 +71,12 @@ file(GLOB_RECURSE SOURCE_FILES
 file(GLOB_RECURSE VENDOR_SOURCE_FILES
 	${CMAKE_SOURCE_DIR}/vendor/imgui/*.c
     ${CMAKE_SOURCE_DIR}/vendor/imgui/*.cpp
+    ${CMAKE_SOURCE_DIR}/vendor/imgui/*.c
+    ${CMAKE_SOURCE_DIR}/vendor/imgui/*.cpp
+    ${CMAKE_SOURCE_DIR}/vendor/ImGuizmo/ImCurveEdit.cpp
+    ${CMAKE_SOURCE_DIR}/vendor/ImGuizmo/ImGradient.cpp
+    ${CMAKE_SOURCE_DIR}/vendor/ImGuizmo/ImGuizmo.cpp
+    ${CMAKE_SOURCE_DIR}/vendor/ImGuizmo/ImSequencer.cpp
 )
 
 # Add source header files
@@ -90,6 +98,8 @@ endif (APPLE)
 if(WIN32)
 target_link_libraries(HelloVulkan glfw3 vulkan-1)
 endif()
+
+add_custom_command(OUTPUT ${CMAKE_SOURCE_DIR}/src/shaders/spir-v/frag.spv COMMAND ${CMAKE_SOURCE_DIR}/src/shaders/glsl/compile-glsl.sh)
 
 # Run the binary built using 'make run' command
 add_custom_target(run

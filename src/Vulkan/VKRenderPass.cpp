@@ -13,7 +13,8 @@ void VKRenderPass::Init(const VkFormat& format)
     attachment.stencilLoadOp = VK_ATTACHMENT_LOAD_OP_DONT_CARE;
     attachment.stencilStoreOp = VK_ATTACHMENT_STORE_OP_DONT_CARE;
     attachment.initialLayout = VK_IMAGE_LAYOUT_UNDEFINED;
-    attachment.finalLayout = VK_IMAGE_LAYOUT_PRESENT_SRC_KHR;
+    // Now this not the final presentation coz, of imgui (we are outputting to the frame buffer color attachment)
+    attachment.finalLayout = VK_IMAGE_LAYOUT_COLOR_ATTACHMENT_OPTIMAL;//VK_IMAGE_LAYOUT_PRESENT_SRC_KHR;
 
     VkAttachmentReference colorAttachmentRef{};
     colorAttachmentRef.attachment = 0;
@@ -61,7 +62,7 @@ void VKRenderPass::BeginRenderPass(VkCommandBuffer& cmdBuffer, VkFramebuffer& fr
 	beginInfo.renderArea.offset = { 0, 0 };
 	beginInfo.renderArea.extent = swapextent;
 	beginInfo.clearValueCount = 1;
-	VkClearValue clearColor = { {{m_ClearColor[0], m_ClearColor[1], m_ClearColor[2], 1.0f}} };
+	VkClearValue clearColor = { {{m_ClearColor[0], m_ClearColor[1], m_ClearColor[2], m_ClearColor[3]}} };
 	beginInfo.pClearValues = &clearColor;
 
 	vkCmdBeginRenderPass(cmdBuffer, &beginInfo, VK_SUBPASS_CONTENTS_INLINE);

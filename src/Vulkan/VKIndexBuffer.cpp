@@ -1,6 +1,6 @@
 #include "VKIndexBuffer.h"
 
-void VKIndexBuffer::Create(std::vector<uint16_t> vertices, VkCommandPool pool)
+void VKIndexBuffer::Create(std::vector<uint16_t> vertices, VKCmdPool pool)
 {
     VkDeviceSize IndexDataSize = sizeof(vertices[0]) * vertices.size();
     m_StagingBuffer.CreateBuffer(IndexDataSize, VK_BUFFER_USAGE_TRANSFER_SRC_BIT, VK_MEMORY_PROPERTY_HOST_VISIBLE_BIT | VK_MEMORY_PROPERTY_HOST_COHERENT_BIT);

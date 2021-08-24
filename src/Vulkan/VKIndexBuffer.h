@@ -1,12 +1,13 @@
 #pragma once
 
 #include "VKBuffer.h"
+#include "VKCmdPool.h"
 
 class VKIndexBuffer
 {
 public:
     VKIndexBuffer() = default;
-    void Create(std::vector<uint16_t> vertices, VkCommandPool pool);
+    void Create(std::vector<uint16_t> vertices, VKCmdPool pool);
     void Destroy();
     void Bind(VkCommandBuffer cmdBuffer);
 private:

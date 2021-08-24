@@ -1,6 +1,7 @@
 #pragma once
 
 #include <vulkan/vulkan.h>
+#include <array>
 
 class VKDescriptorSetLayout
 {

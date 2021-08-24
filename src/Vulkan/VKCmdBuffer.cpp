@@ -13,7 +13,7 @@ void VKCmdBuffer::AllocateBuffers(const VkCommandPool& pool)
     m_CommandBuffers.resize(3);
     if(VK_CALL(vkAllocateCommandBuffers(VKLogicalDevice::GetDeviceManager()->GetLogicalDevice(), &allocInfo, m_CommandBuffers.data())))
         throw std::runtime_error("Cannot create command buffers!");
-    else VK_LOG_SUCCESS("CommandBuffers succesfully Allocated!");
+    else VK_LOG_SUCCESS("Command Buffers (3) succesfully Allocated!");
 }
 
 void VKCmdBuffer::DestroyBuffer(VkCommandBuffer& buffer)
@@ -28,6 +28,8 @@ void VKCmdBuffer::RecordBuffer(VkCommandBuffer& buffer)
 	beginInfo.sType = VK_STRUCTURE_TYPE_COMMAND_BUFFER_BEGIN_INFO;
 	beginInfo.flags = VK_COMMAND_BUFFER_USAGE_SIMULTANEOUS_USE_BIT;
 	beginInfo.pInheritanceInfo = nullptr;
+    // Resetting command buffer before starting tor record
+    vkResetCommandBuffer(buffer, 0);
 	if (VK_CALL(vkBeginCommandBuffer(buffer, &beginInfo)))
 		throw std::runtime_error("Cannot record onto CommandBuffers");
 	else VK_LOG("Recording to command buffer...");

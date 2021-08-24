@@ -93,6 +93,8 @@ void VKLogicalDevice::Init()
     }
 
     VkPhysicalDeviceFeatures deviceFeatures{};
+    deviceFeatures.fillModeNonSolid = VK_TRUE;
+    deviceFeatures.samplerAnisotropy = VK_TRUE;
 
     // Create the Logica Device
     VkDeviceCreateInfo deviceCI{};

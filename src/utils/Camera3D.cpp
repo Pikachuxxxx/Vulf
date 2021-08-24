@@ -22,10 +22,8 @@ Camera3D::Camera3D(float posX, float posY, float posZ, float upX, float upY, flo
 
 void Camera3D::Update(Window& window, float deltaTime)
 {
-    if (window.isKeyHeld(GLFW_KEY_W) || window.isKeyHeld(GLFW_KEY_UP)){
+    if (window.isKeyHeld(GLFW_KEY_W) || window.isKeyHeld(GLFW_KEY_UP))
         ProcessKeyboard(FORWARD, deltaTime);
-        std::cout << "Moving forward" << std::endl;
-    }
     else if (window.isKeyHeld(GLFW_KEY_S) || window.isKeyHeld(GLFW_KEY_DOWN))
         ProcessKeyboard(BACKWARD, deltaTime);
     if (window.isKeyHeld(GLFW_KEY_D) || window.isKeyHeld(GLFW_KEY_RIGHT))
@@ -47,11 +45,14 @@ glm::mat4 Camera3D::GetViewMatrix()
     return glm::lookAt(this->Position, this->Position + this->Front, this->Up);
 }
 
+glm::mat4 Camera3D::GetViewRHMatrix()
+{
+    return glm::lookAtRH(this->Position, this->Position + this->Front, this->Up);
+}
 // Processes input received from any keyboard-like input system. Accepts input parameter in the form of camera defined ENUM (to abstract it from windowing systems)
 void Camera3D::ProcessKeyboard(Camera_Movement direction, float deltaTime)
 {
     float velocity = this->MovementSpeed * deltaTime;
-    std::cout << "Camera Velocity : " << velocity << std::endl;
     if (direction == FORWARD)
         this->Position += this->Front * velocity;
     if (direction == BACKWARD)
