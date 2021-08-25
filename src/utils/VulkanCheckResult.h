@@ -59,7 +59,7 @@ static bool VulkanCheckErrorStatus(VkResult x, const char* file, int line)
 
 #define VK_LOG_SUCCESS(msg) std::cout << "\033[1;32m[VULKAN]\033[1;32m - SUCCESS : " << (msg) <<  " \033[0m\n";
 
-#define VK_LOG(...) //std::cout , "\033[1;32m[VULKAN]\033[1;33m - LOG : " , __VA_ARGS__ , " \033[0m" , std::endl
+#define VK_LOG(...) std::cout , "\033[1;32m[VULKAN]\033[1;33m - LOG : " , __VA_ARGS__ , " \033[0m" , std::endl
 
 #define DEVICE VKLogicalDevice::GetDeviceManager()->GetLogicalDevice()
 

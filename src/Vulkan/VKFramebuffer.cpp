@@ -23,7 +23,7 @@ for (size_t i = 0; i < swapViews.size(); i++) {
 
     if(VK_CALL(vkCreateFramebuffer(VKLogicalDevice::GetDeviceManager()->GetLogicalDevice(), &bufCI, nullptr, &m_Framebuffers[i])))
         throw std::runtime_error("Cannot create framebuffer!");
-    else VK_LOG("Framebuffer ", i ,"succesfully created!");
+    // else VK_LOG("Framebuffer ", i ,"succesfully created!");
 }
 }
 

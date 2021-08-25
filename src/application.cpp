@@ -216,11 +216,13 @@ void Application::MainLoop()
         // ImGuizmo Initializaiton
         ImGuizmo::BeginFrame();
         ImGuiIO& io = ImGui::GetIO();
-        ImGuizmo::SetRect(0, 0, swapchainManager.GetSwapExtent().width, swapchainManager.GetSwapExtent().height);
+        // ImGuizmo::SetOrthographic(true);
+        // ImGuizmo::SetRect(0, 0, swapchainManager.GetSwapExtent().width, swapchainManager.GetSwapExtent().height);
         float windowWidth = (float)ImGui::GetWindowWidth();
         float windowHeight = (float)ImGui::GetWindowHeight();
+        VK_LOG("X : ", ImGui::GetWindowPos().x, ", Y : ", ImGui::GetWindowPos().y);
         // ImGuizmo::SetRect(ImGui::GetWindowPos().x, ImGui::GetWindowPos().y, windowWidth, windowHeight);
-        // ImGuizmo::SetRect(0, 0, io.DisplaySize.x, io.DisplaySize.y);
+        ImGuizmo::SetRect(ImGui::GetWindowPos().x - (windowWidth / 2), ImGui::GetWindowPos().y - (windowHeight / 2), swapchainManager.GetSwapExtent().width, swapchainManager.GetSwapExtent().height);
         OnImGui();
         ImGui::Render();
         // Update and Render additional Platform Windows
@@ -538,11 +540,9 @@ void Application::ImGuiError(VkResult err)
 
 void Application::OnImGui()
 {
-    ImGuiIO& io = ImGui::GetIO();
-    ImGuizmo::SetRect(swapchainManager.GetSwapExtent().width / 2, 0, swapchainManager.GetSwapExtent().width, swapchainManager.GetSwapExtent().height);
-    float windowWidth = (float)ImGui::GetWindowWidth();
-    float windowHeight = (float)ImGui::GetWindowHeight();
-    modelTransform = modelTransform.AttachGuizmo(globalOperation, camera.GetViewRHMatrix(), glm::perspectiveRH(glm::radians(45.0f), (float)swapchainManager.GetSwapExtent().width / swapchainManager.GetSwapExtent().height, 0.01f, 100.0f));
+    auto proj = glm::perspective(glm::radians(45.0f), (float)swapchainManager.GetSwapExtent().width / swapchainManager.GetSwapExtent().height, 0.01f, 100.0f);
+    // proj[1][1] *= -1;
+    modelTransform = modelTransform.AttachGuizmo(globalOperation, camera.GetViewMatrix(), proj);
 
     ImGui::ShowDemoWindow();
     ImGui::Begin("Yeah Bitch!");
@@ -616,7 +616,10 @@ void Application::LoadModel(std::string path, std::vector<Vertex>& vertices, std
 
             vertex.texCoord = {
                 0.0f, 0.0f
+                //attrib.texcoords[2 * index.texcoord_index + 0],
+                //attrib.texcoords[2 * index.texcoord_index + 1]
             };
+
             vertex.color = {1.0f, 1.0f, 1.0f};
 
             if (uniqueVertices.count(vertex) == 0) {

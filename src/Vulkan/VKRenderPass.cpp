@@ -54,7 +54,7 @@ void VKRenderPass::Destroy()
 
 void VKRenderPass::BeginRenderPass(VkCommandBuffer& cmdBuffer, VkFramebuffer& framebuffer, const VkExtent2D& swapextent)
 {
-    VK_LOG("Starting render pass!");
+    // VK_LOG("Starting render pass!");
 	VkRenderPassBeginInfo beginInfo{};
 	beginInfo.sType = VK_STRUCTURE_TYPE_RENDER_PASS_BEGIN_INFO;
 	beginInfo.renderPass = m_RenderPass;

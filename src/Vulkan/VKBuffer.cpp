@@ -13,7 +13,7 @@ void VKBuffer::CreateBuffer(VkDeviceSize size, VkBufferUsageFlags usage, VkMemor
 
     if(VK_CALL(vkCreateBuffer(VKLogicalDevice::GetDeviceManager()->GetLogicalDevice(), &bufferInfo, nullptr, &m_Buffer)))
         throw std::runtime_error("Cannot create vertex buffer!");
-    else VK_LOG_SUCCESS("Buffer successuflly created!");
+    // else VK_LOG_SUCCESS("Buffer successuflly created!");
 
 
     // Get the memory memRequirements of the vertex buffer
