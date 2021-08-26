@@ -33,6 +33,7 @@ namespace std {
 #include "utils/Camera3D.h"
 #include "utils/Transform.h"
 #include "utils/cube.h"
+#include "utils/sphere.h"
 
 #include "Vulkan/VKInstance.h"
 #include "Vulkan/VKDevice.h"
@@ -108,7 +109,13 @@ std::vector<uint16_t> buddaIndices;
 VKVertexBuffer buddaVBO;
 VKIndexBuffer buddaIBO;
 
+// Cube
 VKVertexBuffer cubeVBO;
+
+// Sphere
+std::vector<Vertex> sphereVertexData;
+VKVertexBuffer sphereVBO;
+VKIndexBuffer sphereIBO;
 
 // Descriptor and uniforms shit!
 VKUniformBuffer mvpUniformBuffer;
@@ -121,7 +128,7 @@ VkDescriptorPool imguiDescriptorPool;
 VkCommandBuffer imguiCmdBuffer;
 VKCmdBuffer imguiCmdBuffers;
 float clearColor[4] = {0.24, 0.24, 0.24, 1.0f};
-bool enableWireframe = false;
+bool enableWireframe = true;
 
 //Grid image texure
 VKTexture gridTexture;

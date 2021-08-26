@@ -220,7 +220,7 @@ void Application::MainLoop()
         // ImGuizmo::SetRect(0, 0, swapchainManager.GetSwapExtent().width, swapchainManager.GetSwapExtent().height);
         float windowWidth = (float)ImGui::GetWindowWidth();
         float windowHeight = (float)ImGui::GetWindowHeight();
-        VK_LOG("X : ", ImGui::GetWindowPos().x, ", Y : ", ImGui::GetWindowPos().y);
+        // VK_LOG("X : ", ImGui::GetWindowPos().x, ", Y : ", ImGui::GetWindowPos().y);
         // ImGuizmo::SetRect(ImGui::GetWindowPos().x, ImGui::GetWindowPos().y, windowWidth, windowHeight);
         ImGuizmo::SetRect(ImGui::GetWindowPos().x - (windowWidth / 2), ImGui::GetWindowPos().y - (windowHeight / 2), swapchainManager.GetSwapExtent().width, swapchainManager.GetSwapExtent().height);
         OnImGui();
@@ -401,8 +401,17 @@ void Application::RecreateCommandPipeline()
 
     cubeVBO.Create(cubeVertices, cmdPoolManager);
 
-    // Record the commands
-    // RecordCommands();
+    GenerateSphereSmooth(1, 25, 25);
+    for (size_t i = 0; i < sphereVertices.size(); i++) {
+        Vertex vertex{};
+        vertex.position = sphereVertices[i];
+        vertex.color = sphereNormals[i];
+        vertex.texCoord = sphereUVs[i];
+        sphereVertexData.push_back(vertex);
+    }
+
+    sphereVBO.Create(sphereVertexData, cmdPoolManager);
+    sphereIBO.Create(sphereIndices, cmdPoolManager);
 }
 
 void Application::RecordCommands()
@@ -423,7 +432,7 @@ void Application::RecordCommands()
         triIBO.Bind(cmdBuffers[i]);
 
         // Bind the push contants
-        modelPCData.model = glm::rotate(glm::mat4(1.0f), glm::radians(90.0f), glm::vec3(1.0f, 0.0f, 0.0f));
+        modelPCData.model = glm::rotate(glm::mat4(1.0f), (float)glm::radians(90.0f * sin(glfwGetTime())), glm::vec3(1.0f, 0.0f, 0.0f));
         vkCmdPushConstants(cmdBuffers[i], fixedPipelineFuncs.GetPipelineLayout(), VK_SHADER_STAGE_VERTEX_BIT | VK_SHADER_STAGE_FRAGMENT_BIT, 0, sizeof(DefaultPushConstantData), &modelPCData);
 
 
@@ -441,10 +450,10 @@ void Application::RecordCommands()
         // vkCmdDrawIndexed(cmdBuffers[i], 6, 1, 0, 0, 0);
 
         // Draw the Cube
-        modelPCData.model = modelTransform.transformMatrix;//glm::rotate(glm::mat4(1.0f), glm::radians(0.0f), glm::vec3(1.0f, 0.0f, 0.0f));
-        vkCmdPushConstants(cmdBuffers[i], fixedPipelineFuncs.GetPipelineLayout(), VK_SHADER_STAGE_VERTEX_BIT | VK_SHADER_STAGE_FRAGMENT_BIT, 0, sizeof(DefaultPushConstantData), &modelPCData);
-        cubeVBO.Bind(cmdBuffers[i]);
-        vkCmdDraw(cmdBuffers[i], 36, 1, 0, 0);
+        // modelPCData.model = glm::rotate(glm::mat4(1.0f), (float)glm::radians(90.0f * sin(glfwGetTime())), glm::vec3(1.0f, 0.0f, 0.0f));
+        // vkCmdPushConstants(cmdBuffers[i], fixedPipelineFuncs.GetPipelineLayout(), VK_SHADER_STAGE_VERTEX_BIT | VK_SHADER_STAGE_FRAGMENT_BIT, 0, sizeof(DefaultPushConstantData), &modelPCData);
+        // cubeVBO.Bind(cmdBuffers[i]);
+        // vkCmdDraw(cmdBuffers[i], 36, 1, 0, 0);
 
 
         // Draw the budda model
@@ -452,6 +461,22 @@ void Application::RecordCommands()
         buddaIBO.Bind(cmdBuffers[i]);
         // vkCmdDrawIndexed(cmdBuffers[i], buddaIndices.size(), 1, 0, 0, 0);
         // vkCmdDraw(cmdBuffers[i], buddaVertices.size(), 1, 0, 0);
+
+        // Draw the Sphere
+        sphereVBO.Bind(cmdBuffers[i]);
+        sphereIBO.Bind(cmdBuffers[i]);
+        // modelPCData.model = glm::translate(glm::mat4(1.0f), glm::vec3((float)sin(glfwGetTime()), 1.0f, 1.0f));
+        // vkCmdPushConstants(cmdBuffers[i], fixedPipelineFuncs.GetPipelineLayout(), VK_SHADER_STAGE_VERTEX_BIT | VK_SHADER_STAGE_FRAGMENT_BIT, 0, sizeof(DefaultPushConstantData), &modelPCData);
+        // vkCmdDrawIndexed(cmdBuffers[i], sphereIndices.size(), 1, 0, 0, 0);
+
+        for (float x = -6.0f; x < 11.0f; x+= 4.0f) {
+            for (float y = -6.0f; y < 11.0f; y+= 4.0f) {
+                modelPCData.model = glm::translate(glm::mat4(1.0f), glm::vec3(x, y, 0.5f));
+                vkCmdPushConstants(cmdBuffers[i], fixedPipelineFuncs.GetPipelineLayout(), VK_SHADER_STAGE_VERTEX_BIT | VK_SHADER_STAGE_FRAGMENT_BIT, 0, sizeof(DefaultPushConstantData), &modelPCData);
+                vkCmdDrawIndexed(cmdBuffers[i], sphereIndices.size(), 1, 0, 0, 0);
+            }
+        }
+
 
         renderPassManager.EndRenderPass(cmdBuffers[i]);
 		swapCmdBuffers.EndRecordingBuffer(cmdBuffers[i]);
@@ -484,6 +509,8 @@ void Application::CleanUpCommandListResources()
 {
     framebufferManager.Destroy();
     gridTexture.Destroy();
+    sphereVBO.Destroy();
+    sphereIBO.Destroy();
     cubeVBO.Destroy();
     triVBO.Destroy();
     triIBO.Destroy();
@@ -542,7 +569,7 @@ void Application::OnImGui()
 {
     auto proj = glm::perspective(glm::radians(45.0f), (float)swapchainManager.GetSwapExtent().width / swapchainManager.GetSwapExtent().height, 0.01f, 100.0f);
     // proj[1][1] *= -1;
-    modelTransform = modelTransform.AttachGuizmo(globalOperation, camera.GetViewMatrix(), proj);
+    // modelTransform = modelTransform.AttachGuizmo(globalOperation, camera.GetViewMatrix(), proj);
 
     ImGui::ShowDemoWindow();
     ImGui::Begin("Yeah Bitch!");
@@ -580,7 +607,7 @@ void Application::OnImGui()
     }
     ImGui::End();
 
-    ImGui::Begin("Example Bug");
+    ImGui::Begin("Light Settings");
     {
         ImGui::ColorEdit4("Object Color", &objectColor.r);
         ImGui::ColorEdit4("Light Color", &lightColor.r);
