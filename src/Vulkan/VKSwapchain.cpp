@@ -58,7 +58,7 @@ void VKSwapchain::Init(GLFWwindow* window)
     swcCI.oldSwapchain = VK_NULL_HANDLE;
 
     // Now actually create the swapchainManager
-    if(VK_CALL(vkCreateSwapchainKHR(VKLogicalDevice::GetDeviceManager()->GetLogicalDevice(), &swcCI, nullptr, &m_SwapchainKHR)))
+    if(VK_CALL(vkCreateSwapchainKHR(VKDEVICE, &swcCI, nullptr, &m_SwapchainKHR)))
         throw std::runtime_error("Cannot create the Swapchain!");
     else
         VK_LOG_SUCCESS("Swapchain created successfully!");
@@ -73,8 +73,8 @@ void VKSwapchain::Destroy()
 {
     // Destroy the swpachain image views first
     for (const auto & imageView : m_SwapchainImageViews)
-        vkDestroyImageView(VKLogicalDevice::GetDeviceManager()->GetLogicalDevice(), imageView, nullptr);
-    vkDestroySwapchainKHR(VKLogicalDevice::GetDeviceManager()->GetLogicalDevice(), m_SwapchainKHR, nullptr);
+        vkDestroyImageView(VKDEVICE, imageView, nullptr);
+    vkDestroySwapchainKHR(VKDEVICE, m_SwapchainKHR, nullptr);
 }
 
 void VKSwapchain::querySwapchainProperties()
@@ -143,9 +143,9 @@ VkPresentModeKHR VKSwapchain::choosePresentMode()
 
 void VKSwapchain::RetrieveSwapchainImages()
 {
-    vkGetSwapchainImagesKHR(VKLogicalDevice::GetDeviceManager()->GetLogicalDevice(), m_SwapchainKHR, &m_SwapchainImageCount, nullptr);
+    vkGetSwapchainImagesKHR(VKDEVICE, m_SwapchainKHR, &m_SwapchainImageCount, nullptr);
     m_SwapchainImages.resize(m_SwapchainImageCount);
-    if(VK_CALL(vkGetSwapchainImagesKHR(VKLogicalDevice::GetDeviceManager()->GetLogicalDevice(), m_SwapchainKHR, &m_SwapchainImageCount, m_SwapchainImages.data())))
+    if(VK_CALL(vkGetSwapchainImagesKHR(VKDEVICE, m_SwapchainKHR, &m_SwapchainImageCount, m_SwapchainImages.data())))
         throw std::runtime_error("Cannot retrieve swapchain images!");
     else
         VK_LOG("Swapchain images(", m_SwapchainImageCount, ") have been retrieved succesfully!");
@@ -171,7 +171,7 @@ void VKSwapchain::CreateSwapchainImageViews()
         imvCI.subresourceRange.levelCount = 1;
         imvCI.subresourceRange.baseArrayLayer = 0;
         imvCI.subresourceRange.layerCount = 1;
-        if(VK_CALL(vkCreateImageView(VKLogicalDevice::GetDeviceManager()->GetLogicalDevice(), &imvCI, nullptr, &m_SwapchainImageViews[i])))
+        if(VK_CALL(vkCreateImageView(VKDEVICE, &imvCI, nullptr, &m_SwapchainImageViews[i])))
             throw std::runtime_error("Cannot create image view!");
         else VK_LOG("Image view(id=", i ,") succesfully created!");
     }

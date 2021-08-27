@@ -37,14 +37,14 @@ void VKGraphicsPipeline::Create(std::vector<VkPipelineShaderStageCreateInfo> sha
     graphicsCI.basePipelineHandle   = VK_NULL_HANDLE;
     graphicsCI.basePipelineIndex    = -1;
 
-    if(VK_CALL(vkCreateGraphicsPipelines(VKLogicalDevice::GetDeviceManager()->GetLogicalDevice(), VK_NULL_HANDLE, 1, &graphicsCI, nullptr, &m_GraphicsPipeline)))
+    if(VK_CALL(vkCreateGraphicsPipelines(VKDEVICE, VK_NULL_HANDLE, 1, &graphicsCI, nullptr, &m_GraphicsPipeline)))
         throw std::runtime_error("Cannot create Graphics pipeline!");
     else VK_LOG_SUCCESS("Graphics Pipeline succesfully crreated!");
 }
 
 void VKGraphicsPipeline::Destroy()
 {
-    vkDestroyPipeline(VKLogicalDevice::GetDeviceManager()->GetLogicalDevice(), m_GraphicsPipeline, nullptr);
+    vkDestroyPipeline(VKDEVICE, m_GraphicsPipeline, nullptr);
 }
 
 void VKGraphicsPipeline::Bind(VkCommandBuffer& cmdBuffer)

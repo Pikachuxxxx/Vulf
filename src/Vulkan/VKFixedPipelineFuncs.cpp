@@ -140,12 +140,12 @@ void VKFixedPipelineFuncs::SetPipelineLayout(VkDescriptorSetLayout& layout, VkPu
     layoutCI.pushConstantRangeCount = 1;
     layoutCI.pPushConstantRanges = &pushConstants;
 
-    if(VK_CALL(vkCreatePipelineLayout(VKLogicalDevice::GetDeviceManager()->GetLogicalDevice(), &layoutCI, nullptr, &m_PipelineLayout)))
+    if(VK_CALL(vkCreatePipelineLayout(VKDEVICE, &layoutCI, nullptr, &m_PipelineLayout)))
         throw std::runtime_error("Cannot create pipeline layout");
     else VK_LOG_SUCCESS("Pipeline layout successfully created!");
 }
 
 void VKFixedPipelineFuncs::DestroyPipelineLayout()
 {
-    vkDestroyPipelineLayout(VKLogicalDevice::GetDeviceManager()->GetLogicalDevice(), m_PipelineLayout, nullptr);
+    vkDestroyPipelineLayout(VKDEVICE, m_PipelineLayout, nullptr);
 }

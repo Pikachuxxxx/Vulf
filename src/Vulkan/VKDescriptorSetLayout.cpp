@@ -27,12 +27,12 @@ void VKDescriptorSetLayout::CreateDescriptorSetLayout()
     layoutInfo.bindingCount = static_cast<uint32_t>(bindings.size());
     layoutInfo.pBindings = bindings.data();
 
-    if (VK_CALL(vkCreateDescriptorSetLayout(VKLogicalDevice::GetDeviceManager()->GetLogicalDevice(), &layoutInfo, nullptr, &m_DesciptorLayout))) {
+    if (VK_CALL(vkCreateDescriptorSetLayout(VKDEVICE, &layoutInfo, nullptr, &m_DesciptorLayout))) {
         throw std::runtime_error("failed to create descriptor set layout!");
     }
 }
 
 void VKDescriptorSetLayout::Destroy()
 {
-    vkDestroyDescriptorSetLayout(VKLogicalDevice::GetDeviceManager()->GetLogicalDevice(), m_DesciptorLayout, nullptr);
+    vkDestroyDescriptorSetLayout(VKDEVICE, m_DesciptorLayout, nullptr);
 }

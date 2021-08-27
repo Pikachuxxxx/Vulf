@@ -37,25 +37,25 @@ void VKTexture::CreateTexture(const std::string& path, VKCmdPool& cmdPool)
     imageInfo.samples = VK_SAMPLE_COUNT_1_BIT;
 
     // Create the Image
-    if(VK_CALL(vkCreateImage(VKLogicalDevice::GetDeviceManager()->GetLogicalDevice(), &imageInfo, nullptr, &m_TextureImage)))
+    if(VK_CALL(vkCreateImage(VKDEVICE, &imageInfo, nullptr, &m_TextureImage)))
         throw std::runtime_error("Cannot create texture image");
     else VK_LOG_SUCCESS("Texture VK Image created successuflly");
 
     // Allocate the memory for the image(get the memRequirements) and bind it to the VKTextureImage
     VkMemoryRequirements memRequirements;
-    vkGetImageMemoryRequirements(VKLogicalDevice::GetDeviceManager()->GetLogicalDevice(), m_TextureImage, &memRequirements);
+    vkGetImageMemoryRequirements(VKDEVICE, m_TextureImage, &memRequirements);
 
     VkMemoryAllocateInfo allocInfo{};
     allocInfo.sType = VK_STRUCTURE_TYPE_MEMORY_ALLOCATE_INFO;
     allocInfo.allocationSize = memRequirements.size;
     allocInfo.memoryTypeIndex = VKLogicalDevice::GetDeviceManager()->GetGPUManager().FindMemoryTypeIndex(memRequirements.memoryTypeBits, VK_MEMORY_PROPERTY_DEVICE_LOCAL_BIT);
 
-    if(VK_CALL(vkAllocateMemory(VKLogicalDevice::GetDeviceManager()->GetLogicalDevice(), &allocInfo, nullptr, &m_TextureImageMemory)))
+    if(VK_CALL(vkAllocateMemory(VKDEVICE, &allocInfo, nullptr, &m_TextureImageMemory)))
         throw std::runtime_error("Cannot allocate texture image memroy");
     else VK_LOG_SUCCESS("Successuflly allocated memory for texture");
 
     // Bind the memory
-    vkBindImageMemory(VKLogicalDevice::GetDeviceManager()->GetLogicalDevice(), m_TextureImage, m_TextureImageMemory, 0);
+    vkBindImageMemory(VKDEVICE, m_TextureImage, m_TextureImageMemory, 0);
 
 /*
  *    There are two transitions we need to handle:
@@ -95,7 +95,7 @@ void VKTexture::CreateTexture(const std::string& path, VKCmdPool& cmdPool)
     samplerInfo.minLod = 0.0f;
     samplerInfo.maxLod = 0.0f;
 
-    if (VK_CALL(vkCreateSampler(VKLogicalDevice::GetDeviceManager()->GetLogicalDevice(), &samplerInfo, nullptr, &m_TextureSampler)))
+    if (VK_CALL(vkCreateSampler(VKDEVICE, &samplerInfo, nullptr, &m_TextureSampler)))
        throw std::runtime_error("failed to create texture sampler!");
 
 
@@ -117,7 +117,7 @@ VkImageView VKTexture::CreateImageView(VkImage image, VkFormat format)
     viewInfo.subresourceRange.layerCount = 1;
 
     VkImageView imageView;
-    if(VK_CALL(vkCreateImageView(VKLogicalDevice::GetDeviceManager()->GetLogicalDevice(), &viewInfo, nullptr, &imageView)))
+    if(VK_CALL(vkCreateImageView(VKDEVICE, &viewInfo, nullptr, &imageView)))
         throw std::runtime_error("failed to create texture image view!");
     return imageView;
 }
@@ -191,8 +191,8 @@ void VKTexture::TransitionImageLayout(VkFormat format, VkImageLayout oldLayout, 
 
 void VKTexture::Destroy()
 {
-    vkDestroySampler(VKLogicalDevice::GetDeviceManager()->GetLogicalDevice(), m_TextureSampler, nullptr);
-    vkDestroyImageView(VKLogicalDevice::GetDeviceManager()->GetLogicalDevice(), m_TextureImageView, nullptr);
-    vkDestroyImage(VKLogicalDevice::GetDeviceManager()->GetLogicalDevice(), m_TextureImage, nullptr);
-    vkFreeMemory(VKLogicalDevice::GetDeviceManager()->GetLogicalDevice(), m_TextureImageMemory, nullptr);
+    vkDestroySampler(VKDEVICE, m_TextureSampler, nullptr);
+    vkDestroyImageView(VKDEVICE, m_TextureImageView, nullptr);
+    vkDestroyImage(VKDEVICE, m_TextureImage, nullptr);
+    vkFreeMemory(VKDEVICE, m_TextureImageMemory, nullptr);
 }

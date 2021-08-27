@@ -11,14 +11,14 @@ void VKCmdBuffer::AllocateBuffers(const VkCommandPool& pool)
     allocInfo.level = VK_COMMAND_BUFFER_LEVEL_PRIMARY;
     allocInfo.commandBufferCount = 3;
     m_CommandBuffers.resize(3);
-    if(VK_CALL(vkAllocateCommandBuffers(VKLogicalDevice::GetDeviceManager()->GetLogicalDevice(), &allocInfo, m_CommandBuffers.data())))
+    if(VK_CALL(vkAllocateCommandBuffers(VKDEVICE, &allocInfo, m_CommandBuffers.data())))
         throw std::runtime_error("Cannot create command buffers!");
     // else VK_LOG_SUCCESS("Command Buffers (3) succesfully Allocated!");
 }
 
 void VKCmdBuffer::DestroyBuffer(VkCommandBuffer& buffer)
 {
-    // vkFreeCommandBuffers(VKLogicalDevice::GetDeviceManager()->GetLogicalDevice(), buffer, nullptr);
+    // vkFreeCommandBuffers(VKDEVICE, buffer, nullptr);
 	throw std::runtime_error("Unmiplemented method!");
 }
 

@@ -21,6 +21,8 @@ include_directories(
     "${CMAKE_SOURCE_DIR}/vendor"
     # Vulkan MacOS headers
     $ENV{VULKAN_SDK}/macOS/include
+    # Tracy headers
+    "${CMAKE_SOURCE_DIR}/vendor/tracy"
 )
 
 link_directories(
@@ -41,6 +43,8 @@ include_directories(
     $ENV{VULKAN_SDK}/include
     # ImGui Headers
     "$(CMAKE_SOURCE_DIR)/vendor/ImGui"
+    # Tracy headers
+    "${CMAKE_SOURCE_DIR}/vendor/tracy"
 )
 
 link_directories(
@@ -77,12 +81,14 @@ file(GLOB_RECURSE VENDOR_SOURCE_FILES
     ${CMAKE_SOURCE_DIR}/vendor/ImGuizmo/ImGradient.cpp
     ${CMAKE_SOURCE_DIR}/vendor/ImGuizmo/ImGuizmo.cpp
     ${CMAKE_SOURCE_DIR}/vendor/ImGuizmo/ImSequencer.cpp
+    ${CMAKE_SOURCE_DIR}/vendor/tracy/TracyClient.cpp
 )
 
 # Add source header files
 file(GLOB_RECURSE HEADER_FILES
 	${CMAKE_SOURCE_DIR}/src/*.h
     ${CMAKE_SOURCE_DIR}/src/*.hpp
+    # ${CMAKE_SOURCE_DIR}/vendor/tracy/Tracy.hpp
 )
 
 # file(GLOB_RECURSE VENDOR_HEADER_FILES
@@ -100,6 +106,9 @@ target_link_libraries(HelloVulkan glfw3 vulkan-1)
 endif()
 
 add_custom_command(OUTPUT ${CMAKE_SOURCE_DIR}/src/shaders/spir-v/frag.spv COMMAND ${CMAKE_SOURCE_DIR}/src/shaders/glsl/compile-glsl.sh)
+
+# Global pre-processor defines
+add_compile_definitions(TRACY_ENABLE)
 
 # Run the binary built using 'make run' command
 add_custom_target(run

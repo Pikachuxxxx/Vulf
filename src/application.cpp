@@ -4,6 +4,8 @@
 
 #include <sstream>
 
+#include <Tracy.hpp>
+
 // TibyObj
 #define TINYOBJLOADER_IMPLEMENTATION
 #include <tinyobj/tiny_obj_loader.h>
@@ -47,9 +49,9 @@ void Application::InitVulkan()
     imagesInFlight.resize(3, VK_NULL_HANDLE);
     for (size_t i = 0; i < MAX_FRAMES_IN_FLIGHT; i++)
     {
-        if(VK_CALL(vkCreateSemaphore(VKLogicalDevice::GetDeviceManager()->GetLogicalDevice(), &semaphoreInfo, nullptr, &imageAvailableSemaphores[i])) ||
-        VK_CALL(vkCreateSemaphore(VKLogicalDevice::GetDeviceManager()->GetLogicalDevice(), &semaphoreInfo, nullptr, &renderingFinishedSemaphores[i])) ||
-        VK_CALL(vkCreateFence(VKLogicalDevice::GetDeviceManager()->GetLogicalDevice(), &fenceInfo, nullptr, &inFlightFences[i])))
+        if(VK_CALL(vkCreateSemaphore(VKDEVICE, &semaphoreInfo, nullptr, &imageAvailableSemaphores[i])) ||
+        VK_CALL(vkCreateSemaphore(VKDEVICE, &semaphoreInfo, nullptr, &renderingFinishedSemaphores[i])) ||
+        VK_CALL(vkCreateFence(VKDEVICE, &fenceInfo, nullptr, &inFlightFences[i])))
         {
             throw std::runtime_error("Cannot make semaphore!");
         }
@@ -88,7 +90,7 @@ void Application::InitImGui()
     pool_info.maxSets = 1000 * IM_ARRAYSIZE(pool_sizes);
     pool_info.poolSizeCount = (uint32_t)IM_ARRAYSIZE(pool_sizes);
     pool_info.pPoolSizes = pool_sizes;
-    if(VK_CALL(vkCreateDescriptorPool(VKLogicalDevice::GetDeviceManager()->GetLogicalDevice(), &pool_info, nullptr, &imguiDescriptorPool)))
+    if(VK_CALL(vkCreateDescriptorPool(VKDEVICE, &pool_info, nullptr, &imguiDescriptorPool)))
         throw std::runtime_error("Cannot create ImGui command pool!");
     else VK_LOG_SUCCESS("Imgui Command Pool succesfully created!");
 
@@ -133,7 +135,7 @@ void Application::InitImGui()
     imguiRPInfo.pSubpasses = &imguiSubpassDesc;
     imguiRPInfo.dependencyCount = 1;
     imguiRPInfo.pDependencies = &imguiDependency;
-    if(VK_CALL(vkCreateRenderPass(VKLogicalDevice::GetDeviceManager()->GetLogicalDevice(), &imguiRPInfo, nullptr, &imguiRenderPass)))
+    if(VK_CALL(vkCreateRenderPass(VKDEVICE, &imguiRPInfo, nullptr, &imguiRenderPass)))
         throw std::runtime_error("Cannot create imgui render pass");
     else VK_LOG_SUCCESS("ImGUi Renderpass succesfully created !");
 
@@ -142,7 +144,7 @@ void Application::InitImGui()
     ImGui_ImplVulkan_InitInfo init_info = {};
     init_info.Instance = VKInstance::GetInstanceManager()->GetInstance();
     init_info.PhysicalDevice = VKLogicalDevice::GetDeviceManager()->GetGPUManager().GetGPU();
-    init_info.Device = VKLogicalDevice::GetDeviceManager()->GetLogicalDevice();
+    init_info.Device = VKDEVICE;
     init_info.QueueFamily = VKLogicalDevice::GetDeviceManager()->GetGPUManager().GetGraphicsFamilyIndex();
     init_info.Queue = VKLogicalDevice::GetDeviceManager()->GetGraphicsQueue();
     init_info.PipelineCache = VK_NULL_HANDLE;
@@ -156,7 +158,7 @@ void Application::InitImGui()
     // Get the command buffers for imgui
     imguiCmdBuffer = cmdPoolManager.AllocateBuffer();
 
-    if(VK_CALL(vkResetCommandPool(DEVICE, cmdPoolManager.GetPool(), 0)))
+    if(VK_CALL(vkResetCommandPool(VKDEVICE, cmdPoolManager.GetPool(), 0)))
         throw std::runtime_error("Canot reset imgui command pool!");
     else VK_LOG_SUCCESS("succesfully reset ImGui Command Pool");
 
@@ -177,12 +179,10 @@ void Application::InitImGui()
         throw std::runtime_error("Cannot submit imgui command buffer!");
     else VK_LOG_SUCCESS("succesfully submitted ImGui command buffer!");
 
-    vkDeviceWaitIdle(DEVICE);
+    vkDeviceWaitIdle(VKDEVICE);
     ImGui_ImplVulkan_DestroyFontUploadObjects();
 
-    vkFreeCommandBuffers(VKLogicalDevice::GetDeviceManager()->GetLogicalDevice(), cmdPoolManager.GetPool(), 1, &imguiCmdBuffer);
-
-    // RecordCommands();
+    vkFreeCommandBuffers(VKDEVICE, cmdPoolManager.GetPool(), 1, &imguiCmdBuffer);
 }
 
 void Application::MainLoop()
@@ -232,20 +232,22 @@ void Application::MainLoop()
             ImGui::RenderPlatformWindowsDefault();
         }
 
-        vkDeviceWaitIdle(VKLogicalDevice::GetDeviceManager()->GetLogicalDevice());
+        vkDeviceWaitIdle(VKDEVICE);
         RecordCommands();
         DrawFrame();
+        FrameMark
     }
-    vkDeviceWaitIdle(VKLogicalDevice::GetDeviceManager()->GetLogicalDevice());
+    vkDeviceWaitIdle(VKDEVICE);
 }
 
 void Application::DrawFrame()
 {
-    vkWaitForFences(VKLogicalDevice::GetDeviceManager()->GetLogicalDevice(), 1, &inFlightFences[currentFrame], VK_TRUE, UINT64_MAX);
+    ZoneScopedC(0xff0000)
+    vkWaitForFences(VKDEVICE, 1, &inFlightFences[currentFrame], VK_TRUE, UINT64_MAX);
     // Acquire the image to render onto
     uint32_t imageIndex;
 
-    VkResult result = vkAcquireNextImageKHR(VKLogicalDevice::GetDeviceManager()->GetLogicalDevice(), swapchainManager.GetSwapchainKHR(), UINT64_MAX, imageAvailableSemaphores[currentFrame], VK_NULL_HANDLE, &imageIndex);
+    VkResult result = vkAcquireNextImageKHR(VKDEVICE, swapchainManager.GetSwapchainKHR(), UINT64_MAX, imageAvailableSemaphores[currentFrame], VK_NULL_HANDLE, &imageIndex);
 
     if(result == VK_ERROR_OUT_OF_DATE_KHR) {
         // framebufferResized = false;
@@ -257,7 +259,7 @@ void Application::DrawFrame()
     }
 
     if(imagesInFlight[imageIndex] != VK_NULL_HANDLE)
-        vkWaitForFences(VKLogicalDevice::GetDeviceManager()->GetLogicalDevice(), 1, &imagesInFlight[imageIndex], VK_TRUE, UINT64_MAX);
+        vkWaitForFences(VKDEVICE, 1, &imagesInFlight[imageIndex], VK_TRUE, UINT64_MAX);
     imagesInFlight[imageIndex] = inFlightFences[currentFrame];
 
     // Update the uniform buffer before submitting the commands
@@ -279,7 +281,7 @@ void Application::DrawFrame()
     submitInfo.signalSemaphoreCount = 1;
     submitInfo.pSignalSemaphores = signalSemaphores;
 
-    vkResetFences(VKLogicalDevice::GetDeviceManager()->GetLogicalDevice(), 1, &inFlightFences[currentFrame]);
+    vkResetFences(VKDEVICE, 1, &inFlightFences[currentFrame]);
     if(VK_CALL(vkQueueSubmit(VKLogicalDevice::GetDeviceManager()->GetGraphicsQueue(), 1, &submitInfo, inFlightFences[currentFrame]))) {
         throw std::runtime_error("Cannot submit command buffer!");
     }
@@ -311,9 +313,9 @@ void Application::CleanUp()
 {
     for (size_t i = 0; i < MAX_FRAMES_IN_FLIGHT; i++)
     {
-        vkDestroySemaphore(VKLogicalDevice::GetDeviceManager()->GetLogicalDevice(), imageAvailableSemaphores[i], nullptr);
-        vkDestroySemaphore(VKLogicalDevice::GetDeviceManager()->GetLogicalDevice(), renderingFinishedSemaphores[i], nullptr);
-        vkDestroyFence(VKLogicalDevice::GetDeviceManager()->GetLogicalDevice(), inFlightFences[i], nullptr);
+        vkDestroySemaphore(VKDEVICE, imageAvailableSemaphores[i], nullptr);
+        vkDestroySemaphore(VKDEVICE, renderingFinishedSemaphores[i], nullptr);
+        vkDestroyFence(VKDEVICE, inFlightFences[i], nullptr);
     }
     delete window;
     window = nullptr;
@@ -332,7 +334,7 @@ void Application::CleanUp()
 void Application::RecreateSwapchain()
 {
     VK_LOG_SUCCESS("Recreating Swapchain..........");
-    vkDeviceWaitIdle(VKLogicalDevice::GetDeviceManager()->GetLogicalDevice());
+    vkDeviceWaitIdle(VKDEVICE);
 
     CleanUpCommandListResources();
 
@@ -416,6 +418,8 @@ void Application::RecreateCommandPipeline()
 
 void Application::RecordCommands()
 {
+    ZoneScoped
+
     auto cmdBuffers = swapCmdBuffers.GetBuffers();
     auto framebuffers = framebufferManager.GetFramebuffers();
     auto descriptorSets = mvpUniformBuffer.GetSets();
@@ -477,7 +481,6 @@ void Application::RecordCommands()
             }
         }
 
-
         renderPassManager.EndRenderPass(cmdBuffers[i]);
 		swapCmdBuffers.EndRecordingBuffer(cmdBuffers[i]);
 
@@ -529,6 +532,8 @@ void Application::CleanUpCommandListResources()
 
 void Application::UpdateMVPUBO(uint32_t currentImageIndex)
 {
+    ZoneScoped
+
     UniformBufferObject ubo{};
     // ubo.model = glm::rotate(glm::mat4(1.0f), glm::radians(90.0f), glm::vec3(1.0f, 0.0f, 0.0f));
     ubo.view = camera.GetViewMatrix();
@@ -547,7 +552,7 @@ void Application::UpdateMVPUBO(uint32_t currentImageIndex)
 void Application::CleanUpImGuiResources()
 {
     // ImGUi render pass
-    vkDestroyRenderPass(VKLogicalDevice::GetDeviceManager()->GetLogicalDevice(), imguiRenderPass, nullptr);
+    vkDestroyRenderPass(VKDEVICE, imguiRenderPass, nullptr);
 
     // Resources to destroy when the program ends
     ImGui_ImplVulkan_Shutdown();
@@ -555,7 +560,7 @@ void Application::CleanUpImGuiResources()
     ImGui::DestroyContext();
 
     // Imgui Descriptor pool
-    vkDestroyDescriptorPool(VKLogicalDevice::GetDeviceManager()->GetLogicalDevice(), imguiDescriptorPool, nullptr);
+    vkDestroyDescriptorPool(VKDEVICE, imguiDescriptorPool, nullptr);
 
 }
 /******************************* ImGui Callbacks *******************************/
@@ -567,6 +572,8 @@ void Application::ImGuiError(VkResult err)
 
 void Application::OnImGui()
 {
+    ZoneScoped
+
     auto proj = glm::perspective(glm::radians(45.0f), (float)swapchainManager.GetSwapExtent().width / swapchainManager.GetSwapExtent().height, 0.01f, 100.0f);
     // proj[1][1] *= -1;
     // modelTransform = modelTransform.AttachGuizmo(globalOperation, camera.GetViewMatrix(), proj);
@@ -609,8 +616,8 @@ void Application::OnImGui()
 
     ImGui::Begin("Light Settings");
     {
-        ImGui::ColorEdit4("Object Color", &objectColor.r);
-        ImGui::ColorEdit4("Light Color", &lightColor.r);
+        ImGui::ColorEdit3("Object Color", &objectColor.r);
+        ImGui::ColorEdit3("Light Color", &lightColor.r);
         ImGui::DragFloat3("Light Position", &lightPos.x, 0.1f);
     }
     ImGui::End();

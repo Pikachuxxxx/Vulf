@@ -21,7 +21,7 @@ for (size_t i = 0; i < swapViews.size(); i++) {
     bufCI.height = swapExtent.height;
     bufCI.layers = 1;
 
-    if(VK_CALL(vkCreateFramebuffer(VKLogicalDevice::GetDeviceManager()->GetLogicalDevice(), &bufCI, nullptr, &m_Framebuffers[i])))
+    if(VK_CALL(vkCreateFramebuffer(VKDEVICE, &bufCI, nullptr, &m_Framebuffers[i])))
         throw std::runtime_error("Cannot create framebuffer!");
     // else VK_LOG("Framebuffer ", i ,"succesfully created!");
 }
@@ -30,6 +30,6 @@ for (size_t i = 0; i < swapViews.size(); i++) {
 void VKFramebuffer::Destroy()
 {
     for (auto framebuffer : m_Framebuffers) {
-        vkDestroyFramebuffer(VKLogicalDevice::GetDeviceManager()->GetLogicalDevice(), framebuffer, nullptr);
+        vkDestroyFramebuffer(VKDEVICE, framebuffer, nullptr);
     }
 }

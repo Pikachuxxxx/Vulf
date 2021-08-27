@@ -9,9 +9,10 @@
 
 struct UniformBufferObject
 {
-    // alignas(16) glm::mat4 model;
     alignas(16) glm::mat4 view;
     alignas(16) glm::mat4 proj;
+    alignas(16) glm::mat4 _padding1;
+    alignas(16) glm::mat4 _padding2;
 };
 
 struct LightUniformBufferObject
@@ -19,6 +20,7 @@ struct LightUniformBufferObject
     alignas(16) glm::vec3 objectColor;
     alignas(16) glm::vec3 lightColor;
     alignas(16) glm::vec3 lightPos;
+    alignas(16) glm::vec3 _padding;
 };
 
 class VKUniformBuffer

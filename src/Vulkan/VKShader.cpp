@@ -14,7 +14,7 @@ void VKShader::CreateShader(const std::string& path, ShaderType type)
     shaderCI.codeSize = byteCode.size();
     shaderCI.pCode = reinterpret_cast<uint32_t*>(byteCode.data());
 
-    if(VK_CALL(vkCreateShaderModule(VKLogicalDevice::GetDeviceManager()->GetLogicalDevice(), &shaderCI, nullptr, &m_Module)))
+    if(VK_CALL(vkCreateShaderModule(VKDEVICE, &shaderCI, nullptr, &m_Module)))
         throw std::runtime_error("Cannot Create shader module!");
     else VK_LOG(GetShaderTypeString(), " shader module created!");
 
@@ -36,7 +36,7 @@ void VKShader::CreateShader(const std::string& path, ShaderType type)
 
 void VKShader::DestroyModule()
 {
-    vkDestroyShaderModule(VKLogicalDevice::GetDeviceManager()->GetLogicalDevice(), m_Module, nullptr);
+    vkDestroyShaderModule(VKDEVICE, m_Module, nullptr);
 }
 
 std::string VKShader::GetShaderTypeString()

@@ -42,14 +42,14 @@ void VKRenderPass::Init(const VkFormat& format)
     renderpassCI.dependencyCount = 1;
     renderpassCI.pDependencies = &dependency;
 
-    if(VK_CALL(vkCreateRenderPass(VKLogicalDevice::GetDeviceManager()->GetLogicalDevice(), &renderpassCI, nullptr, &m_RenderPass)))
+    if(VK_CALL(vkCreateRenderPass(VKDEVICE, &renderpassCI, nullptr, &m_RenderPass)))
         throw std::runtime_error("Cannot create render pass");
     else VK_LOG_SUCCESS("Render pass succesfully created!");
 }
 
 void VKRenderPass::Destroy()
 {
-    vkDestroyRenderPass(VKLogicalDevice::GetDeviceManager()->GetLogicalDevice(), m_RenderPass, nullptr);
+    vkDestroyRenderPass(VKDEVICE, m_RenderPass, nullptr);
 }
 
 void VKRenderPass::BeginRenderPass(VkCommandBuffer& cmdBuffer, VkFramebuffer& framebuffer, const VkExtent2D& swapextent)
