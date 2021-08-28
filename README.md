@@ -25,7 +25,7 @@ This sandbox has a very simple and brief ImGui integration that makes it easy to
 ![](demo/democam.png)
 ![](demo/demomodel.png)
 ![](demo/texmapping.png)
-![](demo/lightsvulkan.png)
+![](demo/guizmo.png)
 
 ### ImGUI Integration in a nutshell
 - Create a descriptor pool with different size as provided in [frguthmann](https://frguthmann.github.io/posts/vulkan_imgui/) tutorial, next use a single time command buffer to upload the font to GPU using a single queueSubmit. Next create multiple command buffers for each swapchain image and use ImGUI spedicif renderpass also explained how to do by frguthmann and in the DrawFrame submit 2 commandBuffers combined in an array and Voila you have Dear ImGui!

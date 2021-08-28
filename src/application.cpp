@@ -574,9 +574,9 @@ void Application::OnImGui()
 {
     ZoneScoped
 
-    auto proj = glm::perspective(glm::radians(45.0f), (float)swapchainManager.GetSwapExtent().width / swapchainManager.GetSwapExtent().height, 0.01f, 100.0f);
+    auto proj = glm::perspective(glm::radians(45.0f), (float)swapchainManager.GetSwapExtent().width  / swapchainManager.GetSwapExtent().height, 0.01f, 100.0f);
     // proj[1][1] *= -1;
-    // modelTransform = modelTransform.AttachGuizmo(globalOperation, camera.GetViewMatrix(), proj);
+    modelTransform = modelTransform.AttachGuizmo(globalOperation, camera.GetViewMatrix(), proj);
 
     ImGui::ShowDemoWindow();
     ImGui::Begin("Yeah Bitch!");
