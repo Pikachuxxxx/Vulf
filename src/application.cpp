@@ -23,16 +23,27 @@ void Application::InitWindow()
 {
     // Create the window
     window = new Window("Hello Vulkan again!", 800, 600);
+    GenerateSphereSmooth(1, 32, 32);
+    GenerateQuadSphere(1, 32, 32);
+    for (size_t i = 0; i < sphereVertices.size(); i++) {
+        Vertex vertex{};
+        vertex.position = sphereVertices[i];
+        vertex.color = sphereNormals[i];
+        vertex.texCoord = sphereUVs[i];
+        sphereVertexData.push_back(vertex);
+    }
+
 }
 
 void Application::InitVulkan()
 {
-    VKInstance::GetInstanceManager()->Init("Hello Vulkan", window->getGLFWwindow());
+    VKInstance::GetInstanceManager()->Init("Hello Vulkan", window->getGLFWwindow(), true);
 
     VKLogicalDevice::GetDeviceManager()->Init();
 
     vertexShader.CreateShader("./src/shaders/spir-v/vert.spv", ShaderType::VERTEX_SHADER);
     fragmentShader.CreateShader("./src/shaders/spir-v/frag.spv", ShaderType::FRAGMENT_SHADER);
+    outlineFragmentShader.CreateShader("./src/shaders/spir-v/outline.spv", ShaderType::FRAGMENT_SHADER);
 
     cmdPoolManager.Init();
     RecreateCommandPipeline();
@@ -327,20 +338,11 @@ void Application::CleanUp()
     CleanUpCommandListResources();
     vertexShader.DestroyModule();
     fragmentShader.DestroyModule();
+    outlineFragmentShader.DestroyModule();
     VKLogicalDevice::GetDeviceManager()->Destroy();
     VKInstance::GetInstanceManager()->Destroy();
 }
 /******************************************************************************/
-void Application::RecreateSwapchain()
-{
-    VK_LOG_SUCCESS("Recreating Swapchain..........");
-    vkDeviceWaitIdle(VKDEVICE);
-
-    CleanUpCommandListResources();
-
-    RecreateCommandPipeline();
-    RecordCommands();
-}
 
 void Application::RecreateCommandPipeline()
 {
@@ -354,7 +356,7 @@ void Application::RecreateCommandPipeline()
     fixedPipelineFuncs.SetColorBlendSCI();
     fixedPipelineFuncs.SetDynamicSCI();
 
-    wireframeFixedPipelineFuncs.SetInputAssemblyStageInfo(VK_PRIMITIVE_TOPOLOGY_TRIANGLE_LIST);
+    wireframeFixedPipelineFuncs.SetInputAssemblyStageInfo(VK_PRIMITIVE_TOPOLOGY_LINE_STRIP);
     wireframeFixedPipelineFuncs.SetViewportSCI(swapchainManager.GetSwapExtent());
     wireframeFixedPipelineFuncs.SetRasterizerSCI(true);
     wireframeFixedPipelineFuncs.SetMultiSampleSCI();
@@ -362,8 +364,9 @@ void Application::RecreateCommandPipeline()
     wireframeFixedPipelineFuncs.SetColorBlendSCI();
     wireframeFixedPipelineFuncs.SetDynamicSCI();
 
+
     // Create the texture
-    gridTexture.CreateTexture("./data/textures/TestGrid_1024.png", cmdPoolManager);
+    gridTexture.CreateTexture("./data/textures/planet.png", cmdPoolManager);
 
     // Create the push contants
     VkPushConstantRange modelPushConstant;
@@ -374,14 +377,49 @@ void Application::RecreateCommandPipeline()
     // Create the uniform buffer
     mvpUniformBuffer.CreateUniformBuffer(swapchainManager.GetSwapImageCount(), gridTexture);
     auto layout = mvpUniformBuffer.GetDescriptorSetLayout();
+
     fixedPipelineFuncs.SetPipelineLayout(layout, modelPushConstant);
     wireframeFixedPipelineFuncs.SetPipelineLayout(layout, modelPushConstant);
 
     renderPassManager.Init(swapchainManager.GetSwapFormat());
     std::vector<VkPipelineShaderStageCreateInfo>  shaderInfo = {vertexShader.GetShaderStageInfo(), fragmentShader.GetShaderStageInfo()};
+    // std::vector<VkPipelineShaderStageCreateInfo>  outlineShaderInfo = {vertexShader.GetShaderStageInfo(), outlineFragmentShader.GetShaderStageInfo()};
+
+    fixedTopologyPipelines.resize(5);
+    wireframeFixedTopologyPipelineFuncs.resize(5);
+    graphicsPipelines.resize(5);
+    wireframeGraphicsPipelines.resize(5);
+
+    for (size_t i = 0; i <= 4; i++) {
+        fixedTopologyPipelines[i].SetInputAssemblyStageInfo((VkPrimitiveTopology)i);
+        fixedTopologyPipelines[i].SetViewportSCI(swapchainManager.GetSwapExtent());
+        fixedTopologyPipelines[i].SetRasterizerSCI(false);
+        fixedTopologyPipelines[i].SetMultiSampleSCI();
+        fixedTopologyPipelines[i].SetDepthStencilSCI();
+        fixedTopologyPipelines[i].SetColorBlendSCI();
+        fixedTopologyPipelines[i].SetDynamicSCI();
+
+        // Wireframe mode fixed functions
+        wireframeFixedTopologyPipelineFuncs[i].SetInputAssemblyStageInfo((VkPrimitiveTopology)i);
+        wireframeFixedTopologyPipelineFuncs[i].SetViewportSCI(swapchainManager.GetSwapExtent());
+        wireframeFixedTopologyPipelineFuncs[i].SetRasterizerSCI(true);
+        wireframeFixedTopologyPipelineFuncs[i].SetMultiSampleSCI();
+        wireframeFixedTopologyPipelineFuncs[i].SetDepthStencilSCI();
+        wireframeFixedTopologyPipelineFuncs[i].SetColorBlendSCI();
+        wireframeFixedTopologyPipelineFuncs[i].SetDynamicSCI();
+        wireframeFixedTopologyPipelineFuncs[i].SetPipelineLayout(layout, modelPushConstant);
+
+        fixedTopologyPipelines[i].SetPipelineLayout(layout, modelPushConstant);
+        wireframeFixedTopologyPipelineFuncs[i].SetPipelineLayout(layout, modelPushConstant);
+
+        // Create the corresponding graphics pipelines (wireframe and non-wireframe mode)
+        graphicsPipelines[i].Create(shaderInfo, fixedTopologyPipelines[i], renderPassManager.GetRenderPass());
+        wireframeGraphicsPipelines[i].Create(shaderInfo, wireframeFixedTopologyPipelineFuncs[i], renderPassManager.GetRenderPass());
+    }
 
     graphicsPipeline.Create(shaderInfo, fixedPipelineFuncs, renderPassManager.GetRenderPass());
     wireframeGraphicsPipeline.Create(shaderInfo, wireframeFixedPipelineFuncs, renderPassManager.GetRenderPass());
+    // wireframeOutlineGraphicsPipeline.Create(outlineShaderInfo, wireframeFixedPipelineFuncs, renderPassManager.GetRenderPass());
 
     framebufferManager.Create(renderPassManager.GetRenderPass(), swapchainManager.GetSwapImageViews(), swapchainManager.GetSwapExtent());
 
@@ -396,24 +434,17 @@ void Application::RecreateCommandPipeline()
     quadIBO.Create(whiteQuadIndices, cmdPoolManager);
 
     // Budda vbo and  ibo
-    LoadModel("./data/models/quad.obj", buddaVertices, buddaIndices);
-    std::cout << "Verts " << buddaVertices.size() << std::endl;
+    // LoadModel("./data/models/quad.obj", buddaVertices, buddaIndices, buddaQuadIndices);
+    LoadModel("./data/models/lowpolyQuadSphere.obj", buddaVertices, buddaIndices, buddaQuadIndices, false);
     buddaVBO.Create(buddaVertices, cmdPoolManager);
     buddaIBO.Create(buddaIndices, cmdPoolManager);
+    buddaQuadIBO.Create(buddaQuadIndices, cmdPoolManager);
 
     cubeVBO.Create(cubeVertices, cmdPoolManager);
 
-    GenerateSphereSmooth(1, 25, 25);
-    for (size_t i = 0; i < sphereVertices.size(); i++) {
-        Vertex vertex{};
-        vertex.position = sphereVertices[i];
-        vertex.color = sphereNormals[i];
-        vertex.texCoord = sphereUVs[i];
-        sphereVertexData.push_back(vertex);
-    }
-
     sphereVBO.Create(sphereVertexData, cmdPoolManager);
     sphereIBO.Create(sphereIndices, cmdPoolManager);
+    sphereQuadIBO.Create(sphereQuadIndices, cmdPoolManager);
 }
 
 void Application::RecordCommands()
@@ -427,57 +458,89 @@ void Application::RecordCommands()
         swapCmdBuffers.RecordBuffer(cmdBuffers[i]);
         // renderPassManager.SetClearColor(0.85, 0.44, 0.48);
         renderPassManager.BeginRenderPass(cmdBuffers[i], framebuffers[i], swapchainManager.GetSwapExtent());
-        if(!enableWireframe)
-            graphicsPipeline.Bind(cmdBuffers[i]);
-        else
-            wireframeGraphicsPipeline.Bind(cmdBuffers[i]);
+        // if(!enableWireframe)
+        //     graphicsPipeline.Bind(cmdBuffers[i]);
+        // else
+        //     wireframeGraphicsPipeline.Bind(cmdBuffers[i]);
+
+        // Select the wireframe or non-wireframe graphics pipeline based on the primite mode
+        if(!enableWireframe) {
+            graphicsPipelines[topologyPipelineID].Bind(cmdBuffers[i]);
+            vkCmdBindDescriptorSets(cmdBuffers[i], VK_PIPELINE_BIND_POINT_GRAPHICS, fixedTopologyPipelines[topologyPipelineID].GetPipelineLayout(), 0, 1, &descriptorSets[i], 0, nullptr);
+        }
+        else {
+            wireframeGraphicsPipelines[topologyPipelineID].Bind(cmdBuffers[i]);
+            vkCmdBindDescriptorSets(cmdBuffers[i], VK_PIPELINE_BIND_POINT_GRAPHICS, wireframeFixedTopologyPipelineFuncs[topologyPipelineID].GetPipelineLayout(), 0, 1, &descriptorSets[i], 0, nullptr);
+        }
+
         // Bind buffer to the comands
         triVBO.Bind(cmdBuffers[i]);
         triIBO.Bind(cmdBuffers[i]);
 
         // Bind the push contants
-        modelPCData.model = glm::rotate(glm::mat4(1.0f), (float)glm::radians(90.0f * sin(glfwGetTime())), glm::vec3(1.0f, 0.0f, 0.0f));
+        modelPCData.model = glm::rotate(glm::mat4(1.0f), (float)glm::radians(90.0f * 2.0f), glm::vec3(0.0f, 1.0f, 0.0f));
         vkCmdPushConstants(cmdBuffers[i], fixedPipelineFuncs.GetPipelineLayout(), VK_SHADER_STAGE_VERTEX_BIT | VK_SHADER_STAGE_FRAGMENT_BIT, 0, sizeof(DefaultPushConstantData), &modelPCData);
 
-
         // Bind the descriptor sets
-        if(!enableWireframe)
-            vkCmdBindDescriptorSets(cmdBuffers[i], VK_PIPELINE_BIND_POINT_GRAPHICS, fixedPipelineFuncs.GetPipelineLayout(), 0, 1, &descriptorSets[i], 0, nullptr);
-        else
-            vkCmdBindDescriptorSets(cmdBuffers[i], VK_PIPELINE_BIND_POINT_GRAPHICS, wireframeFixedPipelineFuncs.GetPipelineLayout(), 0, 1, &descriptorSets[i], 0, nullptr);
+        // if(!enableWireframe)
+        //     vkCmdBindDescriptorSets(cmdBuffers[i], VK_PIPELINE_BIND_POINT_GRAPHICS, fixedPipelineFuncs.GetPipelineLayout(), 0, 1, &descriptorSets[i], 0, nullptr);
+        // else
+        //     vkCmdBindDescriptorSets(cmdBuffers[i], VK_PIPELINE_BIND_POINT_GRAPHICS, wireframeFixedPipelineFuncs.GetPipelineLayout(), 0, 1, &descriptorSets[i], 0, nullptr);
 
         // Issue the draw command for the super big quad
         // vkCmdDrawIndexed(cmdBuffers[i], 6, 1, 0, 0, 0);
         // Drawing another white quad
-        quadVBO.Bind(cmdBuffers[i]);
-        quadIBO.Bind(cmdBuffers[i]);
-        // vkCmdDrawIndexed(cmdBuffers[i], 6, 1, 0, 0, 0);
+        // quadVBO.Bind(cmdBuffers[i]);
+        // quadIBO.Bind(cmdBuffers[i]);
+        // vkCmdDrawIndexed(cmdBuffers[i], 5, 1, 0, 0, 0);
 
         // Draw the Cube
-        // modelPCData.model = glm::rotate(glm::mat4(1.0f), (float)glm::radians(90.0f * sin(glfwGetTime())), glm::vec3(1.0f, 0.0f, 0.0f));
-        // vkCmdPushConstants(cmdBuffers[i], fixedPipelineFuncs.GetPipelineLayout(), VK_SHADER_STAGE_VERTEX_BIT | VK_SHADER_STAGE_FRAGMENT_BIT, 0, sizeof(DefaultPushConstantData), &modelPCData);
-        // cubeVBO.Bind(cmdBuffers[i]);
+        // modelPCData.model = g lm::rotate(glm::mat4(1.0f), (float)glm::radians(90.0f * sin(glfwGetTime())), glm::vec3(1.0f, 0.0f, 0.0f));
+        vkCmdPushConstants(cmdBuffers[i], fixedPipelineFuncs.GetPipelineLayout(), VK_SHADER_STAGE_VERTEX_BIT | VK_SHADER_STAGE_FRAGMENT_BIT, 0, sizeof(DefaultPushConstantData), &modelPCData);
+        cubeVBO.Bind(cmdBuffers[i]);
         // vkCmdDraw(cmdBuffers[i], 36, 1, 0, 0);
 
 
         // Draw the budda model
         buddaVBO.Bind(cmdBuffers[i]);
         buddaIBO.Bind(cmdBuffers[i]);
-        // vkCmdDrawIndexed(cmdBuffers[i], buddaIndices.size(), 1, 0, 0, 0);
-        // vkCmdDraw(cmdBuffers[i], buddaVertices.size(), 1, 0, 0);
+        // buddaQuadIBO.Bind(cmdBuffers[i]);
+        modelPCData.model = glm::translate(glm::mat4(1.0f), glm::vec3(0.0f, 0.0f, -2.5f));
+        modelPCData.model *= glm::rotate(glm::mat4(1.0f), (float)glm::radians(0.0f), glm::vec3(1.0f, 0.0f, 0.0f));
+        modelPCData.model *= glm::scale(glm::mat4(1.0f), glm::vec3(1.0f));
+        vkCmdPushConstants(cmdBuffers[i], fixedPipelineFuncs.GetPipelineLayout(), VK_SHADER_STAGE_VERTEX_BIT | VK_SHADER_STAGE_FRAGMENT_BIT, 0, sizeof(DefaultPushConstantData), &modelPCData);
+        vkCmdDrawIndexed(cmdBuffers[i], buddaIndices.size(), 1, 0, 0, 0);
+
+        // Quad mesh budda
+        modelPCData.model = glm::translate(glm::mat4(1.0f), glm::vec3(3.0f, 0.0f, -2.5f));
+        modelPCData.model *= glm::rotate(glm::mat4(1.0f), (float)glm::radians(0.0f), glm::vec3(1.0f, 0.0f, 0.0f));
+        modelPCData.model *= glm::scale(glm::mat4(1.0f), glm::vec3(1.0f));
+        vkCmdPushConstants(cmdBuffers[i], fixedPipelineFuncs.GetPipelineLayout(), VK_SHADER_STAGE_VERTEX_BIT | VK_SHADER_STAGE_FRAGMENT_BIT, 0, sizeof(DefaultPushConstantData), &modelPCData);
+        vkCmdDrawIndexed(cmdBuffers[i], buddaQuadIndices.size(), 1, 0, 0, 0);
 
         // Draw the Sphere
         sphereVBO.Bind(cmdBuffers[i]);
-        sphereIBO.Bind(cmdBuffers[i]);
         // modelPCData.model = glm::translate(glm::mat4(1.0f), glm::vec3((float)sin(glfwGetTime()), 1.0f, 1.0f));
         // vkCmdPushConstants(cmdBuffers[i], fixedPipelineFuncs.GetPipelineLayout(), VK_SHADER_STAGE_VERTEX_BIT | VK_SHADER_STAGE_FRAGMENT_BIT, 0, sizeof(DefaultPushConstantData), &modelPCData);
         // vkCmdDrawIndexed(cmdBuffers[i], sphereIndices.size(), 1, 0, 0, 0);
 
         for (float x = -6.0f; x < 11.0f; x+= 4.0f) {
             for (float y = -6.0f; y < 11.0f; y+= 4.0f) {
+                sphereIBO.Bind(cmdBuffers[i]);
                 modelPCData.model = glm::translate(glm::mat4(1.0f), glm::vec3(x, y, 0.5f));
-                vkCmdPushConstants(cmdBuffers[i], fixedPipelineFuncs.GetPipelineLayout(), VK_SHADER_STAGE_VERTEX_BIT | VK_SHADER_STAGE_FRAGMENT_BIT, 0, sizeof(DefaultPushConstantData), &modelPCData);
+                modelPCData.model *= glm::rotate(glm::mat4(1.0f), glm::radians(90.0f), glm::vec3(1.0f, 0.0f, 0.0f));
+                vkCmdPushConstants(cmdBuffers[i], fixedTopologyPipelines[topologyPipelineID].GetPipelineLayout(), VK_SHADER_STAGE_VERTEX_BIT | VK_SHADER_STAGE_FRAGMENT_BIT, 0, sizeof(DefaultPushConstantData), &modelPCData);
                 vkCmdDrawIndexed(cmdBuffers[i], sphereIndices.size(), 1, 0, 0, 0);
+
+                // Scale and draw the outline again
+                // Bind the outline pipeline
+                // sphereQuadIBO.Bind(cmdBuffers[i]);
+                // // Scale and upload the model matrix
+                // modelPCData.model *= glm::scale(glm::mat4(1.0f), glm::vec3(1.01f));
+                // vkCmdPushConstants(cmdBuffers[i], wireframeFixedTopologyPipelineFuncs[topologyPipelineID].GetPipelineLayout(), VK_SHADER_STAGE_VERTEX_BIT | VK_SHADER_STAGE_FRAGMENT_BIT, 0, sizeof(DefaultPushConstantData), &modelPCData);
+                // // Draw again
+                // vkCmdDrawIndexed(cmdBuffers[i], sphereQuadIndices.size(), 1, 0, 0, 0);
+
             }
         }
 
@@ -508,26 +571,15 @@ void Application::RecordCommands()
     }
 }
 
-void Application::CleanUpCommandListResources()
+void Application::RecreateSwapchain()
 {
-    framebufferManager.Destroy();
-    gridTexture.Destroy();
-    sphereVBO.Destroy();
-    sphereIBO.Destroy();
-    cubeVBO.Destroy();
-    triVBO.Destroy();
-    triIBO.Destroy();
-    quadVBO.Destroy();
-    quadIBO.Destroy();
-    buddaVBO.Destroy();
-    buddaIBO.Destroy();
-    mvpUniformBuffer.Destroy();
-    graphicsPipeline.Destroy();
-    wireframeGraphicsPipeline.Destroy();
-    renderPassManager.Destroy();
-    fixedPipelineFuncs.DestroyPipelineLayout();
-    wireframeFixedPipelineFuncs.DestroyPipelineLayout();
-    swapchainManager.Destroy();
+    VK_LOG_SUCCESS("Recreating Swapchain..........");
+    vkDeviceWaitIdle(VKDEVICE);
+
+    CleanUpCommandListResources();
+
+    RecreateCommandPipeline();
+    RecordCommands();
 }
 
 void Application::UpdateMVPUBO(uint32_t currentImageIndex)
@@ -547,6 +599,44 @@ void Application::UpdateMVPUBO(uint32_t currentImageIndex)
 
     mvpUniformBuffer.UpdateBuffer(ubo, currentImageIndex);
     mvpUniformBuffer.UpdateLightBuffer(lightUBO, currentImageIndex);
+}
+
+void Application::CleanUpCommandListResources()
+{
+    framebufferManager.Destroy();
+    gridTexture.Destroy();
+    sphereVBO.Destroy();
+    sphereIBO.Destroy();
+    sphereQuadIBO.Destroy();
+    cubeVBO.Destroy();
+    triVBO.Destroy();
+    triIBO.Destroy();
+    quadVBO.Destroy();
+    quadIBO.Destroy();
+    buddaVBO.Destroy();
+    buddaIBO.Destroy();
+    buddaQuadIBO.Destroy();
+    mvpUniformBuffer.Destroy();
+    graphicsPipeline.Destroy();
+    wireframeGraphicsPipeline.Destroy();
+    renderPassManager.Destroy();
+    fixedPipelineFuncs.DestroyPipelineLayout();
+    wireframeFixedPipelineFuncs.DestroyPipelineLayout();
+
+    for (size_t i = 0; i <= 4; i++) {
+        std::cout << "\033[4;33;49m Deleting Pipeline layouts \033[0m" << std::endl;
+
+        graphicsPipelines[i].Destroy();
+        wireframeGraphicsPipelines[i].Destroy();
+        fixedTopologyPipelines[i].DestroyPipelineLayout();
+        wireframeFixedTopologyPipelineFuncs[i].DestroyPipelineLayout();
+    }
+    graphicsPipelines.clear();
+    wireframeGraphicsPipelines.clear();
+    fixedTopologyPipelines.clear();
+    wireframeFixedTopologyPipelineFuncs.clear();
+
+    swapchainManager.Destroy();
 }
 
 void Application::CleanUpImGuiResources()
@@ -577,6 +667,7 @@ void Application::OnImGui()
     auto proj = glm::perspective(glm::radians(45.0f), (float)swapchainManager.GetSwapExtent().width  / swapchainManager.GetSwapExtent().height, 0.01f, 100.0f);
     // proj[1][1] *= -1;
     modelTransform = modelTransform.AttachGuizmo(globalOperation, camera.GetViewMatrix(), proj);
+    lightPos = glm::vec3(modelTransform.position.x, modelTransform.position.y, -modelTransform.position.z);
 
     ImGui::ShowDemoWindow();
     ImGui::Begin("Yeah Bitch!");
@@ -625,18 +716,209 @@ void Application::OnImGui()
 
 void Application::OnUpdate(double dt) { }
 
-void Application::LoadModel(std::string path, std::vector<Vertex>& vertices, std::vector<uint16_t>& indices)
+static void PrintInfo(const tinyobj::attrib_t& attrib,
+                      const std::vector<tinyobj::shape_t>& shapes,
+                      const std::vector<tinyobj::material_t>& materials) {
+  std::cout << "# of vertices  : " << (attrib.vertices.size() / 3) << std::endl;
+  std::cout << "# of normals   : " << (attrib.normals.size() / 3) << std::endl;
+  std::cout << "# of texcoords : " << (attrib.texcoords.size() / 2)
+            << std::endl;
+
+  std::cout << "# of shapes    : " << shapes.size() << std::endl;
+  std::cout << "# of materials : " << materials.size() << std::endl;
+
+  // for (size_t v = 0; v < attrib.vertices.size() / 3; v++) {
+  //   printf("  v[%ld] = (%f, %f, %f)\n", static_cast<long>(v),
+  //          static_cast<const double>(attrib.vertices[3 * v + 0]),
+  //          static_cast<const double>(attrib.vertices[3 * v + 1]),
+  //          static_cast<const double>(attrib.vertices[3 * v + 2]));
+  // }
+
+  // for (size_t v = 0; v < attrib.normals.size() / 3; v++) {
+  //   printf("  n[%ld] = (%f, %f, %f)\n", static_cast<long>(v),
+  //          static_cast<const double>(attrib.normals[3 * v + 0]),
+  //          static_cast<const double>(attrib.normals[3 * v + 1]),
+  //          static_cast<const double>(attrib.normals[3 * v + 2]));
+  // }
+
+  // for (size_t v = 0; v < attrib.texcoords.size() / 2; v++) {
+  //   printf("  uv[%ld] = (%f, %f)\n", static_cast<long>(v),
+  //          static_cast<const double>(attrib.texcoords[2 * v + 0]),
+  //          static_cast<const double>(attrib.texcoords[2 * v + 1]));
+  // }
+
+  // For each shape
+  for (size_t i = 0; i < shapes.size(); i++) {
+    printf("shape[%ld].name = %s\n", static_cast<long>(i),
+           shapes[i].name.c_str());
+    printf("Size of shape[%ld].mesh.indices: %lu\n", static_cast<long>(i),
+           static_cast<unsigned long>(shapes[i].mesh.indices.size()));
+    printf("Size of shape[%ld].lines.indices: %lu\n", static_cast<long>(i),
+           static_cast<unsigned long>(shapes[i].lines.indices.size()));
+    printf("Size of shape[%ld].points.indices: %lu\n", static_cast<long>(i),
+           static_cast<unsigned long>(shapes[i].points.indices.size()));
+
+    size_t index_offset = 0;
+
+    assert(shapes[i].mesh.num_face_vertices.size() ==
+           shapes[i].mesh.material_ids.size());
+
+    assert(shapes[i].mesh.num_face_vertices.size() ==
+           shapes[i].mesh.smoothing_group_ids.size());
+
+    printf("shape[%ld].num_faces: %lu\n", static_cast<long>(i),
+           static_cast<unsigned long>(shapes[i].mesh.num_face_vertices.size()));
+
+    // For each face
+    for (size_t f = 0; f < shapes[i].mesh.num_face_vertices.size(); f++)
+    {
+      size_t fnum = shapes[i].mesh.num_face_vertices[f];
+
+      printf("  face[%ld].fnum = %ld\n", static_cast<long>(f),
+             static_cast<unsigned long>(fnum));
+
+      // For each vertex in the face
+      for (size_t v = 0; v < fnum; v++) {
+        tinyobj::index_t idx = shapes[i].mesh.indices[index_offset + v];
+        printf("    face[%ld].v[%ld].idx = %d/%d/%d\n", static_cast<long>(f),
+               static_cast<long>(v), idx.vertex_index, idx.normal_index,
+               idx.texcoord_index);
+      }
+
+      printf("  face[%ld].material_id = %d\n", static_cast<long>(f),
+             shapes[i].mesh.material_ids[f]);
+      printf("  face[%ld].smoothing_group_id = %d\n", static_cast<long>(f),
+             shapes[i].mesh.smoothing_group_ids[f]);
+
+      index_offset += fnum;
+    }
+
+    printf("shape[%ld].num_tags: %lu\n", static_cast<long>(i),
+           static_cast<unsigned long>(shapes[i].mesh.tags.size()));
+    for (size_t t = 0; t < shapes[i].mesh.tags.size(); t++) {
+      printf("  tag[%ld] = %s ", static_cast<long>(t),
+             shapes[i].mesh.tags[t].name.c_str());
+      printf(" ints: [");
+      for (size_t j = 0; j < shapes[i].mesh.tags[t].intValues.size(); ++j) {
+        printf("%ld", static_cast<long>(shapes[i].mesh.tags[t].intValues[j]));
+        if (j < (shapes[i].mesh.tags[t].intValues.size() - 1)) {
+          printf(", ");
+        }
+      }
+      printf("]");
+
+      printf(" floats: [");
+      for (size_t j = 0; j < shapes[i].mesh.tags[t].floatValues.size(); ++j) {
+        printf("%f", static_cast<const double>(
+                         shapes[i].mesh.tags[t].floatValues[j]));
+        if (j < (shapes[i].mesh.tags[t].floatValues.size() - 1)) {
+          printf(", ");
+        }
+      }
+      printf("]");
+
+      printf(" strings: [");
+      for (size_t j = 0; j < shapes[i].mesh.tags[t].stringValues.size(); ++j) {
+        printf("%s", shapes[i].mesh.tags[t].stringValues[j].c_str());
+        if (j < (shapes[i].mesh.tags[t].stringValues.size() - 1)) {
+          printf(", ");
+        }
+      }
+      printf("]");
+      printf("\n");
+    }
+  }
+
+  for (size_t i = 0; i < materials.size(); i++) {
+    printf("material[%ld].name = %s\n", static_cast<long>(i),
+           materials[i].name.c_str());
+    printf("  material.Ka = (%f, %f ,%f)\n",
+           static_cast<const double>(materials[i].ambient[0]),
+           static_cast<const double>(materials[i].ambient[1]),
+           static_cast<const double>(materials[i].ambient[2]));
+    printf("  material.Kd = (%f, %f ,%f)\n",
+           static_cast<const double>(materials[i].diffuse[0]),
+           static_cast<const double>(materials[i].diffuse[1]),
+           static_cast<const double>(materials[i].diffuse[2]));
+    printf("  material.Ks = (%f, %f ,%f)\n",
+           static_cast<const double>(materials[i].specular[0]),
+           static_cast<const double>(materials[i].specular[1]),
+           static_cast<const double>(materials[i].specular[2]));
+    printf("  material.Tr = (%f, %f ,%f)\n",
+           static_cast<const double>(materials[i].transmittance[0]),
+           static_cast<const double>(materials[i].transmittance[1]),
+           static_cast<const double>(materials[i].transmittance[2]));
+    printf("  material.Ke = (%f, %f ,%f)\n",
+           static_cast<const double>(materials[i].emission[0]),
+           static_cast<const double>(materials[i].emission[1]),
+           static_cast<const double>(materials[i].emission[2]));
+    printf("  material.Ns = %f\n",
+           static_cast<const double>(materials[i].shininess));
+    printf("  material.Ni = %f\n", static_cast<const double>(materials[i].ior));
+    printf("  material.dissolve = %f\n",
+           static_cast<const double>(materials[i].dissolve));
+    printf("  material.illum = %d\n", materials[i].illum);
+    printf("  material.map_Ka = %s\n", materials[i].ambient_texname.c_str());
+    printf("  material.map_Kd = %s\n", materials[i].diffuse_texname.c_str());
+    printf("  material.map_Ks = %s\n", materials[i].specular_texname.c_str());
+    printf("  material.map_Ns = %s\n",
+           materials[i].specular_highlight_texname.c_str());
+    printf("  material.map_bump = %s\n", materials[i].bump_texname.c_str());
+    printf("    bump_multiplier = %f\n", static_cast<const double>(materials[i].bump_texopt.bump_multiplier));
+    printf("  material.map_d = %s\n", materials[i].alpha_texname.c_str());
+    printf("  material.disp = %s\n", materials[i].displacement_texname.c_str());
+    printf("  <<PBR>>\n");
+    printf("  material.Pr     = %f\n", static_cast<const double>(materials[i].roughness));
+    printf("  material.Pm     = %f\n", static_cast<const double>(materials[i].metallic));
+    printf("  material.Ps     = %f\n", static_cast<const double>(materials[i].sheen));
+    printf("  material.Pc     = %f\n", static_cast<const double>(materials[i].clearcoat_thickness));
+    printf("  material.Pcr    = %f\n", static_cast<const double>(materials[i].clearcoat_thickness));
+    printf("  material.aniso  = %f\n", static_cast<const double>(materials[i].anisotropy));
+    printf("  material.anisor = %f\n", static_cast<const double>(materials[i].anisotropy_rotation));
+    printf("  material.map_Ke = %s\n", materials[i].emissive_texname.c_str());
+    printf("  material.map_Pr = %s\n", materials[i].roughness_texname.c_str());
+    printf("  material.map_Pm = %s\n", materials[i].metallic_texname.c_str());
+    printf("  material.map_Ps = %s\n", materials[i].sheen_texname.c_str());
+    printf("  material.norm   = %s\n", materials[i].normal_texname.c_str());
+    std::map<std::string, std::string>::const_iterator it(
+        materials[i].unknown_parameter.begin());
+    std::map<std::string, std::string>::const_iterator itEnd(
+        materials[i].unknown_parameter.end());
+
+    for (; it != itEnd; it++) {
+      printf("  material.%s = %s\n", it->first.c_str(), it->second.c_str());
+    }
+    printf("\n");
+  }
+}
+
+/*
+
+f 1 1421 1358 1441
+f 1358 1421 1442 1375
+f 1560 1601 1421 1
+f 2388 2376 2395 2413
+f 2406 2415 2388 2413
+f 2369 2312 2376 2388
+
+*/
+void Application::LoadModel(std::string path, std::vector<Vertex>& vertices, std::vector<uint16_t>& indices, std::vector<uint16_t>& quadIndices, bool triangulate)
 {
     tinyobj::attrib_t attrib;
     std::vector<tinyobj::shape_t> shapes;
     std::vector<tinyobj::material_t> materials;
     std::string warn, err;
 
-    if (!tinyobj::LoadObj(&attrib, &shapes, &materials, &warn, &err, path.c_str())) {
+    if (!tinyobj::LoadObj(&attrib, &shapes, &materials, &warn, &err, path.c_str(), nullptr, triangulate)) {
         throw std::runtime_error(warn + err);
     }
     std::cout << "Beginning to load model at path : " << path << std::endl;
     std::unordered_map<Vertex, uint16_t> uniqueVertices{};
+
+    // PrintInfo(attrib, shapes, materials);
+
+    auto faces = shapes[0].mesh.num_face_vertices;
+    std::cout << "\033[4;33;49m Num faces in shape 0 : " << faces[2] << " \033[0m" << std::endl;
 
     for (const auto& shape : shapes) {
         for (const auto& index : shape.mesh.indices) {
@@ -663,5 +945,32 @@ void Application::LoadModel(std::string path, std::vector<Vertex>& vertices, std
 
             indices.push_back(uniqueVertices[vertex]);
         }
+
+        // std::vector<uint16_t> quadIndices;
+
+        size_t index_offset = 0;
+        // For each face
+        for (size_t f = 0; f < shape.mesh.num_face_vertices.size(); f++)
+        {
+          size_t fnum = shape.mesh.num_face_vertices[f];
+
+          // printf("  face[%ld].fnum = %ld\n", static_cast<long>(f),
+                 // static_cast<unsigned long>(fnum));
+
+          // For each vertex in the face
+          for (size_t v = 0; v < fnum; v++) {
+            tinyobj::index_t idx = shape.mesh.indices[index_offset + v];
+            // printf("    face[%ld].v[%ld].idx = %d/%d/%d\n", static_cast<long>(f),
+            //        static_cast<long>(v), idx.vertex_index, idx.normal_index,
+            //        idx.texcoord_index);
+            quadIndices.push_back(idx.vertex_index);
+          }
+          // tinyobj::index_t idx = shape.mesh.indices[index_offset];
+          // quadIndices.push_back(idx.vertex_index);
+
+          index_offset += fnum;
+        }
+
+        std::cout << "Quad Indices count : " << quadIndices.size() << std::endl;
     }
 }

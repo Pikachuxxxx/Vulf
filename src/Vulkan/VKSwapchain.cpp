@@ -101,8 +101,8 @@ VkExtent2D VKSwapchain::getSwapchainExtent()
     else
     {
         auto& capabilities = m_SurfaceProperties.capabilities;
-        int width, height;
-        glfwGetFramebufferSize(m_Window, &width, &height);
+        int width = 3840, height = 2160;
+        // glfwGetFramebufferSize(m_Window, &width, &height);
 
         VkExtent2D actualExtent =
         {

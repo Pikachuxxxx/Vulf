@@ -25,6 +25,8 @@ layout(binding = 0) uniform UniformBufferObject {
     // mat4 model;
     mat4 view;
     mat4 proj;
+    mat4 _padding1;
+    mat4 _padding2;
 } ubo;
 
 layout(location = 0) out vec3 fragPos;
@@ -36,8 +38,8 @@ layout (push_constant)  uniform ModelPushConstantData{
 }modelPushConstantData;
 
 void main() {
-    gl_PointSize = 1.0;
-    gl_Position = ubo.proj * ubo.view * modelPushConstantData .model * vec4(inPosition, 1.0);
+    gl_PointSize = 5.0;
+    gl_Position = ubo.proj * ubo.view * modelPushConstantData.model * vec4(inPosition, 1.0);
     fragNormal = mat3(transpose(inverse(modelPushConstantData.model))) * inNormal;;
     fragTexCoord = inTexCoord;
     fragPos = vec3(modelPushConstantData.model * vec4(inPosition, 1.0));

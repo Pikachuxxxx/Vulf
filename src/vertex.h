@@ -30,7 +30,7 @@ static const std::vector<Vertex> rainbowTriangleVertices = {
 };
 
 static const std::vector<uint16_t> rainbowTriangleIndices = {
-    0, 1, 2, 2, 3, 0
+    0, 1, 2, 3, 0
 };
 
 static const std::vector<Vertex> whiteQuadVertices = {

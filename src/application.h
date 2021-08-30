@@ -1,7 +1,7 @@
 // Vulkan Include
 #define GLFW_INCLUDE_VULKAN
 #include <GLFW/glfw3.h>
-// #define GLM_DEPTH_ZERO_TO_ONE
+#define GLM_DEPTH_ZERO_TO_ONE
 
 // Std. Libraries
 #include <iostream>
@@ -83,11 +83,12 @@ private:
     void CleanUp();
     void OnImGui();
     void OnUpdate(double dt);
-    void LoadModel(std::string path, std::vector<Vertex>& vertices, std::vector<uint16_t>& indices);
+    void LoadModel(std::string path, std::vector<Vertex>& vertices, std::vector<uint16_t>& indices, std::vector<uint16_t>& quadIndices, bool triangulate = true);
 /***************************** Vulkan Encapsulation ***************************/
 VKSwapchain swapchainManager;
 VKShader vertexShader;
 VKShader fragmentShader;
+VKShader outlineFragmentShader;
 VKFixedPipelineFuncs fixedPipelineFuncs;
 VKFixedPipelineFuncs wireframeFixedPipelineFuncs;
 VKRenderPass renderPassManager;
@@ -96,6 +97,12 @@ VKGraphicsPipeline wireframeGraphicsPipeline;
 VKFramebuffer framebufferManager;
 VKCmdPool cmdPoolManager;
 VKCmdBuffer swapCmdBuffers;
+
+std::vector<VKFixedPipelineFuncs> fixedTopologyPipelines;
+std::vector<VKFixedPipelineFuncs>  wireframeFixedTopologyPipelineFuncs;
+
+std::vector<VKGraphicsPipeline> graphicsPipelines;
+std::vector<VKGraphicsPipeline> wireframeGraphicsPipelines;
 
 VKVertexBuffer triVBO;
 VKIndexBuffer triIBO;
@@ -106,8 +113,10 @@ VKIndexBuffer quadIBO;
 // Happy budda model
 std::vector<Vertex> buddaVertices;
 std::vector<uint16_t> buddaIndices;
+std::vector<uint16_t> buddaQuadIndices;
 VKVertexBuffer buddaVBO;
 VKIndexBuffer buddaIBO;
+VKIndexBuffer buddaQuadIBO;
 
 // Cube
 VKVertexBuffer cubeVBO;
@@ -116,6 +125,7 @@ VKVertexBuffer cubeVBO;
 std::vector<Vertex> sphereVertexData;
 VKVertexBuffer sphereVBO;
 VKIndexBuffer sphereIBO;
+VKIndexBuffer sphereQuadIBO;
 
 // Descriptor and uniforms shit!
 VKUniformBuffer mvpUniformBuffer;
@@ -144,6 +154,7 @@ ImGuizmo::OPERATION globalOperation = ImGuizmo::TRANSLATE;
 glm::vec3 objectColor = glm::vec3(1.0f, 0.5f, 0.32f);
 glm::vec3 lightColor = glm::vec3(1.0f, 1.0f, 1.0f);
 glm::vec3 lightPos = glm::vec3(0.4, 0.5, 1.0f);
+uint32_t topologyPipelineID = 3;
 /******************************* Vulkan Variables *****************************/
 std::vector<VkSemaphore> imageAvailableSemaphores;
 std::vector<VkSemaphore> renderingFinishedSemaphores;
