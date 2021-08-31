@@ -143,6 +143,7 @@ bool enableWireframe = true;
 
 //Grid image texure
 VKTexture gridTexture;
+VKTexture earthTexture;
 // Model Push contant data
 struct DefaultPushConstantData
 {
@@ -155,7 +156,21 @@ ImGuizmo::OPERATION globalOperation = ImGuizmo::TRANSLATE;
 glm::vec3 objectColor = glm::vec3(1.0f, 0.5f, 0.32f);
 glm::vec3 lightColor = glm::vec3(1.0f, 1.0f, 1.0f);
 glm::vec3 lightPos = glm::vec3(0.4, 0.5, 1.0f);
-uint32_t topologyPipelineID = 3;
+/*
+    VK_PRIMITIVE_TOPOLOGY_POINT_LIST = 0,
+    VK_PRIMITIVE_TOPOLOGY_LINE_LIST = 1,
+    VK_PRIMITIVE_TOPOLOGY_LINE_STRIP = 2,
+    VK_PRIMITIVE_TOPOLOGY_TRIANGLE_LIST = 3,
+    VK_PRIMITIVE_TOPOLOGY_TRIANGLE_STRIP = 4,
+    VK_PRIMITIVE_TOPOLOGY_TRIANGLE_FAN = 5,
+    VK_PRIMITIVE_TOPOLOGY_LINE_LIST_WITH_ADJACENCY = 6,
+    VK_PRIMITIVE_TOPOLOGY_LINE_STRIP_WITH_ADJACENCY = 7,
+    VK_PRIMITIVE_TOPOLOGY_TRIANGLE_LIST_WITH_ADJACENCY = 8,
+    VK_PRIMITIVE_TOPOLOGY_TRIANGLE_STRIP_WITH_ADJACENCY = 9,
+    VK_PRIMITIVE_TOPOLOGY_PATCH_LIST = 10,
+  */
+uint32_t topologyPipelineID = VK_PRIMITIVE_TOPOLOGY_TRIANGLE_LIST;
+uint32_t wireframeTopologyPipelineID = VK_PRIMITIVE_TOPOLOGY_LINE_STRIP;
 /******************************* Vulkan Variables *****************************/
 std::vector<VkSemaphore> imageAvailableSemaphores;
 std::vector<VkSemaphore> renderingFinishedSemaphores;

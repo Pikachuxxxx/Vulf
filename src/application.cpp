@@ -371,7 +371,8 @@ void Application::RecreateCommandPipeline()
 
 
     // Create the texture
-    gridTexture.CreateTexture("./data/textures/planet.png", cmdPoolManager);
+    gridTexture.CreateTexture("./data/textures/TestGrid_1024.png", cmdPoolManager);
+    earthTexture.CreateTexture("./data/textures/earthmap.jpg", cmdPoolManager);
 
     // Create the push contants
     VkPushConstantRange modelPushConstant;
@@ -388,7 +389,7 @@ void Application::RecreateCommandPipeline()
 
     renderPassManager.Init(swapchainManager.GetSwapFormat());
     std::vector<VkPipelineShaderStageCreateInfo>  shaderInfo = {vertexShader.GetShaderStageInfo(), fragmentShader.GetShaderStageInfo()};
-    // std::vector<VkPipelineShaderStageCreateInfo>  outlineShaderInfo = {vertexShader.GetShaderStageInfo(), outlineFragmentShader.GetShaderStageInfo()};
+    std::vector<VkPipelineShaderStageCreateInfo>  outlineShaderInfo = {vertexShader.GetShaderStageInfo(), outlineFragmentShader.GetShaderStageInfo()};
 
     fixedTopologyPipelines.resize(5);
     wireframeFixedTopologyPipelineFuncs.resize(5);
@@ -419,7 +420,8 @@ void Application::RecreateCommandPipeline()
 
         // Create the corresponding graphics pipelines (wireframe and non-wireframe mode)
         graphicsPipelines[i].Create(shaderInfo, fixedTopologyPipelines[i], renderPassManager.GetRenderPass());
-        wireframeGraphicsPipelines[i].Create(shaderInfo, wireframeFixedTopologyPipelineFuncs[i], renderPassManager.GetRenderPass());
+        // Wireframe uses the outline shader now
+        wireframeGraphicsPipelines[i].Create(outlineShaderInfo, wireframeFixedTopologyPipelineFuncs[i], renderPassManager.GetRenderPass());
     }
 
     graphicsPipeline.Create(shaderInfo, fixedPipelineFuncs, renderPassManager.GetRenderPass());
@@ -469,14 +471,12 @@ void Application::RecordCommands()
         //     wireframeGraphicsPipeline.Bind(cmdBuffers[i]);
 
         // Select the wireframe or non-wireframe graphics pipeline based on the primite mode
-        if(!enableWireframe) {
-            graphicsPipelines[topologyPipelineID].Bind(cmdBuffers[i]);
-            vkCmdBindDescriptorSets(cmdBuffers[i], VK_PIPELINE_BIND_POINT_GRAPHICS, fixedTopologyPipelines[topologyPipelineID].GetPipelineLayout(), 0, 1, &descriptorSets[i], 0, nullptr);
-        }
-        else {
-            wireframeGraphicsPipelines[topologyPipelineID].Bind(cmdBuffers[i]);
-            vkCmdBindDescriptorSets(cmdBuffers[i], VK_PIPELINE_BIND_POINT_GRAPHICS, wireframeFixedTopologyPipelineFuncs[topologyPipelineID].GetPipelineLayout(), 0, 1, &descriptorSets[i], 0, nullptr);
-        }
+        // if(!enableWireframe) {
+        graphicsPipelines[topologyPipelineID].Bind(cmdBuffers[i]);
+        vkCmdBindDescriptorSets(cmdBuffers[i], VK_PIPELINE_BIND_POINT_GRAPHICS, fixedTopologyPipelines[topologyPipelineID].GetPipelineLayout(), 0, 1, &descriptorSets[i], 0, nullptr);
+        // }
+        // else {
+                    // }
 
         // Bind buffer to the comands
         triVBO.Bind(cmdBuffers[i]);
@@ -514,17 +514,20 @@ void Application::RecordCommands()
         modelPCData.model *= glm::rotate(glm::mat4(1.0f), (float)glm::radians(0.0f), glm::vec3(1.0f, 0.0f, 0.0f));
         modelPCData.model *= glm::scale(glm::mat4(1.0f), glm::vec3(1.0f));
         vkCmdPushConstants(cmdBuffers[i], fixedPipelineFuncs.GetPipelineLayout(), VK_SHADER_STAGE_VERTEX_BIT | VK_SHADER_STAGE_FRAGMENT_BIT, 0, sizeof(DefaultPushConstantData), &modelPCData);
-        vkCmdDrawIndexed(cmdBuffers[i], buddaIndices.size(), 1, 0, 0, 0);
+        // vkCmdDrawIndexed(cmdBuffers[i], buddaIndices.size(), 1, 0, 0, 0);
 
         // Quad mesh budda
         modelPCData.model = glm::translate(glm::mat4(1.0f), glm::vec3(3.0f, 0.0f, -2.5f));
         modelPCData.model *= glm::rotate(glm::mat4(1.0f), (float)glm::radians(0.0f), glm::vec3(1.0f, 0.0f, 0.0f));
         modelPCData.model *= glm::scale(glm::mat4(1.0f), glm::vec3(1.0f));
         vkCmdPushConstants(cmdBuffers[i], fixedPipelineFuncs.GetPipelineLayout(), VK_SHADER_STAGE_VERTEX_BIT | VK_SHADER_STAGE_FRAGMENT_BIT, 0, sizeof(DefaultPushConstantData), &modelPCData);
-        vkCmdDrawIndexed(cmdBuffers[i], buddaQuadIndices.size(), 1, 0, 0, 0);
+        // vkCmdDrawIndexed(cmdBuffers[i], buddaQuadIndices.size(), 1, 0, 0, 0);
 
         // Draw the Sphere
         sphereVBO.Bind(cmdBuffers[i]);
+        // sphereIBO.Bind(cmdBuffers[i]);
+        // sphereQuadIBO.Bind(cmdBuffers[i]);
+
         // modelPCData.model = glm::translate(glm::mat4(1.0f), glm::vec3((float)sin(glfwGetTime()), 1.0f, 1.0f));
         // vkCmdPushConstants(cmdBuffers[i], fixedPipelineFuncs.GetPipelineLayout(), VK_SHADER_STAGE_VERTEX_BIT | VK_SHADER_STAGE_FRAGMENT_BIT, 0, sizeof(DefaultPushConstantData), &modelPCData);
         // vkCmdDrawIndexed(cmdBuffers[i], sphereIndices.size(), 1, 0, 0, 0);
@@ -532,6 +535,8 @@ void Application::RecordCommands()
         for (float x = -6.0f; x < 11.0f; x+= 4.0f) {
             for (float y = -6.0f; y < 11.0f; y+= 4.0f) {
                 sphereIBO.Bind(cmdBuffers[i]);
+                graphicsPipelines[topologyPipelineID].Bind(cmdBuffers[i]);
+                vkCmdBindDescriptorSets(cmdBuffers[i], VK_PIPELINE_BIND_POINT_GRAPHICS, fixedTopologyPipelines[topologyPipelineID].GetPipelineLayout(), 0, 1, &descriptorSets[i], 0, nullptr);
                 modelPCData.model = glm::translate(glm::mat4(1.0f), glm::vec3(x, y, 0.5f));
                 modelPCData.model *= glm::rotate(glm::mat4(1.0f), glm::radians(90.0f), glm::vec3(1.0f, 0.0f, 0.0f));
                 vkCmdPushConstants(cmdBuffers[i], fixedTopologyPipelines[topologyPipelineID].GetPipelineLayout(), VK_SHADER_STAGE_VERTEX_BIT | VK_SHADER_STAGE_FRAGMENT_BIT, 0, sizeof(DefaultPushConstantData), &modelPCData);
@@ -539,13 +544,18 @@ void Application::RecordCommands()
 
                 // Scale and draw the outline again
                 // Bind the outline pipeline
-                // sphereQuadIBO.Bind(cmdBuffers[i]);
-                // // Scale and upload the model matrix
-                // modelPCData.model *= glm::scale(glm::mat4(1.0f), glm::vec3(1.01f));
-                // vkCmdPushConstants(cmdBuffers[i], wireframeFixedTopologyPipelineFuncs[topologyPipelineID].GetPipelineLayout(), VK_SHADER_STAGE_VERTEX_BIT | VK_SHADER_STAGE_FRAGMENT_BIT, 0, sizeof(DefaultPushConstantData), &modelPCData);
-                // // Draw again
-                // vkCmdDrawIndexed(cmdBuffers[i], sphereQuadIndices.size(), 1, 0, 0, 0);
-
+                if(enableWireframe) {
+                    sphereQuadIBO.Bind(cmdBuffers[i]);
+                    wireframeGraphicsPipelines[wireframeTopologyPipelineID].Bind(cmdBuffers[i]);
+                    vkCmdBindDescriptorSets(cmdBuffers[i], VK_PIPELINE_BIND_POINT_GRAPHICS, wireframeFixedTopologyPipelineFuncs[wireframeTopologyPipelineID].GetPipelineLayout(), 0, 1, &descriptorSets[i], 0, nullptr);
+                    modelPCData.model = glm::translate(glm::mat4(1.0f), glm::vec3(x, y, 0.5f));
+                    modelPCData.model *= glm::rotate(glm::mat4(1.0f), glm::radians(90.0f), glm::vec3(1.0f, 0.0f, 0.0f));
+                    // Scale and upload the model matrix
+                    modelPCData.model *= glm::scale(glm::mat4(1.0f), glm::vec3(1.01f));
+                    vkCmdPushConstants(cmdBuffers[i], wireframeFixedTopologyPipelineFuncs[wireframeTopologyPipelineID].GetPipelineLayout(), VK_SHADER_STAGE_VERTEX_BIT | VK_SHADER_STAGE_FRAGMENT_BIT, 0, sizeof(DefaultPushConstantData), &modelPCData);
+                    // Draw again
+                    vkCmdDrawIndexed(cmdBuffers[i], sphereQuadIndices.size(), 1, 0, 0, 0);
+                }
             }
         }
 
@@ -610,6 +620,7 @@ void Application::CleanUpCommandListResources()
 {
     framebufferManager.Destroy();
     gridTexture.Destroy();
+    earthTexture.Destroy();
     sphereVBO.Destroy();
     sphereIBO.Destroy();
     sphereQuadIBO.Destroy();
@@ -677,7 +688,6 @@ void Application::OnImGui()
     ImGui::ShowDemoWindow();
     ImGui::Begin("Yeah Bitch!");
     {
-        ImGui::Text("Hello, world %d", 123);
         static ImVec4 color = {0.24, 0.24, 0.24, 1.0f};
         ImGui::Text("Background Color"); ImGui::SameLine(); ImGui::ColorEdit4("Mycolor#2", (float*)&color, ImGuiColorEditFlags_NoInputs | ImGuiColorEditFlags_NoLabel);
         clearColor[0] = color.x;
@@ -686,7 +696,7 @@ void Application::OnImGui()
         clearColor[3] = color.w;
         renderPassManager.SetClearColor(clearColor);
         ImGui::Checkbox("Wireframe Mode ", &enableWireframe);
-        const char* items[] = { "Translate", "Rotate", "Scale"};
+        static const char* items[] = { "Translate", "Rotate", "Scale"};
         static const char* current_item = "Translate";
 
         if (ImGui::BeginCombo("Guizmo Mode##combo", current_item)) // The second parameter is the label previewed before opening the combo.
@@ -701,12 +711,35 @@ void Application::OnImGui()
             }
             ImGui::EndCombo();
         }
-            if(!strcmp(current_item, "Translate"))
-                globalOperation = ImGuizmo::TRANSLATE;
-            else if(!strcmp(current_item, "Rotate"))
-                globalOperation = ImGuizmo::ROTATE;
-            else if(!strcmp(current_item, "Scale"))
-                globalOperation = ImGuizmo::SCALE;
+        if(!strcmp(current_item, "Translate"))
+            globalOperation = ImGuizmo::TRANSLATE;
+        else if(!strcmp(current_item, "Rotate"))
+            globalOperation = ImGuizmo::ROTATE;
+        else if(!strcmp(current_item, "Scale"))
+            globalOperation = ImGuizmo::SCALE;
+
+        static const char* topologies[] = { "Point List", "Line List", "Line Strip", "Triangle List", "Traingle Strip"};
+        static const char* currentTopology = "Triangle List";
+        if (ImGui::BeginCombo("Topology", currentTopology))
+        {
+            for (int n = 0; n < IM_ARRAYSIZE(topologies); n++)
+            {
+                bool is_topology_selected = (currentTopology == topologies[n]); // You can store your selection however you want, outside or inside your objects
+                if (ImGui::Selectable(topologies[n], is_topology_selected))
+                    currentTopology = topologies[n];
+                if (is_topology_selected)
+                    ImGui::SetItemDefaultFocus();   // You may set the initial focus when opening the combo (scrolling + for keyboard navigation support)
+            }
+            ImGui::EndCombo();
+        }
+
+    }
+    ImGui::End();
+
+    ImGui::Begin("Image Demo");
+    {
+        //ImGui::Image((ImTextureID)ImGui_ImplVulkan_AddTexture(gridTexture.GetTextureImageSampler(), gridTexture.GetTextureImageView(), VK_IMAGE_LAYOUT_SHADER_READ_ONLY_OPTIMAL), ImVec2(200, 200));
+        //ImGui::Image((ImTextureID)ImGui_ImplVulkan_AddTexture(earthTexture.GetTextureImageSampler(), earthTexture.GetTextureImageView(), VK_IMAGE_LAYOUT_SHADER_READ_ONLY_OPTIMAL), ImVec2(200, 200));
     }
     ImGui::End();
 

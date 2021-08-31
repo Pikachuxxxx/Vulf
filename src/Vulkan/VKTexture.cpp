@@ -11,7 +11,7 @@
 void VKTexture::CreateTexture(const std::string& path, VKCmdPool& cmdPool)
 {
     stbi_uc* imageData = LoadImage(path);
-    VkDeviceSize imageSize = m_Height * m_Width * m_BPP;
+    VkDeviceSize imageSize = m_Height * m_Width * 4;
     std::cout << "\033[4;33;49m Hmmmmmmmmmmmm \033[0m" << std::endl;
     std::cout << "\033[4;33;49m Image Height : " << m_Height << ", Width : " << m_Width << " BPP : " << m_BPP << " Size : " << imageSize << "\033[0m" << std::endl;
     m_ImageStagingBuffer.CreateBuffer(imageSize, VK_BUFFER_USAGE_TRANSFER_SRC_BIT, VK_MEMORY_PROPERTY_HOST_VISIBLE_BIT | VK_MEMORY_PROPERTY_HOST_COHERENT_BIT);
