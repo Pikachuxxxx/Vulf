@@ -29,7 +29,7 @@ This sandbox has a very simple and brief ImGui integration that makes it easy to
 ### ImGUI Integration in a nutshell
 - Create a descriptor pool with different size as provided in [frguthmann](https://frguthmann.github.io/posts/vulkan_imgui/) tutorial, next use a single time command buffer to upload the font to GPU using a single queueSubmit. Next create multiple command buffers for each swapchain image and use ImGUI spedicif renderpass also explained how to do by frguthmann and in the DrawFrame submit 2 commandBuffers combined in an array and Voila you have Dear ImGui!
 
-A more detailed ImGui flow is give below :
+A more detailed ImGui flow is given below :
 
 #### Important initialization steps
 <details>
@@ -58,9 +58,58 @@ pool_info.maxSets = 1000 * IM_ARRAYSIZE(pool_sizes);
 pool_info.poolSizeCount = (uint32_t) IM_ARRAYSIZE(pool_sizes);
 pool_info.pPoolSizes = pool_sizes;
 
-vulkan::checkError(vkCreateDescriptorPool(context->getDevice().getVkDevice(),
+VK_CALL(vkCreateDescriptorPool(context->getDevice().getVkDevice(),
     &pool_info, nullptr, &descriptorPool),
     "ImGui descriptor pool creation");
+```
+</details>
+
+<details>
+<summary>Creating a ImGui specific Renderpass</summary>
+<br>
+
+```c++
+
+VkAttachmentDescription imguiAttachmentDesc = {};
+imguiAttachmentDesc.format = swapchainManager.GetSwapFormat();
+imguiAttachmentDesc.samples = VK_SAMPLE_COUNT_1_BIT;
+imguiAttachmentDesc.loadOp = VK_ATTACHMENT_LOAD_OP_LOAD;
+imguiAttachmentDesc.storeOp = VK_ATTACHMENT_STORE_OP_STORE;
+imguiAttachmentDesc.stencilLoadOp = VK_ATTACHMENT_LOAD_OP_DONT_CARE;
+imguiAttachmentDesc.stencilStoreOp = VK_ATTACHMENT_STORE_OP_DONT_CARE;
+imguiAttachmentDesc.initialLayout = VK_IMAGE_LAYOUT_COLOR_ATTACHMENT_OPTIMAL;
+imguiAttachmentDesc.finalLayout = VK_IMAGE_LAYOUT_PRESENT_SRC_KHR; // Since UI is the last render pass, now this will be used for presentation
+
+// ImGui color attachment reference to be used by the attachment and this is described by the attachment Description
+VkAttachmentReference imguiColorAttachmentRef = {};
+imguiColorAttachmentRef.attachment = 0;
+imguiColorAttachmentRef.layout = VK_IMAGE_LAYOUT_COLOR_ATTACHMENT_OPTIMAL;
+
+// Create a subpass using the attachment reference
+VkSubpassDescription imguiSubpassDesc{};
+imguiSubpassDesc.pipelineBindPoint = VK_PIPELINE_BIND_POINT_GRAPHICS;
+imguiSubpassDesc.colorAttachmentCount = 1;
+imguiSubpassDesc.pColorAttachments = &imguiColorAttachmentRef;
+
+// Create the sub pass dependency to communicate between different subpasses, we describe the dependencies between them
+VkSubpassDependency imguiDependency{};
+imguiDependency.srcSubpass = VK_SUBPASS_EXTERNAL;
+imguiDependency.dstSubpass = 0;
+imguiDependency.srcStageMask = VK_PIPELINE_STAGE_COLOR_ATTACHMENT_OUTPUT_BIT;
+imguiDependency.dstStageMask = VK_PIPELINE_STAGE_COLOR_ATTACHMENT_OUTPUT_BIT;
+imguiDependency.srcAccessMask = 0;
+imguiDependency.dstAccessMask = VK_ACCESS_COLOR_ATTACHMENT_WRITE_BIT;
+
+// Now create the imgui renderPass
+VkRenderPassCreateInfo imguiRPInfo{};
+imguiRPInfo.sType = VK_STRUCTURE_TYPE_RENDER_PASS_CREATE_INFO;
+imguiRPInfo.attachmentCount = 1;
+imguiRPInfo.pAttachments = &imguiAttachmentDesc;
+imguiRPInfo.subpassCount = 1;
+imguiRPInfo.pSubpasses = &imguiSubpassDesc;
+imguiRPInfo.dependencyCount = 1;
+imguiRPInfo.pDependencies = &imguiDependency;
+if(VK_CALL(vkCreateRenderPass(VKDEVICE, &imguiRPInfo, nullptr, &imguiRenderPass)))
 ```
 </details>
 
@@ -80,8 +129,8 @@ init_info.Queue = context->getDevice().getGraphicsQueue();
 init_info.DescriptorPool = descriptorPool;
 init_info.MinImageCount = swapchain->imageCount;
 init_info.ImageCount = swapchain->imageCount;
-init_info.CheckVkResultFn = [](VkResult result) { vulkan::checkError(result, "Internal ImGui operation"); };
-ImGui_ImplVulkan_Init(&init_info, renderPass);
+init_info.CheckVkResultFn = [](VkResult result) { VK_CALL(result, "Internal ImGui operation"); };
+ImGui_ImplVulkan_Init(&init_info, imguiRenderPass);
 ```
 </details>
 
@@ -158,14 +207,14 @@ if (ImGui::GetIO().ConfigFlags & ImGuiConfigFlags_ViewportsEnable) {
 <br>
 
 ```c++
-vulkan::checkError(vkResetCommandPool(context->getDevice().getVkDevice(),
+VK_CALL(vkResetCommandPool(context->getDevice().getVkDevice(),
                                       commandPools[imageIndex].getVkCommandPool(), 0),
                    "Command buffer reset");
 
 VkCommandBufferBeginInfo commandBufferBeginInfo = {};
 commandBufferBeginInfo.sType = VK_STRUCTURE_TYPE_COMMAND_BUFFER_BEGIN_INFO;
 commandBufferBeginInfo.flags |= VK_COMMAND_BUFFER_USAGE_ONE_TIME_SUBMIT_BIT;
-vulkan::checkError(vkBeginCommandBuffer(commandBuffers[imageIndex],
+VK_CALL(vkBeginCommandBuffer(commandBuffers[imageIndex],
                                         &commandBufferBeginInfo),
                    "Command buffer begin");
 
@@ -205,7 +254,7 @@ info.pCommandBuffers = &commandBuffers[imageIndex];
 info.signalSemaphoreCount = 1;
 info.pSignalSemaphores = &syncObject.renderFinishedSemaphore;
 
-vulkan::checkError(vkEndCommandBuffer(commandBuffers[imageIndex]),
+VK_CALL(vkEndCommandBuffer(commandBuffers[imageIndex]),
                    "Command buffer end");
 ```
 </details>
@@ -217,7 +266,7 @@ vulkan::checkError(vkEndCommandBuffer(commandBuffers[imageIndex]),
 ```c++
 vkResetFences(context->getDevice().getVkDevice(), 1, &syncObject.fence);
 
-vulkan::checkError(vkQueueSubmit(context->getDevice().getGraphicsQueue(), 1, &info, syncObject.fence),
+VK_CALL(vkQueueSubmit(context->getDevice().getGraphicsQueue(), 1, &info, syncObject.fence),
                    "Queue submit");
 ```
 </details>
