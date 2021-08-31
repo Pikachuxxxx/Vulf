@@ -12,6 +12,7 @@
 /**************************** Application Flow ********************************/
 void Application::Run()
 {
+    InitResources();
     InitWindow();
     InitVulkan();
     InitImGui();
@@ -19,10 +20,8 @@ void Application::Run()
     CleanUp();
 }
 
-void Application::InitWindow()
+void Application::InitResources()
 {
-    // Create the window
-    window = new Window("Hello Vulkan again!", 800, 600);
     GenerateSphereSmooth(1, 32, 32);
     GenerateQuadSphere(1, 32, 32);
     for (size_t i = 0; i < sphereVertices.size(); i++) {
@@ -32,7 +31,13 @@ void Application::InitWindow()
         vertex.texCoord = sphereUVs[i];
         sphereVertexData.push_back(vertex);
     }
+}
 
+void Application::InitWindow()
+{
+/******************************************************************/
+/**/ window = new Window("Hello Vulkan again!", 800, 600);      /**/
+/******************************************************************/
 }
 
 void Application::InitVulkan()

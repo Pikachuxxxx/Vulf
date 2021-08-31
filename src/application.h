@@ -75,6 +75,7 @@ private:
 /***************************** Vulkan Variables *******************************/
 private:
 /****************************** Application Flow ******************************/
+    void InitResources();
     void InitWindow();
     void InitVulkan();
     void InitImGui();
