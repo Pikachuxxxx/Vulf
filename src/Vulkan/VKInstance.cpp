@@ -133,9 +133,9 @@ std::vector<const char*> VKInstance::getRequiredExtensions()
 
     std::vector<const char*> extensions(glfwExtensions, glfwExtensions + glfwExtensionCount);
     // Add extensions for validation layers
-    if (m_EnableValidationLayers) {
+    // if (m_EnableValidationLayers) {
         extensions.push_back(VK_EXT_DEBUG_UTILS_EXTENSION_NAME);
-    }
+    // }
     // Add any user defined extensions
     extensions.insert(extensions.end(), instanceExtensions.begin(), instanceExtensions.end());
     return extensions;

@@ -49,6 +49,7 @@ namespace std {
 #include "Vulkan/VKIndexBuffer.h"
 #include "Vulkan/VKUniformBuffer.h"
 #include "Vulkan/VKTexture.h"
+#include "Vulkan/VKDepthImage.h"
 
 // Imgui
 #include <imgui.h>
@@ -144,6 +145,9 @@ bool enableWireframe = true;
 //Grid image texure
 VKTexture gridTexture;
 VKTexture earthTexture;
+ImTextureID imguiGridTexture;
+ImTextureID imguiEarthTexture;
+
 // Model Push contant data
 struct DefaultPushConstantData
 {
@@ -151,6 +155,9 @@ struct DefaultPushConstantData
 }modelPCData;
 Transform modelTransform;
 ImGuizmo::OPERATION globalOperation = ImGuizmo::TRANSLATE;
+
+// Depth Image
+VKDepthImage depthImage;
 /******************************************************************************/
 // Light settings
 glm::vec3 objectColor = glm::vec3(1.0f, 0.5f, 0.32f);

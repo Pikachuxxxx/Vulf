@@ -104,6 +104,19 @@ void VKFixedPipelineFuncs::SetDepthStencilSCI()
 {
     // TODO: Fill this later (for now pass a nullptr)
     m_DepthStencilSCI = {};
+    m_DepthStencilSCI.sType = VK_STRUCTURE_TYPE_PIPELINE_DEPTH_STENCIL_STATE_CREATE_INFO;
+    m_DepthStencilSCI.depthTestEnable = VK_TRUE;
+    m_DepthStencilSCI.depthWriteEnable = VK_TRUE;
+    ////////////////////////////////////////////////////
+    m_DepthStencilSCI.depthCompareOp = VK_COMPARE_OP_LESS;
+    ////////////////////////////////////////////////////
+    m_DepthStencilSCI.depthBoundsTestEnable = VK_FALSE;
+    m_DepthStencilSCI.minDepthBounds = 0.0f; // Optional
+    m_DepthStencilSCI.maxDepthBounds = 1.0f; // Optional
+    m_DepthStencilSCI.stencilTestEnable = VK_FALSE;
+    m_DepthStencilSCI.front = {}; // Optional
+    m_DepthStencilSCI.back = {}; // Optional
+
 }
 
 void VKFixedPipelineFuncs::SetColorBlendSCI()

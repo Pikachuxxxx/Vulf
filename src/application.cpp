@@ -6,6 +6,8 @@
 
 #include <Tracy.hpp>
 
+#include <array>
+
 // TibyObj
 #define TINYOBJLOADER_IMPLEMENTATION
 #include <tinyobj/tiny_obj_loader.h>
@@ -42,7 +44,7 @@ void Application::InitWindow()
 
 void Application::InitVulkan()
 {
-    VKInstance::GetInstanceManager()->Init("Hello Vulkan", window->getGLFWwindow(), true);
+    VKInstance::GetInstanceManager()->Init("Hello Vulkan", window->getGLFWwindow(), false);
 
     VKLogicalDevice::GetDeviceManager()->Init();
 
@@ -428,7 +430,10 @@ void Application::RecreateCommandPipeline()
     wireframeGraphicsPipeline.Create(shaderInfo, wireframeFixedPipelineFuncs, renderPassManager.GetRenderPass());
     // wireframeOutlineGraphicsPipeline.Create(outlineShaderInfo, wireframeFixedPipelineFuncs, renderPassManager.GetRenderPass());
 
-    framebufferManager.Create(renderPassManager.GetRenderPass(), swapchainManager.GetSwapImageViews(), swapchainManager.GetSwapExtent());
+    // Create the depth image
+    depthImage.CreateDepthImage(swapchainManager.GetSwapExtent().width, swapchainManager.GetSwapExtent().height, cmdPoolManager);
+
+    framebufferManager.Create(renderPassManager.GetRenderPass(), swapchainManager.GetSwapImageViews(), depthImage.GetDepthImageView(), swapchainManager.GetSwapExtent());
 
     swapCmdBuffers.AllocateBuffers(cmdPoolManager.GetPool());
     imguiCmdBuffers.AllocateBuffers(cmdPoolManager.GetPool());
@@ -452,6 +457,10 @@ void Application::RecreateCommandPipeline()
     sphereVBO.Create(sphereVertexData, cmdPoolManager);
     sphereIBO.Create(sphereIndices, cmdPoolManager);
     sphereQuadIBO.Create(sphereQuadIndices, cmdPoolManager);
+
+
+
+
 }
 
 void Application::RecordCommands()
@@ -462,6 +471,7 @@ void Application::RecordCommands()
     auto framebuffers = framebufferManager.GetFramebuffers();
     auto descriptorSets = mvpUniformBuffer.GetSets();
     for (int i = 0; i <  cmdBuffers.size(); i++) {
+
         swapCmdBuffers.RecordBuffer(cmdBuffers[i]);
         // renderPassManager.SetClearColor(0.85, 0.44, 0.48);
         renderPassManager.BeginRenderPass(cmdBuffers[i], framebuffers[i], swapchainManager.GetSwapExtent());
@@ -574,9 +584,12 @@ void Application::RecordCommands()
         RPinfo.framebuffer = framebuffers[i];
         RPinfo.renderArea.extent.width = swapchainManager.GetSwapExtent().width;
         RPinfo.renderArea.extent.height = swapchainManager.GetSwapExtent().height;
-        RPinfo.clearValueCount = 0;
-        VkClearValue clearColor = { {{0.0, 1.0, 1.0, 1.0f}} };
-        RPinfo.pClearValues = nullptr;
+        std::array<VkClearValue, 2> clearValues{};
+        clearValues[0].color = {{clearColor[0], clearColor[1], clearColor[2], clearColor[3]}};
+        clearValues[1].depthStencil = {1.0f, 0};
+        RPinfo.clearValueCount = static_cast<uint32_t>(clearValues.size());
+        RPinfo.pClearValues = clearValues.data();
+
         vkCmdBeginRenderPass(imguiCmdBuffers.GetBufferAt(i), &RPinfo, VK_SUBPASS_CONTENTS_INLINE);
 
         ImGui_ImplVulkan_RenderDrawData(ImGui::GetDrawData(), imguiCmdBuffers.GetBufferAt(i));
@@ -619,6 +632,7 @@ void Application::UpdateMVPUBO(uint32_t currentImageIndex)
 void Application::CleanUpCommandListResources()
 {
     framebufferManager.Destroy();
+    depthImage.Destroy();
     gridTexture.Destroy();
     earthTexture.Destroy();
     sphereVBO.Destroy();
@@ -679,6 +693,8 @@ void Application::ImGuiError(VkResult err)
 void Application::OnImGui()
 {
     ZoneScoped
+    // imguiGridTexture = ImGui_ImplVulkan_AddTexture(gridTexture.GetTextureImageSampler(), gridTexture.GetTextureImageView(), VK_IMAGE_LAYOUT_SHADER_READ_ONLY_OPTIMAL);
+    // imguiEarthTexture = ImGui_ImplVulkan_AddTexture(earthTexture.GetTextureImageSampler(), earthTexture.GetTextureImageView(), VK_IMAGE_LAYOUT_SHADER_READ_ONLY_OPTIMAL);
 
     auto proj = glm::perspective(glm::radians(45.0f), (float)swapchainManager.GetSwapExtent().width  / swapchainManager.GetSwapExtent().height, 0.01f, 100.0f);
     // proj[1][1] *= -1;
@@ -736,12 +752,12 @@ void Application::OnImGui()
     }
     ImGui::End();
 
-    ImGui::Begin("Image Demo");
-    {
-        //ImGui::Image((ImTextureID)ImGui_ImplVulkan_AddTexture(gridTexture.GetTextureImageSampler(), gridTexture.GetTextureImageView(), VK_IMAGE_LAYOUT_SHADER_READ_ONLY_OPTIMAL), ImVec2(200, 200));
-        //ImGui::Image((ImTextureID)ImGui_ImplVulkan_AddTexture(earthTexture.GetTextureImageSampler(), earthTexture.GetTextureImageView(), VK_IMAGE_LAYOUT_SHADER_READ_ONLY_OPTIMAL), ImVec2(200, 200));
-    }
-    ImGui::End();
+    // ImGui::Begin("Image Demo");
+    // {
+    //     // ImGui::Image((ImTextureID)imguiGridTexture, ImVec2(200, 200));
+    //     // ImGui::Image((ImTextureID)imguiEarthTexture, ImVec2(200, 200));
+    // }
+    // ImGui::End();
 
     ImGui::Begin("Light Settings");
     {
