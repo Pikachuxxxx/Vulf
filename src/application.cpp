@@ -38,13 +38,13 @@ void Application::InitResources()
 void Application::InitWindow()
 {
 /******************************************************************/
-/**/ window = new Window("Hello Vulkan again!", 800, 600);      /**/
+/**/ window = new Window("Hello Vulkan again!", width, height);      /**/
 /******************************************************************/
 }
 
 void Application::InitVulkan()
 {
-    VKInstance::GetInstanceManager()->Init("Hello Vulkan", window->getGLFWwindow(), false);
+    VKInstance::GetInstanceManager()->Init("Hello Vulkan", window->getGLFWwindow(), enableValidationLayers);
 
     VKLogicalDevice::GetDeviceManager()->Init();
 
@@ -446,10 +446,10 @@ void Application::RecreateCommandPipeline()
     quadIBO.Create(whiteQuadIndices, cmdPoolManager);
 
     // Budda vbo and  ibo
-    // LoadModel("./data/models/quad.obj", buddaVertices, buddaIndices, buddaQuadIndices);
-    LoadModel("./data/models/lowpolyQuadSphere.obj", buddaVertices, buddaIndices, buddaQuadIndices, false);
+    LoadModel("./data/models/lowpolyTriSphere.obj", buddaVertices, buddaIndices, buddaQuadIndices, true);
     buddaVBO.Create(buddaVertices, cmdPoolManager);
     buddaIBO.Create(buddaIndices, cmdPoolManager);
+    LoadModel("./data/models/lowpolyQuadSphere.obj", buddaVertices, buddaIndices, buddaQuadIndices, false);
     buddaQuadIBO.Create(buddaQuadIndices, cmdPoolManager);
 
     cubeVBO.Create(cubeVertices, cmdPoolManager);
@@ -457,10 +457,6 @@ void Application::RecreateCommandPipeline()
     sphereVBO.Create(sphereVertexData, cmdPoolManager);
     sphereIBO.Create(sphereIndices, cmdPoolManager);
     sphereQuadIBO.Create(sphereQuadIndices, cmdPoolManager);
-
-
-
-
 }
 
 void Application::RecordCommands()
@@ -481,12 +477,14 @@ void Application::RecordCommands()
         //     wireframeGraphicsPipeline.Bind(cmdBuffers[i]);
 
         // Select the wireframe or non-wireframe graphics pipeline based on the primite mode
-        // if(!enableWireframe) {
-        graphicsPipelines[topologyPipelineID].Bind(cmdBuffers[i]);
-        vkCmdBindDescriptorSets(cmdBuffers[i], VK_PIPELINE_BIND_POINT_GRAPHICS, fixedTopologyPipelines[topologyPipelineID].GetPipelineLayout(), 0, 1, &descriptorSets[i], 0, nullptr);
-        // }
-        // else {
-                    // }
+        if(!enableWireframe) {
+            graphicsPipelines[topologyPipelineID].Bind(cmdBuffers[i]);
+            vkCmdBindDescriptorSets(cmdBuffers[i], VK_PIPELINE_BIND_POINT_GRAPHICS, fixedTopologyPipelines[topologyPipelineID].GetPipelineLayout(), 0, 1, &descriptorSets[i], 0, nullptr);
+        }
+        else {
+            wireframeGraphicsPipelines[wireframeTopologyPipelineID].Bind(cmdBuffers[i]);
+            vkCmdBindDescriptorSets(cmdBuffers[i], VK_PIPELINE_BIND_POINT_GRAPHICS, wireframeFixedTopologyPipelineFuncs[wireframeTopologyPipelineID].GetPipelineLayout(), 0, 1, &descriptorSets[i], 0, nullptr);
+        }
 
         // Bind buffer to the comands
         triVBO.Bind(cmdBuffers[i]);
@@ -519,19 +517,19 @@ void Application::RecordCommands()
         // Draw the budda model
         buddaVBO.Bind(cmdBuffers[i]);
         buddaIBO.Bind(cmdBuffers[i]);
-        // buddaQuadIBO.Bind(cmdBuffers[i]);
         modelPCData.model = glm::translate(glm::mat4(1.0f), glm::vec3(0.0f, 0.0f, -2.5f));
         modelPCData.model *= glm::rotate(glm::mat4(1.0f), (float)glm::radians(0.0f), glm::vec3(1.0f, 0.0f, 0.0f));
         modelPCData.model *= glm::scale(glm::mat4(1.0f), glm::vec3(1.0f));
         vkCmdPushConstants(cmdBuffers[i], fixedPipelineFuncs.GetPipelineLayout(), VK_SHADER_STAGE_VERTEX_BIT | VK_SHADER_STAGE_FRAGMENT_BIT, 0, sizeof(DefaultPushConstantData), &modelPCData);
-        // vkCmdDrawIndexed(cmdBuffers[i], buddaIndices.size(), 1, 0, 0, 0);
+        vkCmdDrawIndexed(cmdBuffers[i], buddaIndices.size(), 1, 0, 0, 0);
 
         // Quad mesh budda
-        modelPCData.model = glm::translate(glm::mat4(1.0f), glm::vec3(3.0f, 0.0f, -2.5f));
+        buddaQuadIBO.Bind(cmdBuffers[i]);
+        modelPCData.model = glm::translate(glm::mat4(1.0f), glm::vec3(2.0f, 0.0f, -2.5f));
         modelPCData.model *= glm::rotate(glm::mat4(1.0f), (float)glm::radians(0.0f), glm::vec3(1.0f, 0.0f, 0.0f));
         modelPCData.model *= glm::scale(glm::mat4(1.0f), glm::vec3(1.0f));
         vkCmdPushConstants(cmdBuffers[i], fixedPipelineFuncs.GetPipelineLayout(), VK_SHADER_STAGE_VERTEX_BIT | VK_SHADER_STAGE_FRAGMENT_BIT, 0, sizeof(DefaultPushConstantData), &modelPCData);
-        // vkCmdDrawIndexed(cmdBuffers[i], buddaQuadIndices.size(), 1, 0, 0, 0);
+        vkCmdDrawIndexed(cmdBuffers[i], buddaQuadIndices.size(), 1, 0, 0, 0);
 
         // Draw the Sphere
         sphereVBO.Bind(cmdBuffers[i]);
@@ -699,7 +697,7 @@ void Application::OnImGui()
     auto proj = glm::perspective(glm::radians(45.0f), (float)swapchainManager.GetSwapExtent().width  / swapchainManager.GetSwapExtent().height, 0.01f, 100.0f);
     // proj[1][1] *= -1;
     modelTransform = modelTransform.AttachGuizmo(globalOperation, camera.GetViewMatrix(), proj);
-    lightPos = glm::vec3(modelTransform.position.x, modelTransform.position.y, -modelTransform.position.z);
+    lightPos = glm::vec3(modelTransform.position.x, modelTransform.position.y, modelTransform.position.z);
 
     ImGui::ShowDemoWindow();
     ImGui::Begin("Yeah Bitch!");
@@ -736,14 +734,32 @@ void Application::OnImGui()
 
         static const char* topologies[] = { "Point List", "Line List", "Line Strip", "Triangle List", "Traingle Strip"};
         static const char* currentTopology = "Triangle List";
+        static const char* currentWireframeTopology = "Line Strip";
         if (ImGui::BeginCombo("Topology", currentTopology))
         {
             for (int n = 0; n < IM_ARRAYSIZE(topologies); n++)
             {
                 bool is_topology_selected = (currentTopology == topologies[n]); // You can store your selection however you want, outside or inside your objects
-                if (ImGui::Selectable(topologies[n], is_topology_selected))
+                if (ImGui::Selectable(topologies[n], is_topology_selected)) {
                     currentTopology = topologies[n];
+                    topologyPipelineID = n;
+                }
                 if (is_topology_selected)
+                    ImGui::SetItemDefaultFocus();   // You may set the initial focus when opening the combo (scrolling + for keyboard navigation support)
+            }
+            ImGui::EndCombo();
+        }
+
+        if (ImGui::BeginCombo("Wireframe Topology", currentWireframeTopology))
+        {
+            for (int n = 0; n < IM_ARRAYSIZE(topologies); n++)
+            {
+                bool is_wireframe_topology_selected = (currentWireframeTopology == topologies[n]); // You can store your selection however you want, outside or inside your objects
+                if (ImGui::Selectable(topologies[n], is_wireframe_topology_selected)) {
+                    currentWireframeTopology = topologies[n];
+                    wireframeTopologyPipelineID = n;
+                }
+                if (is_wireframe_topology_selected)
                     ImGui::SetItemDefaultFocus();   // You may set the initial focus when opening the combo (scrolling + for keyboard navigation support)
             }
             ImGui::EndCombo();
@@ -752,12 +768,12 @@ void Application::OnImGui()
     }
     ImGui::End();
 
-    // ImGui::Begin("Image Demo");
-    // {
-    //     // ImGui::Image((ImTextureID)imguiGridTexture, ImVec2(200, 200));
-    //     // ImGui::Image((ImTextureID)imguiEarthTexture, ImVec2(200, 200));
-    // }
-    // ImGui::End();
+    ImGui::Begin("Image Demo");
+    {
+        ImGui::Image((ImTextureID)ImGui_ImplVulkan_AddTexture(depthImage.GetImage().GetImageSampler(), depthImage.GetDepthImageView(), VK_IMAGE_LAYOUT_DEPTH_STENCIL_ATTACHMENT_OPTIMAL), ImVec2(200, 200));
+        // ImGui::Image((ImTextureID)imguiEarthTexture, ImVec2(200, 200));
+    }
+    ImGui::End();
 
     ImGui::Begin("Light Settings");
     {
@@ -946,16 +962,6 @@ static void PrintInfo(const tinyobj::attrib_t& attrib,
   }
 }
 
-/*
-
-f 1 1421 1358 1441
-f 1358 1421 1442 1375
-f 1560 1601 1421 1
-f 2388 2376 2395 2413
-f 2406 2415 2388 2413
-f 2369 2312 2376 2388
-
-*/
 void Application::LoadModel(std::string path, std::vector<Vertex>& vertices, std::vector<uint16_t>& indices, std::vector<uint16_t>& quadIndices, bool triangulate)
 {
     tinyobj::attrib_t attrib;
@@ -997,27 +1003,28 @@ void Application::LoadModel(std::string path, std::vector<Vertex>& vertices, std
                 vertices.push_back(vertex);
             }
 
-            indices.push_back(uniqueVertices[vertex]);
+            // indices.push_back(uniqueVertices[vertex]);
         }
 
         // std::vector<uint16_t> quadIndices;
 
         size_t index_offset = 0;
         // For each face
-        for (size_t f = 0; f < shape.mesh.num_face_vertices.size(); f++)
+        for (size_t f = 0; f < 22 /*shape.mesh.num_face_vertices.size()*/; f++)
         {
           size_t fnum = shape.mesh.num_face_vertices[f];
 
-          // printf("  face[%ld].fnum = %ld\n", static_cast<long>(f),
-                 // static_cast<unsigned long>(fnum));
+          printf("  face[%ld].fnum = %ld\n", static_cast<long>(f),
+                 static_cast<unsigned long>(fnum));
 
           // For each vertex in the face
           for (size_t v = 0; v < fnum; v++) {
             tinyobj::index_t idx = shape.mesh.indices[index_offset + v];
-            // printf("    face[%ld].v[%ld].idx = %d/%d/%d\n", static_cast<long>(f),
-            //        static_cast<long>(v), idx.vertex_index, idx.normal_index,
-            //        idx.texcoord_index);
+            printf("    face[%ld].v[%ld].idx = %d/%d/%d\n", static_cast<long>(f),
+                   static_cast<long>(v), idx.vertex_index, idx.normal_index,
+                   idx.texcoord_index);
             quadIndices.push_back(idx.vertex_index);
+            indices.push_back(idx.texcoord_index);
           }
           // tinyobj::index_t idx = shape.mesh.indices[index_offset];
           // quadIndices.push_back(idx.vertex_index);
@@ -1025,6 +1032,6 @@ void Application::LoadModel(std::string path, std::vector<Vertex>& vertices, std
           index_offset += fnum;
         }
 
-        std::cout << "Quad Indices count : " << quadIndices.size() << std::endl;
+        std::cout << "Indices count : " << indices.size() << std::endl;
     }
 }

@@ -34,6 +34,9 @@ namespace std {
 #include "utils/Transform.h"
 #include "utils/cube.h"
 #include "utils/sphere.h"
+// Command Line Parser
+#include "utils/CommandLineParser.h"
+
 
 #include "Vulkan/VKInstance.h"
 #include "Vulkan/VKDevice.h"
@@ -66,6 +69,11 @@ class Application
 {
 public:
     void Run();
+/***************************** Application Variables **************************/
+public:
+CommandLineParser commandLineParser;
+bool enableValidationLayers = false;
+int width, height;
 private:
     Window* window;
     Camera3D camera;
@@ -73,8 +81,6 @@ private:
     double lastTime;
     double nbFrames = 0;
     double delta = 0;
-/***************************** Vulkan Variables *******************************/
-private:
 /****************************** Application Flow ******************************/
     void InitResources();
     void InitWindow();

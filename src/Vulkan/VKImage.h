@@ -17,6 +17,7 @@ public:
     VkImage GetImage() const { return m_Image; }
     VkImageView GetImageView() const { return m_ImageView; }
     VkDeviceMemory GetImageMemory() const { return m_ImageMemory; }
+    VkSampler GetImageSampler() const { return m_ImageSampler; }
 private:
     VkImage m_Image;
     VkDeviceMemory m_ImageMemory;
@@ -24,4 +25,5 @@ private:
     // TODO: Read about these in detail!
     VkPipelineStageFlags m_ImageSourceStage;
     VkPipelineStageFlags m_ImageDestinationStage;
+    VkSampler m_ImageSampler;
 };

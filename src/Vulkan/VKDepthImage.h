@@ -15,6 +15,7 @@ public:
     bool HasStencilComponent(VkFormat format);
     VkFormat GetDepthFormat() { return m_DepthFormat; }
     VkImageView GetDepthImageView() const { return m_DepthImage.GetImageView(); }
+    VKImage GetImage() const { return m_DepthImage; }
 private:
     VkFormat m_DepthFormat;
     VKImage m_DepthImage;
