@@ -1,6 +1,7 @@
 #include "VKShader.h"
 
 #include <fstream>
+#include <sstream>
 
 #include "VKDevice.h"
 #include "../utils/VulkanCheckResult.h"
@@ -55,8 +56,11 @@ std::vector<char> VKShader::ReadShaderByteCode(const std::string& filePath)
 {
     std::ifstream file(filePath, std::ios::ate | std::ios::binary);
 
+    std::ostringstream error;
+    error << "Cannot open the shader byte code file  " << "(" << filePath + ")";
+
     if(!file.is_open())
-        throw std::runtime_error("Cannot open the shader byte code file");
+        throw std::runtime_error(error.str().c_str());
 
     size_t fileSize = file.tellg();
     file.seekg(0);

@@ -66,6 +66,11 @@ void VKImage::CreateImage(uint32_t width, uint32_t height, VkFormat format, VkIm
 
     if (VK_CALL(vkCreateSampler(VKDEVICE, &samplerInfo, nullptr, &m_ImageSampler)))
        throw std::runtime_error("failed to create texture sampler!");
+
+    // Create the descriptor Info for the Image
+    m_DescrioptorInfo.imageLayout = VK_IMAGE_LAYOUT_SHADER_READ_ONLY_OPTIMAL;
+    m_DescrioptorInfo.imageView = m_ImageView;
+    m_DescrioptorInfo.sampler = m_ImageSampler;
 }
 
 void VKImage::CreateImageView(VkFormat format, VkImageAspectFlags aspectFlags)

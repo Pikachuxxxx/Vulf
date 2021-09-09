@@ -18,15 +18,7 @@
 #include <set>
 #include <unordered_map>
 
-#include "vertex.h"
-
-namespace std {
-    template<> struct hash<Vertex> {
-        size_t operator()(Vertex const& vertex) const {
-            return ((hash<glm::vec3>()(vertex.position) ^ (hash<glm::vec3>()(vertex.color) << 1)) >> 1) ^ (hash<glm::vec2>()(vertex.texCoord) << 1);
-        }
-    };
-}
+#include "utils/vertex.h"
 
 // Helper includes
 #include "utils/Window.h"
@@ -54,14 +46,15 @@ namespace std {
 #include "Vulkan/VKTexture.h"
 #include "Vulkan/VKDepthImage.h"
 
+
 // Imgui
 #include <imgui.h>
 #include <imgui_internal.h>
 #include <backends/imgui_impl_glfw.h>
 #include <backends/imgui_impl_vulkan.h>
+
 // ImGuizmo
 #include <ImGuizmo/ImGuizmo.h>
-
 
 const int MAX_FRAMES_IN_FLIGHT = 2;
 

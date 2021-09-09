@@ -2,7 +2,7 @@
 
 #include "VKDevice.h"
 #include "../utils/VulkanCheckResult.h"
-#include "../vertex.h"
+#include "../utils/vertex.h"
 
 // TODO: Add methods to add bindings and attributes dynamically
 

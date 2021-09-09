@@ -1201,6 +1201,8 @@ ImTextureID ImGui_ImplVulkan_AddTexture(VkSampler sampler, VkImageView image_vie
 
     ImGui_ImplVulkan_InitInfo* v = &g_VulkanInitInfo;
     VkDescriptorSet descriptor_set;
+
+    // if(allocated < 2)
     // Create Descriptor Set:
     {
         VkDescriptorSetAllocateInfo alloc_info = {};

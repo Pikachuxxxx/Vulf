@@ -1,6 +1,6 @@
 #pragma once
 
-#include "../vertex.h"
+#include "vertex.h"
 
 static std::vector<glm::vec3> sphereVertices;
 static std::vector<glm::vec3> sphereNormals;

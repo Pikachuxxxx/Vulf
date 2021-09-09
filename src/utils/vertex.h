@@ -22,6 +22,14 @@ struct Vertex
     }
 };
 
+namespace std {
+    template<> struct hash<Vertex> {
+        size_t operator()(Vertex const& vertex) const {
+            return ((hash<glm::vec3>()(vertex.position) ^ (hash<glm::vec3>()(vertex.color) << 1)) >> 1) ^ (hash<glm::vec2>()(vertex.texCoord) << 1);
+        }
+    };
+}
+
 static const std::vector<Vertex> rainbowTriangleVertices = {
     {{-5.0f, -5.0f, 0.5f}, {1.0f, 0.0f, 0.0f}, {0.0f, 0.0f}},
     {{ 5.0f, -5.0f, 0.5f}, {0.0f, 1.0f, 0.0f}, {1.0f, 0.0f}},

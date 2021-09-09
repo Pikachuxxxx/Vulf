@@ -2,7 +2,7 @@
 
 #include "VKDevice.h"
 #include "../utils/VulkanCheckResult.h"
-#include "../vertex.h"
+#include "../utils/vertex.h"
 
 void VKGraphicsPipeline::Create(std::vector<VkPipelineShaderStageCreateInfo> shaderStages, VKFixedPipelineFuncs& fixedfunctions, VkRenderPass& renderpass)
 {

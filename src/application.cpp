@@ -1,12 +1,15 @@
 #include "application.h"
 
-#include "utils/VulkanCheckResult.h"
-
-#include <sstream>
-
-#include <Tracy.hpp>
 
 #include <array>
+// STL
+#include <sstream>
+
+// Utilities
+#include "utils/VulkanCheckResult.h"
+
+// Profiling
+#include <Tracy.hpp>
 
 // TibyObj
 #define TINYOBJLOADER_IMPLEMENTATION
@@ -48,8 +51,8 @@ void Application::InitVulkan()
 
     VKLogicalDevice::GetDeviceManager()->Init();
 
-    vertexShader.CreateShader("./src/shaders/spir-v/vert.spv", ShaderType::VERTEX_SHADER);
-    fragmentShader.CreateShader("./src/shaders/spir-v/frag.spv", ShaderType::FRAGMENT_SHADER);
+    vertexShader.CreateShader("./src/shaders/spir-v/defaultVert.spv", ShaderType::VERTEX_SHADER);
+    fragmentShader.CreateShader("./src/shaders/spir-v/defaultFrag.spv", ShaderType::FRAGMENT_SHADER);
     outlineFragmentShader.CreateShader("./src/shaders/spir-v/outline.spv", ShaderType::FRAGMENT_SHADER);
 
     cmdPoolManager.Init();
@@ -691,8 +694,6 @@ void Application::ImGuiError(VkResult err)
 void Application::OnImGui()
 {
     ZoneScoped
-    // imguiGridTexture = ImGui_ImplVulkan_AddTexture(gridTexture.GetTextureImageSampler(), gridTexture.GetTextureImageView(), VK_IMAGE_LAYOUT_SHADER_READ_ONLY_OPTIMAL);
-    // imguiEarthTexture = ImGui_ImplVulkan_AddTexture(earthTexture.GetTextureImageSampler(), earthTexture.GetTextureImageView(), VK_IMAGE_LAYOUT_SHADER_READ_ONLY_OPTIMAL);
 
     auto proj = glm::perspective(glm::radians(45.0f), (float)swapchainManager.GetSwapExtent().width  / swapchainManager.GetSwapExtent().height, 0.01f, 100.0f);
     // proj[1][1] *= -1;
@@ -770,7 +771,9 @@ void Application::OnImGui()
 
     ImGui::Begin("Image Demo");
     {
-        ImGui::Image((ImTextureID)ImGui_ImplVulkan_AddTexture(depthImage.GetImage().GetImageSampler(), depthImage.GetDepthImageView(), VK_IMAGE_LAYOUT_DEPTH_STENCIL_ATTACHMENT_OPTIMAL), ImVec2(200, 200));
+        // imguiGridTexture = ImGui_ImplVulkan_AddTexture(gridTexture.GetTextureImageSampler(), gridTexture.GetTextureImageView(), VK_IMAGE_LAYOUT_SHADER_READ_ONLY_OPTIMAL);
+        // imguiEarthTexture = ImGui_ImplVulkan_AddTexture(earthTexture.GetTextureImageSampler(), earthTexture.GetTextureImageView(), VK_IMAGE_LAYOUT_SHADER_READ_ONLY_OPTIMAL);
+        // ImGui::Image((ImTextureID)ImGui_ImplVulkan_AddTexture(depthImage.GetImage().GetImageSampler(), depthImage.GetDepthImageView(), VK_IMAGE_LAYOUT_DEPTH_STENCIL_ATTACHMENT_OPTIMAL), ImVec2(200, 200));
         // ImGui::Image((ImTextureID)imguiEarthTexture, ImVec2(200, 200));
     }
     ImGui::End();
