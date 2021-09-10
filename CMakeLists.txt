@@ -1,7 +1,7 @@
 cmake_minimum_required(VERSION 3.18)
 
 # set the project name and version
-project(HelloVulkan)
+project(Vulf)
 
 # specify the C++ standard and making it mandatory
 set(CMAKE_CXX_STANDARD 17)
@@ -141,25 +141,28 @@ file(GLOB_RECURSE HEADER_FILES
 
 #===============================================================================
 # Compile the source files for the executable
-add_executable(HelloVulkan ${HEADER_FILES} ${SOURCE_FILES} ${VENDOR_SOURCE_FILES})
+add_executable(Vulf ${HEADER_FILES} ${SOURCE_FILES} ${VENDOR_SOURCE_FILES})
 #===============================================================================
 
 #===============================================================================
 # LINK EXECUTABLE WITH LIBRARIES
 if (APPLE)
-target_link_libraries(HelloVulkan glfw3 vulkan.1 "-framework CoreFoundation -framework CoreAudio -framework OpenAL -framework Cocoa -framework IOKit -framework CoreGraphics")
+target_link_libraries(Vulf glfw3 vulkan.1 "-framework CoreFoundation -framework CoreAudio -framework OpenAL -framework Cocoa -framework IOKit -framework CoreGraphics")
 endif (APPLE)
 if(WIN32)
-target_link_libraries(HelloVulkan glfw3 vulkan-1)
+target_link_libraries(Vulf glfw3 vulkan-1)
 endif()
 #===============================================================================
 # Global pre-processor defines
 add_compile_definitions(TRACY_ENABLE)
+add_compile_definitions("MY_FILE_PATH=\"${MY_FILE_PATH}\"")
+target_compile_definitions(Vulf PRIVATE "SHADER_BINARY_DIR=\"${SHADER_BINARY_DIR}\"")
+target_compile_definitions(Vulf PRIVATE "SRC_DIR=\"${CMAKE_SOURCE_DIR}\"")
 #===============================================================================
 # Run the binary built using 'make run' command
 add_custom_target(run
-    COMMAND HelloVulkan
-    DEPENDS HelloVulkan
+    COMMAND Vulf
+    DEPENDS Vulf
     WORKING_DIRECTORY ${CMAKE_SOURCE_DIR} # here we set the executable direcotry to the CMake home dir
 )
 #===============================================================================

@@ -46,7 +46,6 @@
 #include "Vulkan/VKTexture.h"
 #include "Vulkan/VKDepthImage.h"
 
-
 // Imgui
 #include <imgui.h>
 #include <imgui_internal.h>
@@ -55,6 +54,8 @@
 
 // ImGuizmo
 #include <ImGuizmo/ImGuizmo.h>
+
+#define STRINGIZE(s) #s
 
 const int MAX_FRAMES_IN_FLIGHT = 2;
 
@@ -66,7 +67,7 @@ public:
 public:
 CommandLineParser commandLineParser;
 bool enableValidationLayers = false;
-int width, height;
+int width = 800, height = 600;
 private:
     Window* window;
     Camera3D camera;

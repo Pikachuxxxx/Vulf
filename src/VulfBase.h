@@ -68,6 +68,7 @@
 #include "Vulkan/VKTexture.h"
 #include "Vulkan/VKDepthImage.h"
 
+// Execution command
 // make && cd ../ && ./build//HelloVulkan -w 1280 -h 720  && cd build
 
 namespace Vulf {

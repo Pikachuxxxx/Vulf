@@ -41,7 +41,7 @@ void Application::InitResources()
 void Application::InitWindow()
 {
 /******************************************************************/
-/**/ window = new Window("Hello Vulkan again!", width, height);      /**/
+/**/ window = new Window("Hello Vulkan again!", width, height); /**/
 /******************************************************************/
 }
 
@@ -51,9 +51,9 @@ void Application::InitVulkan()
 
     VKLogicalDevice::GetDeviceManager()->Init();
 
-    vertexShader.CreateShader("./src/shaders/spir-v/defaultVert.spv", ShaderType::VERTEX_SHADER);
-    fragmentShader.CreateShader("./src/shaders/spir-v/defaultFrag.spv", ShaderType::FRAGMENT_SHADER);
-    outlineFragmentShader.CreateShader("./src/shaders/spir-v/outline.spv", ShaderType::FRAGMENT_SHADER);
+    vertexShader.CreateShader(SHADER_BINARY_DIR + std::string("/defaultVert.spv"), ShaderType::VERTEX_SHADER);
+    fragmentShader.CreateShader(SHADER_BINARY_DIR + std::string("/defaultFrag.spv"), ShaderType::FRAGMENT_SHADER);
+    outlineFragmentShader.CreateShader(SHADER_BINARY_DIR + std::string("/outline.spv"), ShaderType::FRAGMENT_SHADER);
 
     cmdPoolManager.Init();
     RecreateCommandPipeline();
@@ -376,8 +376,8 @@ void Application::RecreateCommandPipeline()
 
 
     // Create the texture
-    gridTexture.CreateTexture("./data/textures/TestGrid_1024.png", cmdPoolManager);
-    earthTexture.CreateTexture("./data/textures/earthmap.jpg", cmdPoolManager);
+    gridTexture.CreateTexture(SRC_DIR + std::string("/data/textures/TestGrid_1024.png"), cmdPoolManager);
+    earthTexture.CreateTexture(SRC_DIR + std::string("/data/textures/earthmap.jpg"), cmdPoolManager);
 
     // Create the push contants
     VkPushConstantRange modelPushConstant;
@@ -449,10 +449,10 @@ void Application::RecreateCommandPipeline()
     quadIBO.Create(whiteQuadIndices, cmdPoolManager);
 
     // Budda vbo and  ibo
-    LoadModel("./data/models/lowpolyTriSphere.obj", buddaVertices, buddaIndices, buddaQuadIndices, true);
+    LoadModel(SRC_DIR + std::string("/data/models/lowpolyTriSphere.obj"), buddaVertices, buddaIndices, buddaQuadIndices, true);
     buddaVBO.Create(buddaVertices, cmdPoolManager);
     buddaIBO.Create(buddaIndices, cmdPoolManager);
-    LoadModel("./data/models/lowpolyQuadSphere.obj", buddaVertices, buddaIndices, buddaQuadIndices, false);
+    LoadModel(SRC_DIR + std::string("/data/models/lowpolyQuadSphere.obj"), buddaVertices, buddaIndices, buddaQuadIndices, false);
     buddaQuadIBO.Create(buddaQuadIndices, cmdPoolManager);
 
     cubeVBO.Create(cubeVertices, cmdPoolManager);
@@ -586,8 +586,11 @@ void Application::RecordCommands()
         RPinfo.renderArea.extent.width = swapchainManager.GetSwapExtent().width;
         RPinfo.renderArea.extent.height = swapchainManager.GetSwapExtent().height;
         std::array<VkClearValue, 2> clearValues{};
-        clearValues[0].color = {{clearColor[0], clearColor[1], clearColor[2], clearColor[3]}};
+        clearValues[0].color = {
+            {clearColor[0], clearColor[1], clearColor[2], clearColor[3]}
+        };
         clearValues[1].depthStencil = {1.0f, 0};
+
         RPinfo.clearValueCount = static_cast<uint32_t>(clearValues.size());
         RPinfo.pClearValues = clearValues.data();
 
@@ -1017,8 +1020,7 @@ void Application::LoadModel(std::string path, std::vector<Vertex>& vertices, std
         {
           size_t fnum = shape.mesh.num_face_vertices[f];
 
-          printf("  face[%ld].fnum = %ld\n", static_cast<long>(f),
-                 static_cast<unsigned long>(fnum));
+          // printf("  face[%ld].fnum = %ld\n", static_cast<long>(f), static_cast<unsigned long>(fnum));
 
           // For each vertex in the face
           for (size_t v = 0; v < fnum; v++) {
