@@ -52,6 +52,7 @@ static int SpirvReflectExample(const void* spirv_code, size_t spirv_nbytes)
 
   // Destroy the reflection data when no longer required.
   spvReflectDestroyShaderModule(&module);
+  return 0;
 }
 
 /**************************** Application Flow ********************************/

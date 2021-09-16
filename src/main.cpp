@@ -27,13 +27,13 @@ int main(int argc, char* argv[]) {
         args.push_back(argv[i]);
     }
     Application app;
-    app.commandLineParser.Parse(args);
+    app.commandLineParser.Parse(args); 
 
     // TODO: Add support for all command line arguments
     // --help : Prints all the availbale command line options
     if(app.commandLineParser.IsSet("help")) {
         app.commandLineParser.PrintHelp();
-		exit(0);
+		//exit(0);
     }
     // enables valdiation layers
     if (app.commandLineParser.IsSet("validation")) {

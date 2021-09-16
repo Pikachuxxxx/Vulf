@@ -1,6 +1,7 @@
 #include "CommandLineParser.h"
 
 #include <iomanip>
+#include <assert.h>
 
 CommandLineParser::CommandLineParser()
 {

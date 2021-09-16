@@ -115,8 +115,8 @@ bool VKInstance::checkValidationLayersSupport()
             }
         }
     }
-#endif
     vt.print(std::cout);
+#endif
 
     return true;
 }

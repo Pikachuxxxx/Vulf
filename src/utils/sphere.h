@@ -2,6 +2,9 @@
 
 #include "vertex.h"
 
+#define _USE_MATH_DEFINES
+#include <math.h>
+
 static std::vector<glm::vec3> sphereVertices;
 static std::vector<glm::vec3> sphereNormals;
 static std::vector<glm::vec2> sphereUVs;

@@ -114,7 +114,7 @@ namespace Vulf {
 
         /* Builds the command pipeline for the entire application */
         virtual void BuildCommandPipeline();
-        /* Build the renderpassed for the Vulf application */
+        /* Build the render passes for the Vulf application */
         virtual void BuildRenderPass();
         /* Build the framebuffers with the proper render pass attachments and swapchain configuration */
         virtual void BuildFramebuffer();
@@ -127,7 +127,7 @@ namespace Vulf {
          * @param dt The delta time taken to render a frame since the last frame
          */
         virtual void OnUpdate(double dt);
-        /* Client defines how the scene is renderd and it's resources are used */
+        /* Client defines how the scene is rendered and it's resources are used */
         virtual void OnRender();
         /* ImGui Overlay */
         virtual void OnImGui();

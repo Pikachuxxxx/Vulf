@@ -6,12 +6,17 @@ project(Vulf)
 # specify the C++ standard and making it mandatory
 set(CMAKE_CXX_STANDARD 17)
 set(CMAKE_CXX_STANDARD_REQUIRED True)
+set(CMAKE_SUPPRESS_REGENERATION true)
 
 #===============================================================================
 # COMPILE SHADERS
 
 if(APPLE)
     set(glslc_executable $ENV{VULKAN_SDK}/macOS/bin/glslc)
+endif()
+
+if(WIN32)
+    set(glslc_executable $ENV{VULKAN_SDK}/Bin/glslc)
 endif()
 
 set(SHADER_SOURCE_DIR ${CMAKE_CURRENT_SOURCE_DIR}/src/shaders/glsl)
@@ -59,6 +64,7 @@ add_custom_target(shaders ALL DEPENDS ${SPV_SHADERS})
 
 #===============================================================================
 # INCLUDE AND LINK DIRECTORIES
+
 #   MACOS
 if (APPLE)
 # set the include directories for the vendor dependencies
@@ -91,14 +97,15 @@ endif()
 #   WINDOWS
 if(WIN32)
 include_directories(
+    "${CMAKE_SOURCE_DIR}/vendor"
     # GLFW headers
     "${CMAKE_SOURCE_DIR}/vendor/glfw/include"
     # GLM headers
     "${CMAKE_SOURCE_DIR}/vendor/glm"
     # Vulkan MacOS headers
-    $ENV{VULKAN_SDK}/include
+    "$ENV{VULKAN_SDK}/include"
     # ImGui Headers
-    "$(CMAKE_SOURCE_DIR)/vendor/ImGui"
+    "${CMAKE_SOURCE_DIR}/vendor/ImGui"
     # Tracy headers
     "${CMAKE_SOURCE_DIR}/vendor/tracy"
     #SPIRV-Reflect
@@ -106,9 +113,9 @@ include_directories(
 )
 
 link_directories(
-    # glfw library path
-    "${CMAKE_SOURCE_DIR}/vendor/glfw/build/src"
-    # MoltenVk libraries
+    # GLFW library path
+    "${CMAKE_SOURCE_DIR}/vendor/glfw/libs"
+    # Vulkan libraries
     $ENV{VULKAN_SDK}/Lib
 )
 endif()
@@ -148,6 +155,9 @@ file(GLOB_RECURSE HEADER_FILES
 #===============================================================================
 # Compile the source files for the executable
 add_executable(Vulf ${HEADER_FILES} ${SOURCE_FILES} ${VENDOR_SOURCE_FILES})
+set_property(GLOBAL PROPERTY USE_FOLDERS ON)
+set_property(GLOBAL PROPERTY PREDEFINED_TARGETS_FOLDER "_CMakePredefinedTargets")
+set_property(DIRECTORY ${CMAKE_CURRENT_SOURCE_DIR} PROPERTY VS_STARTUP_PROJECT Vulf)
 #===============================================================================
 
 #===============================================================================
