@@ -1,6 +1,7 @@
 #pragma once
 
 // Std. Includes
+#define GLM_FORCE_DEPTH_ZERO_TO_ONE
 #include <vector>
 #include <glm/glm.hpp>
 #include <glm/gtc/matrix_transform.hpp>
@@ -18,7 +19,7 @@ enum Camera_Movement {
 // Default camera values
 const float YAW        = -90.0f;
 const float PITCH      =  0.0f;
-const float SPEED      =  0.01f;
+const float SPEED      =  0.05f;
 const float SENSITIVTY =  0.50f;
 const float ZOOM       =  45.0f;
 
@@ -47,7 +48,8 @@ public:
     void Update(Window& window, float deltaTime);
     // Returns the view matrix calculated using Euler Angles and the LookAt Matrix
     glm::mat4 GetViewMatrix();
-    glm::mat4 GetViewRHMatrix();
+    glm::mat4 GetViewMatrixLH();
+    glm::mat4 GetViewMatrixRH();
     // Processes input received from any keyboard-like input system. Accepts input parameter in the form of camera defined ENUM (to abstract it from windowing systems)
     void ProcessKeyboard(Camera_Movement direction, float deltaTime);
     // Processes input received from a mouse input system. Expects the offset value in both the x and y direction.

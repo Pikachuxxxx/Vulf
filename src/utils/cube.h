@@ -1,6 +1,6 @@
 #pragma once
 
-#include "../vertex.h"
+#include "vertex.h"
 
 static const std::vector<Vertex>  cubeVertices = {
    // positions          // normals           // texture coords

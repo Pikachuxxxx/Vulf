@@ -12,6 +12,7 @@ extern std::vector<const char*> instanceExtensions;
 class VKInstance
 {
 public:
+    VKInstance() = default;
     void Init(std::string appname, GLFWwindow* window, bool enableValidationLayers = true);
     void Destroy();
     static VKInstance* GetInstanceManager() { if(s_Instance ==  nullptr) s_Instance = new VKInstance; return s_Instance; }
@@ -25,7 +26,6 @@ private:
     VkSurfaceKHR m_Surface;
     static VKInstance* s_Instance;
 private:
-    VKInstance() = default;
     // Check whether or not the validation layers are supported
     bool checkValidationLayersSupport();
     // retrieves the list of extensions to be loaded

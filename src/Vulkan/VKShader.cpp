@@ -1,6 +1,7 @@
 #include "VKShader.h"
 
 #include <fstream>
+#include <sstream>
 
 #include "VKDevice.h"
 #include "../utils/VulkanCheckResult.h"
@@ -14,7 +15,7 @@ void VKShader::CreateShader(const std::string& path, ShaderType type)
     shaderCI.codeSize = byteCode.size();
     shaderCI.pCode = reinterpret_cast<uint32_t*>(byteCode.data());
 
-    if(VK_CALL(vkCreateShaderModule(VKLogicalDevice::GetDeviceManager()->GetLogicalDevice(), &shaderCI, nullptr, &m_Module)))
+    if(VK_CALL(vkCreateShaderModule(VKDEVICE, &shaderCI, nullptr, &m_Module)))
         throw std::runtime_error("Cannot Create shader module!");
     else VK_LOG(GetShaderTypeString(), " shader module created!");
 
@@ -36,7 +37,7 @@ void VKShader::CreateShader(const std::string& path, ShaderType type)
 
 void VKShader::DestroyModule()
 {
-    vkDestroyShaderModule(VKLogicalDevice::GetDeviceManager()->GetLogicalDevice(), m_Module, nullptr);
+    vkDestroyShaderModule(VKDEVICE, m_Module, nullptr);
 }
 
 std::string VKShader::GetShaderTypeString()
@@ -55,8 +56,11 @@ std::vector<char> VKShader::ReadShaderByteCode(const std::string& filePath)
 {
     std::ifstream file(filePath, std::ios::ate | std::ios::binary);
 
+    std::ostringstream error;
+    error << "Cannot open the shader byte code file  " << "(" << filePath + ")";
+
     if(!file.is_open())
-        throw std::runtime_error("Cannot open the shader byte code file");
+        throw std::runtime_error(error.str().c_str());
 
     size_t fileSize = file.tellg();
     file.seekg(0);

@@ -10,7 +10,7 @@ void VKCmdPool::Init()
     poolCI.flags = VK_COMMAND_POOL_CREATE_RESET_COMMAND_BUFFER_BIT;
     poolCI.queueFamilyIndex = VKLogicalDevice::GetDeviceManager()->GetGPUManager().GetQueueFamilyIndices().graphicsFamily.value();
 
-    if(VK_CALL(vkCreateCommandPool(VKLogicalDevice::GetDeviceManager()->GetLogicalDevice(), &poolCI, nullptr, &m_CommandPool)))
+    if(VK_CALL(vkCreateCommandPool(VKDEVICE, &poolCI, nullptr, &m_CommandPool)))
         throw std::runtime_error("Cannot create command pool");
     else VK_LOG_SUCCESS("Command pool created succesfully!");
 }
@@ -23,7 +23,7 @@ VkCommandBuffer VKCmdPool::AllocateBuffer()
     allocInfo.level = VK_COMMAND_BUFFER_LEVEL_PRIMARY;
     allocInfo.commandBufferCount = 1;
     VkCommandBuffer cmdBuffer;
-    if(VK_CALL(vkAllocateCommandBuffers(VKLogicalDevice::GetDeviceManager()->GetLogicalDevice(), &allocInfo, &cmdBuffer)))
+    if(VK_CALL(vkAllocateCommandBuffers(VKDEVICE, &allocInfo, &cmdBuffer)))
         throw std::runtime_error("Cannot create command buffer!");
     else VK_LOG_SUCCESS("Command Buffer (1) succesfully Allocated!");
 
@@ -32,7 +32,7 @@ VkCommandBuffer VKCmdPool::AllocateBuffer()
 
 void VKCmdPool::Destroy()
 {
-    vkDestroyCommandPool(VKLogicalDevice::GetDeviceManager()->GetLogicalDevice(), m_CommandPool, nullptr);
+    vkDestroyCommandPool(VKDEVICE, m_CommandPool, nullptr);
 }
 
 VkCommandBuffer VKCmdPool::BeginSingleTimeBuffer()
@@ -44,7 +44,7 @@ VkCommandBuffer VKCmdPool::BeginSingleTimeBuffer()
     allocInfo.commandBufferCount = 1;
 
     VkCommandBuffer commandBuffer;
-    vkAllocateCommandBuffers(VKLogicalDevice::GetDeviceManager()->GetLogicalDevice(), &allocInfo, &commandBuffer);
+    vkAllocateCommandBuffers(VKDEVICE, &allocInfo, &commandBuffer);
 
     VkCommandBufferBeginInfo beginInfo{};
     beginInfo.sType = VK_STRUCTURE_TYPE_COMMAND_BUFFER_BEGIN_INFO;
@@ -66,7 +66,7 @@ void VKCmdPool::EndSingleTimeBuffer(const VkCommandBuffer& buffer)
     vkQueueSubmit(VKLogicalDevice::GetDeviceManager()->GetGraphicsQueue(), 1, &submitInfo, VK_NULL_HANDLE);
     vkQueueWaitIdle(VKLogicalDevice::GetDeviceManager()->GetGraphicsQueue());
 
-    vkFreeCommandBuffers(VKLogicalDevice::GetDeviceManager()->GetLogicalDevice(), m_CommandPool, 1, &buffer);
+    vkFreeCommandBuffers(VKDEVICE, m_CommandPool, 1, &buffer);
 }
 
 void VKCmdPool::CopyBufferToImage(VkBuffer buffer, VkImage image, uint32_t width, uint32_t height)

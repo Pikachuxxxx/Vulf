@@ -2,7 +2,7 @@
 
 #include "VKDevice.h"
 #include "../utils/VulkanCheckResult.h"
-#include "../vertex.h"
+#include "../utils/vertex.h"
 
 // TODO: Add methods to add bindings and attributes dynamically
 
@@ -78,8 +78,8 @@ void VKFixedPipelineFuncs::SetRasterizerSCI(bool enableWireFrameMode)
         m_RasterizerSCI.polygonMode = VK_POLYGON_MODE_LINE;
     else
         m_RasterizerSCI.polygonMode = VK_POLYGON_MODE_FILL;
-    m_RasterizerSCI.cullMode = VK_CULL_MODE_BACK_BIT;//VK_CULL_MODE_NONE;
-    m_RasterizerSCI.frontFace = VK_FRONT_FACE_CLOCKWISE;
+    m_RasterizerSCI.cullMode = VK_CULL_MODE_BACK_BIT;//VK_CULL_MODE_NONE;//
+    m_RasterizerSCI.frontFace = VK_FRONT_FACE_CLOCKWISE;//VK_FRONT_FACE_COUNTER_CLOCKWISE;//
     m_RasterizerSCI.depthBiasEnable = VK_FALSE;
     m_RasterizerSCI.depthBiasConstantFactor = 0.0f;
     m_RasterizerSCI.depthBiasClamp = 0.0f;
@@ -104,6 +104,19 @@ void VKFixedPipelineFuncs::SetDepthStencilSCI()
 {
     // TODO: Fill this later (for now pass a nullptr)
     m_DepthStencilSCI = {};
+    m_DepthStencilSCI.sType = VK_STRUCTURE_TYPE_PIPELINE_DEPTH_STENCIL_STATE_CREATE_INFO;
+    m_DepthStencilSCI.depthTestEnable = VK_TRUE;
+    m_DepthStencilSCI.depthWriteEnable = VK_TRUE;
+    ////////////////////////////////////////////////////
+    m_DepthStencilSCI.depthCompareOp = VK_COMPARE_OP_LESS;
+    ////////////////////////////////////////////////////
+    m_DepthStencilSCI.depthBoundsTestEnable = VK_FALSE;
+    m_DepthStencilSCI.minDepthBounds = 0.0f; // Optional
+    m_DepthStencilSCI.maxDepthBounds = 1.0f; // Optional
+    m_DepthStencilSCI.stencilTestEnable = VK_FALSE;
+    m_DepthStencilSCI.front = {}; // Optional
+    m_DepthStencilSCI.back = {}; // Optional
+
 }
 
 void VKFixedPipelineFuncs::SetColorBlendSCI()
@@ -140,12 +153,12 @@ void VKFixedPipelineFuncs::SetPipelineLayout(VkDescriptorSetLayout& layout, VkPu
     layoutCI.pushConstantRangeCount = 1;
     layoutCI.pPushConstantRanges = &pushConstants;
 
-    if(VK_CALL(vkCreatePipelineLayout(VKLogicalDevice::GetDeviceManager()->GetLogicalDevice(), &layoutCI, nullptr, &m_PipelineLayout)))
+    if(VK_CALL(vkCreatePipelineLayout(VKDEVICE, &layoutCI, nullptr, &m_PipelineLayout)))
         throw std::runtime_error("Cannot create pipeline layout");
     else VK_LOG_SUCCESS("Pipeline layout successfully created!");
 }
 
 void VKFixedPipelineFuncs::DestroyPipelineLayout()
 {
-    vkDestroyPipelineLayout(VKLogicalDevice::GetDeviceManager()->GetLogicalDevice(), m_PipelineLayout, nullptr);
+    vkDestroyPipelineLayout(VKDEVICE, m_PipelineLayout, nullptr);
 }

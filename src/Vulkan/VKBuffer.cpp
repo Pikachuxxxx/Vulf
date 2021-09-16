@@ -11,51 +11,51 @@ void VKBuffer::CreateBuffer(VkDeviceSize size, VkBufferUsageFlags usage, VkMemor
     bufferInfo.usage = usage;
     bufferInfo.sharingMode = VK_SHARING_MODE_EXCLUSIVE;
 
-    if(VK_CALL(vkCreateBuffer(VKLogicalDevice::GetDeviceManager()->GetLogicalDevice(), &bufferInfo, nullptr, &m_Buffer)))
+    if(VK_CALL(vkCreateBuffer(VKDEVICE, &bufferInfo, nullptr, &m_Buffer)))
         throw std::runtime_error("Cannot create vertex buffer!");
-    else VK_LOG_SUCCESS("Buffer successuflly created!");
+    // else VK_LOG_SUCCESS("Buffer successuflly created!");
 
 
     // Get the memory memRequirements of the vertex buffer
     VkMemoryRequirements memRequirements;
-    vkGetBufferMemoryRequirements(VKLogicalDevice::GetDeviceManager()->GetLogicalDevice(), m_Buffer, &memRequirements);
+    vkGetBufferMemoryRequirements(VKDEVICE, m_Buffer, &memRequirements);
 
     // Now allocate actual Physical memry for the buffer
     VkMemoryAllocateInfo allocInfo{};
     allocInfo.sType = VK_STRUCTURE_TYPE_MEMORY_ALLOCATE_INFO;
     allocInfo.allocationSize = memRequirements.size;
     allocInfo.memoryTypeIndex = VKLogicalDevice::GetDeviceManager()->GetGPUManager().FindMemoryTypeIndex(memRequirements.memoryTypeBits, properties);
-    if(VK_CALL(vkAllocateMemory(VKLogicalDevice::GetDeviceManager()->GetLogicalDevice(), &allocInfo, nullptr, &m_BufferMemory)))
+    if(VK_CALL(vkAllocateMemory(VKDEVICE, &allocInfo, nullptr, &m_BufferMemory)))
         throw std::runtime_error("Cannot alocate memory for vertex buffer");
 
     // Bind the buffer to the allocated memory
-    vkBindBufferMemory(VKLogicalDevice::GetDeviceManager()->GetLogicalDevice(), m_Buffer, m_BufferMemory, 0);
+    vkBindBufferMemory(VKDEVICE, m_Buffer, m_BufferMemory, 0);
 }
 
 void VKBuffer::MapVertexBufferData(const std::vector<Vertex>& vertexData)
 {
     void* data;
-    vkMapMemory(VKLogicalDevice::GetDeviceManager()->GetLogicalDevice(), m_BufferMemory, 0, sizeof(vertexData[0]) * vertexData.size(), 0, &data);
+    vkMapMemory(VKDEVICE, m_BufferMemory, 0, sizeof(vertexData[0]) * vertexData.size(), 0, &data);
     memcpy(data, vertexData.data(), (size_t) sizeof(vertexData[0]) * vertexData.size());
-    vkUnmapMemory(VKLogicalDevice::GetDeviceManager()->GetLogicalDevice(), m_BufferMemory);
+    vkUnmapMemory(VKDEVICE, m_BufferMemory);
 }
 
 void VKBuffer::MapIndexBufferData(const std::vector<uint16_t>& indexData)
 {
     void* data;
-    vkMapMemory(VKLogicalDevice::GetDeviceManager()->GetLogicalDevice(), m_BufferMemory, 0, sizeof(indexData[0]) * indexData.size(), 0, &data);
+    vkMapMemory(VKDEVICE, m_BufferMemory, 0, sizeof(indexData[0]) * indexData.size(), 0, &data);
     memcpy(data, indexData.data(), (size_t) sizeof(indexData[0]) * indexData.size());
-    vkUnmapMemory(VKLogicalDevice::GetDeviceManager()->GetLogicalDevice(), m_BufferMemory);
+    vkUnmapMemory(VKDEVICE, m_BufferMemory);
 }
 
 void VKBuffer::MapImage(unsigned char* imageData, VkDeviceSize imageSize)
 {
     void* data;
-    vkMapMemory(VKLogicalDevice::GetDeviceManager()->GetLogicalDevice(), m_BufferMemory, 0, imageSize, 0, &data);
+    vkMapMemory(VKDEVICE, m_BufferMemory, 0, imageSize, 0, &data);
     std::cout << "\033[4;30;49m Hereeeeeee!!!!!!!!!!! \033[0m" << std::endl;
     memcpy(data, imageData, static_cast<size_t>(imageSize));
     std::cout << "\033[4;33;49m Hereeeeeee!!!!!!!!!!! \033[0m" << std::endl;
-    vkUnmapMemory(VKLogicalDevice::GetDeviceManager()->GetLogicalDevice(), m_BufferMemory);
+    vkUnmapMemory(VKDEVICE, m_BufferMemory);
     std::cout << "\033[4;34;49m Hereeeeeee!!!!!!!!!!! \033[0m" << std::endl;
 }
 
@@ -72,6 +72,6 @@ void VKBuffer::CopyBufferToDevice(VKCmdPool pool, VkBuffer dstBuffer, VkDeviceSi
 
 void VKBuffer::DestroyBuffer()
 {
-    vkDestroyBuffer(VKLogicalDevice::GetDeviceManager()->GetLogicalDevice(), m_Buffer, nullptr);
-    vkFreeMemory(VKLogicalDevice::GetDeviceManager()->GetLogicalDevice(), m_BufferMemory, nullptr);
+    vkDestroyBuffer(VKDEVICE, m_Buffer, nullptr);
+    vkFreeMemory(VKDEVICE, m_BufferMemory, nullptr);
 }

@@ -1,7 +1,7 @@
 // Vulkan Include
 #define GLFW_INCLUDE_VULKAN
 #include <GLFW/glfw3.h>
-// #define GLM_DEPTH_ZERO_TO_ONE
+#define GLM_DEPTH_ZERO_TO_ONE
 
 // Std. Libraries
 #include <iostream>
@@ -18,21 +18,17 @@
 #include <set>
 #include <unordered_map>
 
-#include "vertex.h"
-
-namespace std {
-    template<> struct hash<Vertex> {
-        size_t operator()(Vertex const& vertex) const {
-            return ((hash<glm::vec3>()(vertex.position) ^ (hash<glm::vec3>()(vertex.color) << 1)) >> 1) ^ (hash<glm::vec2>()(vertex.texCoord) << 1);
-        }
-    };
-}
+#include "utils/vertex.h"
 
 // Helper includes
 #include "utils/Window.h"
 #include "utils/Camera3D.h"
 #include "utils/Transform.h"
 #include "utils/cube.h"
+#include "utils/sphere.h"
+// Command Line Parser
+#include "utils/CommandLineParser.h"
+
 
 #include "Vulkan/VKInstance.h"
 #include "Vulkan/VKDevice.h"
@@ -48,15 +44,21 @@ namespace std {
 #include "Vulkan/VKIndexBuffer.h"
 #include "Vulkan/VKUniformBuffer.h"
 #include "Vulkan/VKTexture.h"
+#include "Vulkan/VKDepthImage.h"
 
 // Imgui
 #include <imgui.h>
 #include <imgui_internal.h>
 #include <backends/imgui_impl_glfw.h>
 #include <backends/imgui_impl_vulkan.h>
+
 // ImGuizmo
 #include <ImGuizmo/ImGuizmo.h>
 
+// SPIRV-Reflect
+#include <spirv_reflect.h>
+
+#define STRINGIZE(s) #s
 
 const int MAX_FRAMES_IN_FLIGHT = 2;
 
@@ -64,6 +66,11 @@ class Application
 {
 public:
     void Run();
+/***************************** Application Variables **************************/
+public:
+CommandLineParser commandLineParser;
+bool enableValidationLayers = false;
+int width = 800, height = 600;
 private:
     Window* window;
     Camera3D camera;
@@ -71,9 +78,8 @@ private:
     double lastTime;
     double nbFrames = 0;
     double delta = 0;
-/***************************** Vulkan Variables *******************************/
-private:
 /****************************** Application Flow ******************************/
+    void InitResources();
     void InitWindow();
     void InitVulkan();
     void InitImGui();
@@ -82,11 +88,12 @@ private:
     void CleanUp();
     void OnImGui();
     void OnUpdate(double dt);
-    void LoadModel(std::string path, std::vector<Vertex>& vertices, std::vector<uint16_t>& indices);
+    void LoadModel(std::string path, std::vector<Vertex>& vertices, std::vector<uint16_t>& indices, std::vector<uint16_t>& quadIndices, bool triangulate = true);
 /***************************** Vulkan Encapsulation ***************************/
 VKSwapchain swapchainManager;
 VKShader vertexShader;
 VKShader fragmentShader;
+VKShader outlineFragmentShader;
 VKFixedPipelineFuncs fixedPipelineFuncs;
 VKFixedPipelineFuncs wireframeFixedPipelineFuncs;
 VKRenderPass renderPassManager;
@@ -95,6 +102,12 @@ VKGraphicsPipeline wireframeGraphicsPipeline;
 VKFramebuffer framebufferManager;
 VKCmdPool cmdPoolManager;
 VKCmdBuffer swapCmdBuffers;
+
+std::vector<VKFixedPipelineFuncs> fixedTopologyPipelines;
+std::vector<VKFixedPipelineFuncs>  wireframeFixedTopologyPipelineFuncs;
+
+std::vector<VKGraphicsPipeline> graphicsPipelines;
+std::vector<VKGraphicsPipeline> wireframeGraphicsPipelines;
 
 VKVertexBuffer triVBO;
 VKIndexBuffer triIBO;
@@ -105,10 +118,19 @@ VKIndexBuffer quadIBO;
 // Happy budda model
 std::vector<Vertex> buddaVertices;
 std::vector<uint16_t> buddaIndices;
+std::vector<uint16_t> buddaQuadIndices;
 VKVertexBuffer buddaVBO;
 VKIndexBuffer buddaIBO;
+VKIndexBuffer buddaQuadIBO;
 
+// Cube
 VKVertexBuffer cubeVBO;
+
+// Sphere
+std::vector<Vertex> sphereVertexData;
+VKVertexBuffer sphereVBO;
+VKIndexBuffer sphereIBO;
+VKIndexBuffer sphereQuadIBO;
 
 // Descriptor and uniforms shit!
 VKUniformBuffer mvpUniformBuffer;
@@ -121,10 +143,14 @@ VkDescriptorPool imguiDescriptorPool;
 VkCommandBuffer imguiCmdBuffer;
 VKCmdBuffer imguiCmdBuffers;
 float clearColor[4] = {0.24, 0.24, 0.24, 1.0f};
-bool enableWireframe = false;
+bool enableWireframe = true;
 
 //Grid image texure
 VKTexture gridTexture;
+VKTexture earthTexture;
+ImTextureID imguiGridTexture;
+ImTextureID imguiEarthTexture;
+
 // Model Push contant data
 struct DefaultPushConstantData
 {
@@ -132,11 +158,29 @@ struct DefaultPushConstantData
 }modelPCData;
 Transform modelTransform;
 ImGuizmo::OPERATION globalOperation = ImGuizmo::TRANSLATE;
+
+// Depth Image
+VKDepthImage depthImage;
 /******************************************************************************/
 // Light settings
 glm::vec3 objectColor = glm::vec3(1.0f, 0.5f, 0.32f);
 glm::vec3 lightColor = glm::vec3(1.0f, 1.0f, 1.0f);
 glm::vec3 lightPos = glm::vec3(0.4, 0.5, 1.0f);
+/*
+    VK_PRIMITIVE_TOPOLOGY_POINT_LIST = 0,
+    VK_PRIMITIVE_TOPOLOGY_LINE_LIST = 1,
+    VK_PRIMITIVE_TOPOLOGY_LINE_STRIP = 2,
+    VK_PRIMITIVE_TOPOLOGY_TRIANGLE_LIST = 3,
+    VK_PRIMITIVE_TOPOLOGY_TRIANGLE_STRIP = 4,
+    VK_PRIMITIVE_TOPOLOGY_TRIANGLE_FAN = 5,
+    VK_PRIMITIVE_TOPOLOGY_LINE_LIST_WITH_ADJACENCY = 6,
+    VK_PRIMITIVE_TOPOLOGY_LINE_STRIP_WITH_ADJACENCY = 7,
+    VK_PRIMITIVE_TOPOLOGY_TRIANGLE_LIST_WITH_ADJACENCY = 8,
+    VK_PRIMITIVE_TOPOLOGY_TRIANGLE_STRIP_WITH_ADJACENCY = 9,
+    VK_PRIMITIVE_TOPOLOGY_PATCH_LIST = 10,
+  */
+uint32_t topologyPipelineID = VK_PRIMITIVE_TOPOLOGY_TRIANGLE_LIST;
+uint32_t wireframeTopologyPipelineID = VK_PRIMITIVE_TOPOLOGY_LINE_STRIP;
 /******************************* Vulkan Variables *****************************/
 std::vector<VkSemaphore> imageAvailableSemaphores;
 std::vector<VkSemaphore> renderingFinishedSemaphores;

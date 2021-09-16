@@ -7,7 +7,7 @@ class VKFramebuffer
 {
 public:
     VKFramebuffer() = default;
-    void Create(const VkRenderPass& renderpass, std::vector<VkImageView> swapViews, VkExtent2D swapExtent);
+    void Create(const VkRenderPass& renderpass, std::vector<VkImageView> swapViews, VkImageView depthImageView, VkExtent2D swapExtent);
     void Destroy();
     std::vector<VkFramebuffer> GetFramebuffers() { return m_Framebuffers; }
     VkFramebuffer& GetFramebufferAt(int index) { return m_Framebuffers[index]; }

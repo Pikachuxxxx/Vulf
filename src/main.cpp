@@ -1,6 +1,7 @@
 #include <iostream>
 
 #include "application.h"
+#include "utils/VulkanCheckResult.h"
 
 std::vector<const char*> validationLayers = {
     "VK_LAYER_KHRONOS_validation",
@@ -18,9 +19,34 @@ std::vector<const char*> deviceExtensions = {
 #endif
 };
 
-int main() {
+int main(int argc, char* argv[]) {
 
+    static std::vector<const char*> args;
+    for (size_t i = 0; i < argc; i++) {
+        std::cout << "Argument : " << argv[i] << std::endl;
+        args.push_back(argv[i]);
+    }
     Application app;
+    app.commandLineParser.Parse(args);
+
+    // TODO: Add support for all command line arguments
+    // --help : Prints all the availbale command line options
+    if(app.commandLineParser.IsSet("help")) {
+        app.commandLineParser.PrintHelp();
+		exit(0);
+    }
+    // enables valdiation layers
+    if (app.commandLineParser.IsSet("validation")) {
+        VK_LOG("Enabling Validation Layers");
+        app.enableValidationLayers = true;
+    }
+    // Sets the width and height of the application
+    if(app.commandLineParser.IsSet("width") || app.commandLineParser.IsSet("height"))
+    {
+        VK_LOG("Width : ", app.commandLineParser.GetValueAsInt("width", 800), ", Height : ", app.commandLineParser.GetValueAsInt("height", 600));
+        app.width = app.commandLineParser.GetValueAsInt("width", 800);
+        app.height = app.commandLineParser.GetValueAsInt("height", 600);
+    }
 
     try
     {

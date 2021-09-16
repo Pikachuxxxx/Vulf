@@ -26,6 +26,8 @@ public:
     VkPhysicalDevice& GetGPU() { return m_GPU; }
     QueueFamilyIndices& GetQueueFamilyIndices() { return m_QueueFamilyIndices; }
     uint32_t FindMemoryTypeIndex(uint32_t typeBitFieldFilter, VkMemoryPropertyFlags flags);
+    VkFormat FindSupportedFormat(const std::vector<VkFormat>& candidates, VkImageTiling tiling, VkFormatFeatureFlags features);
+    VkFormat FindDepthFormat();
     uint32_t GetGraphicsFamilyIndex() { return m_QueueFamilyIndices.graphicsFamily.value(); }
 private:
     VkPhysicalDevice m_GPU;
@@ -42,6 +44,7 @@ extern std::vector<const char*> deviceExtensions;
 class VKLogicalDevice
 {
 public:
+    VKLogicalDevice() = default;
     void Init();
     void Destroy();
     static VKLogicalDevice* GetDeviceManager() { if(s_Instance ==  nullptr) s_Instance = new VKLogicalDevice; return s_Instance; }
@@ -56,6 +59,5 @@ private:
     VkQueue graphicsQueue;
     VkQueue presentQueue;
 private:
-    VKLogicalDevice() = default;
     void CreateQueues();
 };

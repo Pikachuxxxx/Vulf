@@ -2,7 +2,7 @@
 
 #include <vulkan/vulkan.h>
 #include <vector>
-#include "../vertex.h"
+#include "../utils/vertex.h"
 
 #include "VKCmdPool.h"
 

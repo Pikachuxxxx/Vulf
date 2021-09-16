@@ -17,11 +17,11 @@ void VKDescriptorPool::CreatePool(uint32_t size)
     poolInfo.pPoolSizes = poolSizes.data();
     poolInfo.maxSets = static_cast<uint32_t>(size);
 
-    if(VK_CALL(vkCreateDescriptorPool(VKLogicalDevice::GetDeviceManager()->GetLogicalDevice(), &poolInfo, nullptr, &m_DescriptorPool)))
+    if(VK_CALL(vkCreateDescriptorPool(VKDEVICE, &poolInfo, nullptr, &m_DescriptorPool)))
         throw std::runtime_error("Cannot create descriptor pool");
 }
 
 void VKDescriptorPool::Destroy()
 {
-    vkDestroyDescriptorPool(VKLogicalDevice::GetDeviceManager()->GetLogicalDevice(), m_DescriptorPool, nullptr);
+    vkDestroyDescriptorPool(VKDEVICE, m_DescriptorPool, nullptr);
 }

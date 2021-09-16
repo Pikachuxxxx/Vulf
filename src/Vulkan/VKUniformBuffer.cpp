@@ -58,7 +58,7 @@ void VKUniformBuffer::CreateDescriptorSetLayout()
     layoutInfo.pBindings = bindings.data();
 
     // Create the descriptor set layout
-    if(VK_CALL(vkCreateDescriptorSetLayout(VKLogicalDevice::GetDeviceManager()->GetLogicalDevice(), &layoutInfo, nullptr, &m_UBODescriptorSetLayout)))
+    if(VK_CALL(vkCreateDescriptorSetLayout(VKDEVICE, &layoutInfo, nullptr, &m_UBODescriptorSetLayout)))
         throw std::runtime_error("Cannot Create Descriptor Set Layout");
     else VK_LOG_SUCCESS("Descriptor Set Layout successuflly created!");
 }
@@ -84,7 +84,7 @@ void VKUniformBuffer::CreatePool()
     poolInfo.pPoolSizes = poolSizes.data();
     poolInfo.maxSets = static_cast<uint32_t>(m_UniformBuffers.size());
 
-    if(VK_CALL(vkCreateDescriptorPool(VKLogicalDevice::GetDeviceManager()->GetLogicalDevice(), &poolInfo, nullptr, &m_DescriptorPool)))
+    if(VK_CALL(vkCreateDescriptorPool(VKDEVICE, &poolInfo, nullptr, &m_DescriptorPool)))
         throw std::runtime_error("Cannot create the descriptor pool!");
     else VK_LOG_SUCCESS("successuflly create descriptor pool!");
 }
@@ -99,7 +99,7 @@ void VKUniformBuffer::CreateSets()
     allocInfo.pSetLayouts = layouts.data();
 
     m_DescriptorSets.resize(m_UniformBuffers.size());
-    if(VK_CALL(vkAllocateDescriptorSets(VKLogicalDevice::GetDeviceManager()->GetLogicalDevice(), &allocInfo, m_DescriptorSets.data())))
+    if(VK_CALL(vkAllocateDescriptorSets(VKDEVICE, &allocInfo, m_DescriptorSets.data())))
         throw std::runtime_error("Coudld not create descriptor sets!!!");
     else VK_LOG_SUCCESS("Descriptor sets successuflly created!");
 }
@@ -153,7 +153,7 @@ void VKUniformBuffer::UpdateDescriptorSetConfig()
         descriptorWrites[2].pImageInfo = nullptr; // Optional
         descriptorWrites[2].pTexelBufferView = nullptr; // Optional
 
-        vkUpdateDescriptorSets(VKLogicalDevice::GetDeviceManager()->GetLogicalDevice(), static_cast<uint32_t>(descriptorWrites.size()), descriptorWrites.data(), 0, nullptr);
+        vkUpdateDescriptorSets(VKDEVICE, static_cast<uint32_t>(descriptorWrites.size()), descriptorWrites.data(), 0, nullptr);
     }
 }
 
@@ -161,25 +161,25 @@ void VKUniformBuffer::UpdateDescriptorSetConfig()
 void VKUniformBuffer::UpdateBuffer(UniformBufferObject buffer, uint32_t index)
 {
     void* data;
-    vkMapMemory(VKLogicalDevice::GetDeviceManager()->GetLogicalDevice(), m_UniformBuffers[index].GetBufferMemory(), 0, sizeof(UniformBufferObject), 0, &data);
+    vkMapMemory(VKDEVICE, m_UniformBuffers[index].GetBufferMemory(), 0, sizeof(UniformBufferObject), 0, &data);
     memcpy(data, &buffer, sizeof(buffer));
-    vkUnmapMemory(VKLogicalDevice::GetDeviceManager()->GetLogicalDevice(), m_UniformBuffers[index].GetBufferMemory());
+    vkUnmapMemory(VKDEVICE, m_UniformBuffers[index].GetBufferMemory());
 }
 
 void VKUniformBuffer::UpdateLightBuffer(LightUniformBufferObject buffer, uint32_t index)
 {
     void* data;
-    vkMapMemory(VKLogicalDevice::GetDeviceManager()->GetLogicalDevice(), m_UniformBuffers[index].GetBufferMemory(), sizeof(UniformBufferObject), sizeof(LightUniformBufferObject), 0, &data);
+    vkMapMemory(VKDEVICE, m_UniformBuffers[index].GetBufferMemory(), sizeof(UniformBufferObject), sizeof(LightUniformBufferObject), 0, &data);
     memcpy(data, &buffer, sizeof(buffer));
-    vkUnmapMemory(VKLogicalDevice::GetDeviceManager()->GetLogicalDevice(), m_UniformBuffers[index].GetBufferMemory());
+    vkUnmapMemory(VKDEVICE, m_UniformBuffers[index].GetBufferMemory());
 }
 
 void VKUniformBuffer::Destroy()
 {
     // m_Texture.Destroy();
-    vkDestroyDescriptorPool(VKLogicalDevice::GetDeviceManager()->GetLogicalDevice(), m_DescriptorPool, nullptr);
+    vkDestroyDescriptorPool(VKDEVICE, m_DescriptorPool, nullptr);
     for (size_t i = 0; i < m_UniformBuffers.size(); i++)
         m_UniformBuffers[i].DestroyBuffer();
-    vkDestroyDescriptorSetLayout(VKLogicalDevice::GetDeviceManager()->GetLogicalDevice(), m_UBODescriptorSetLayout, nullptr);
+    vkDestroyDescriptorSetLayout(VKDEVICE, m_UBODescriptorSetLayout, nullptr);
 
 }

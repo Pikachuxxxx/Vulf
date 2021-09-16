@@ -32,7 +32,7 @@ void VKInstance::Init(std::string appname, GLFWwindow* window, bool enableValida
     appCI.pNext = nullptr;
     appCI.pApplicationName = appname.c_str();
     appCI.applicationVersion = VK_MAKE_VERSION(1, 0, 0);
-    appCI.pEngineName = "Hello Vulkan";
+    appCI.pEngineName = "Vulf";
     appCI.engineVersion = VK_MAKE_VERSION(1, 0, 0);
     appCI.apiVersion = VK_API_VERSION_1_0;
 
@@ -133,9 +133,9 @@ std::vector<const char*> VKInstance::getRequiredExtensions()
 
     std::vector<const char*> extensions(glfwExtensions, glfwExtensions + glfwExtensionCount);
     // Add extensions for validation layers
-    if (m_EnableValidationLayers) {
+    // if (m_EnableValidationLayers) {
         extensions.push_back(VK_EXT_DEBUG_UTILS_EXTENSION_NAME);
-    }
+    // }
     // Add any user defined extensions
     extensions.insert(extensions.end(), instanceExtensions.begin(), instanceExtensions.end());
     return extensions;

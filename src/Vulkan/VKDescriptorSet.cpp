@@ -13,7 +13,7 @@ void VKDescriptorSet::CreateSets(uint32_t size, VkDescriptorPool pool, VkDescrip
     allocInfo.pSetLayouts = layouts.data();
 
     m_DescriptorSets.resize(size);
-    if (VK_CALL(vkAllocateDescriptorSets(VKLogicalDevice::GetDeviceManager()->GetLogicalDevice(), &allocInfo, m_DescriptorSets.data()))) {
+    if (VK_CALL(vkAllocateDescriptorSets(VKDEVICE, &allocInfo, m_DescriptorSets.data()))) {
         throw std::runtime_error("failed to allocate descriptor sets!");
     }
 
@@ -49,7 +49,7 @@ void VKDescriptorSet::CreateSets(uint32_t size, VkDescriptorPool pool, VkDescrip
         descriptorWrites[1].descriptorCount = 1;
         descriptorWrites[1].pImageInfo = &imageInfo;
 
-        vkUpdateDescriptorSets(VKLogicalDevice::GetDeviceManager()->GetLogicalDevice(), static_cast<uint32_t>(descriptorWrites.size()), descriptorWrites.data(), 0, nullptr);
+        vkUpdateDescriptorSets(VKDEVICE, static_cast<uint32_t>(descriptorWrites.size()), descriptorWrites.data(), 0, nullptr);
 
     }
 }

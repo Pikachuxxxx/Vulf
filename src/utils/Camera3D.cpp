@@ -45,7 +45,12 @@ glm::mat4 Camera3D::GetViewMatrix()
     return glm::lookAt(this->Position, this->Position + this->Front, this->Up);
 }
 
-glm::mat4 Camera3D::GetViewRHMatrix()
+glm::mat4 Camera3D::GetViewMatrixLH()
+{
+    return glm::lookAtLH(this->Position, this->Position + this->Front, this->Up);
+}
+
+glm::mat4 Camera3D::GetViewMatrixRH()
 {
     return glm::lookAtRH(this->Position, this->Position + this->Front, this->Up);
 }
