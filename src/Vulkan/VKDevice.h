@@ -44,6 +44,7 @@ extern std::vector<const char*> deviceExtensions;
 class VKLogicalDevice
 {
 public:
+    VKLogicalDevice() = default;
     void Init();
     void Destroy();
     static VKLogicalDevice* GetDeviceManager() { if(s_Instance ==  nullptr) s_Instance = new VKLogicalDevice; return s_Instance; }
@@ -58,6 +59,5 @@ private:
     VkQueue graphicsQueue;
     VkQueue presentQueue;
 private:
-    VKLogicalDevice() = default;
     void CreateQueues();
 };

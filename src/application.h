@@ -55,6 +55,9 @@
 // ImGuizmo
 #include <ImGuizmo/ImGuizmo.h>
 
+// SPIRV-Reflect
+#include <spirv_reflect.h>
+
 #define STRINGIZE(s) #s
 
 const int MAX_FRAMES_IN_FLIGHT = 2;

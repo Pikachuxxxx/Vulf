@@ -76,6 +76,8 @@ include_directories(
     $ENV{VULKAN_SDK}/macOS/include
     # Tracy headers
     "${CMAKE_SOURCE_DIR}/vendor/tracy"
+    #SPIRV-Reflect
+    "${CMAKE_SOURCE_DIR}/vendor/SPIRV-Reflect"
 )
 
 link_directories(
@@ -99,6 +101,8 @@ include_directories(
     "$(CMAKE_SOURCE_DIR)/vendor/ImGui"
     # Tracy headers
     "${CMAKE_SOURCE_DIR}/vendor/tracy"
+    #SPIRV-Reflect
+    "${CMAKE_SOURCE_DIR}/vendor/SPIRV-Reflect"
 )
 
 link_directories(
@@ -125,6 +129,8 @@ file(GLOB_RECURSE VENDOR_SOURCE_FILES
     ${CMAKE_SOURCE_DIR}/vendor/ImGuizmo/ImGuizmo.cpp
     ${CMAKE_SOURCE_DIR}/vendor/ImGuizmo/ImSequencer.cpp
     ${CMAKE_SOURCE_DIR}/vendor/tracy/TracyClient.cpp
+    ${CMAKE_SOURCE_DIR}/vendor/SPIRV-Reflect/spirv_reflect.c
+    ${CMAKE_SOURCE_DIR}/vendor/SPIRV-Reflect/common/output_stream.cpp
 )
 
 # Add source header files
@@ -155,7 +161,6 @@ endif()
 #===============================================================================
 # Global pre-processor defines
 add_compile_definitions(TRACY_ENABLE)
-add_compile_definitions("MY_FILE_PATH=\"${MY_FILE_PATH}\"")
 target_compile_definitions(Vulf PRIVATE "SHADER_BINARY_DIR=\"${SHADER_BINARY_DIR}\"")
 target_compile_definitions(Vulf PRIVATE "SRC_DIR=\"${CMAKE_SOURCE_DIR}\"")
 #===============================================================================
