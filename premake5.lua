@@ -3,11 +3,11 @@ IncludeDir["glfw"]          = "vendor/glfw/include"
 IncludeDir["glm"]           = "vendor/glm"
 IncludeDir["ImGui"]         = "vendor/imgui"
 IncludeDir["ImGuizmo"]      = "vendor/ImGuizmo"
-IncludeDir["SPIRVReflect"] = "vendor/SPIRVReflect"
+IncludeDir["SPIRVReflect"]  = "vendor/SPIRVReflect"
 IncludeDir["stb"]           = "vendor/stb"
 IncludeDir["tinyobj"]       = "vendor/tinyobj"
 IncludeDir["tracy"]         = "vendor/TracyProfiler"
-IncludeDir["vendor"]         = "vendor"
+IncludeDir["vendor"]        = "vendor"
 VulkanSDK = os.getenv("VULKAN_SDK")
 print(VulkanSDK)
 root_dir = os.getcwd()
@@ -82,11 +82,10 @@ workspace ( "Vulf" )
         "vulkan-1"
     }
 
-    filter "files: src/shaders/glsl/*.vert"
-        removeflags("ExcludeFromBuild")
-        buildcommands ' %{VulkanSDK}Bin/glslc.exe" -o "%{file.directory}/../spir-v/%{file.name}.spv" "%{file.relpath}"'
-        buildoutputs "%{file.directory}/../spir-v/%{file.name}.spv"
-
+    filter {"files:**.vert or **.frag"}
+        removeflags "ExcludeFromBuild"
+        buildcommands ' \"%{VulkanSDK}/Bin/glslc.exe\" "%{file.directory}/%{file.name}" -o "%{file.directory}/../spir-v/%{file.basename }.spv" '
+        buildoutputs "%{file.directory}/../spir-v/%{file.basename }.spv"
 
     includedirs { VulkanSDK .. "/include" }
 

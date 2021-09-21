@@ -96,7 +96,13 @@ namespace Vulf {
 
     }
 
-    void VulfBase::CreateSynchronizationPrimitives() {
+    void VulfBase::Present()
+    {
+
+    }
+
+    void VulfBase::CreateSynchronizationPrimitives()
+    {
         // Create the synchronization stuff
         VkSemaphoreCreateInfo semaphoreInfo{};
         semaphoreInfo.sType = VK_STRUCTURE_TYPE_SEMAPHORE_CREATE_INFO;
@@ -114,7 +120,7 @@ namespace Vulf {
             if( VK_CALL(vkCreateSemaphore(VKDEVICE, &semaphoreInfo, nullptr, &m_ImageAvailableSemaphores[i])) ||
                 VK_CALL(vkCreateSemaphore(VKDEVICE, &semaphoreInfo, nullptr, &m_RenderingFinishedSemaphores[i])) ||
                 VK_CALL(vkCreateFence(VKDEVICE, &fenceInfo, nullptr, &m_InFlightFences[i]))) {
-                throw std::runtime_error("Cannot create Synchorinization primitives!");
+                throw std::runtime_error("Cannot create Synchronization primitives!");
             }
         }
     }
