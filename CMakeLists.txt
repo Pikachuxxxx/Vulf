@@ -83,9 +83,9 @@ include_directories(
     # Vulkan MacOS headers
     $ENV{VULKAN_SDK}/macOS/include
     # Tracy headers
-    "${CMAKE_SOURCE_DIR}/vendor/tracy"
+    "${CMAKE_SOURCE_DIR}/vendor/TracyProfiler"
     #SPIRV-Reflect
-    "${CMAKE_SOURCE_DIR}/vendor/SPIRV-Reflect"
+    "${CMAKE_SOURCE_DIR}/vendor/SPIRVReflect"
 )
 
 link_directories(
@@ -109,9 +109,9 @@ include_directories(
     # ImGui Headers
     "${CMAKE_SOURCE_DIR}/vendor/ImGui"
     # Tracy headers
-    "${CMAKE_SOURCE_DIR}/vendor/tracy"
+    "${CMAKE_SOURCE_DIR}/vendor/TracyProfiler"
     #SPIRV-Reflect
-    "${CMAKE_SOURCE_DIR}/vendor/SPIRV-Reflect"
+    "${CMAKE_SOURCE_DIR}/vendor/SPIRVReflect"
 )
 
 link_directories(
@@ -137,9 +137,9 @@ file(GLOB_RECURSE VENDOR_SOURCE_FILES
     ${CMAKE_SOURCE_DIR}/vendor/ImGuizmo/ImGradient.cpp
     ${CMAKE_SOURCE_DIR}/vendor/ImGuizmo/ImGuizmo.cpp
     ${CMAKE_SOURCE_DIR}/vendor/ImGuizmo/ImSequencer.cpp
-    ${CMAKE_SOURCE_DIR}/vendor/tracy/TracyClient.cpp
-    ${CMAKE_SOURCE_DIR}/vendor/SPIRV-Reflect/spirv_reflect.c
-    ${CMAKE_SOURCE_DIR}/vendor/SPIRV-Reflect/common/output_stream.cpp
+    ${CMAKE_SOURCE_DIR}/vendor/TracyProfiler/TracyClient.cpp
+    ${CMAKE_SOURCE_DIR}/vendor/SPIRVReflect/spirv_reflect.c
+    ${CMAKE_SOURCE_DIR}/vendor/SPIRVReflect/common/output_stream.cpp
 )
 
 # Add source header files

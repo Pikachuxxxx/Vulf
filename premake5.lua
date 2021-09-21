@@ -3,10 +3,10 @@ IncludeDir["glfw"]          = "vendor/glfw/include"
 IncludeDir["glm"]           = "vendor/glm"
 IncludeDir["ImGui"]         = "vendor/imgui"
 IncludeDir["ImGuizmo"]      = "vendor/ImGuizmo"
-IncludeDir["SPIRVReflect"] = "vendor/SPIRV-Reflect"
+IncludeDir["SPIRVReflect"] = "vendor/SPIRVReflect"
 IncludeDir["stb"]           = "vendor/stb"
 IncludeDir["tinyobj"]       = "vendor/tinyobj"
-IncludeDir["tracy"]         = "vendor/tracy"
+IncludeDir["tracy"]         = "vendor/TracyProfiler"
 IncludeDir["vendor"]         = "vendor"
 VulkanSDK = os.getenv("VULKAN_SDK")
 print(VulkanSDK)
@@ -52,12 +52,12 @@ workspace ( "Vulf" )
         "vendor/ImGuizmo/ImGuizmo.cpp",
         "vendor/ImGuizmo/ImSequencer.h",
         "vendor/ImGuizmo/ImSequencer.cpp",
-        "vendor/tracy/Tracy.hpp",
-        "vendor/tracy/TracyClient.cpp",
-        "vendor/SPIRV-Reflect/spirv_reflect.h",
-        "vendor/SPIRV-Reflect/spirv_reflect.c",
-        "vendor/SPIRV-Reflect/common/output_stream.h",
-        "vendor/SPIRV-Reflect/common/output_stream.cpp",
+        "vendor/TracyProfiler/Tracy.hpp",
+        "vendor/TracyProfiler/TracyClient.cpp",
+        "vendor/SPIRVReflect/spirv_reflect.h",
+        "vendor/SPIRVReflect/spirv_reflect.c",
+        "vendor/SPIRVReflect/common/output_stream.h",
+        "vendor/SPIRVReflect/common/output_stream.cpp",
         "src/shaders/glsl/*.vert",
         "src/shaders/glsl/*.frag",
 	}
