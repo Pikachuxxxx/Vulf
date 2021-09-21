@@ -3,3 +3,5 @@
 
 # Directories
 build/
+bin/
+bin-int/

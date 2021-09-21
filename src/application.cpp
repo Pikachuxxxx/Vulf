@@ -92,13 +92,13 @@ void Application::InitVulkan()
 
     VKLogicalDevice::GetDeviceManager()->Init();
 
-    vertexShader.CreateShader(SHADER_BINARY_DIR + std::string("/defaultVert.spv"), ShaderType::VERTEX_SHADER);
-    fragmentShader.CreateShader(SHADER_BINARY_DIR + std::string("/defaultFrag.spv"), ShaderType::FRAGMENT_SHADER);
-    outlineFragmentShader.CreateShader(SHADER_BINARY_DIR + std::string("/outline.spv"), ShaderType::FRAGMENT_SHADER);
+    vertexShader.CreateShader((SHADER_BINARY_DIR) + std::string("/defaultVert.spv"), ShaderType::VERTEX_SHADER);
+    fragmentShader.CreateShader((SHADER_BINARY_DIR) + std::string("/defaultFrag.spv"), ShaderType::FRAGMENT_SHADER);
+    outlineFragmentShader.CreateShader((SHADER_BINARY_DIR) + std::string("/outline.spv"), ShaderType::FRAGMENT_SHADER);
 
 ////////////////////////////////////////////////////////////////////////////////
     // SPIRV Reflect
-    auto defaultByteCode = readFile(SHADER_BINARY_DIR + std::string("/defaultVert.spv"));
+    auto defaultByteCode = readFile((SHADER_BINARY_DIR) + std::string("/defaultVert.spv"));
     SpirvReflectExample(defaultByteCode.data(), defaultByteCode.size());
 
 ////////////////////////////////////////////////////////////////////////////////
@@ -424,8 +424,8 @@ void Application::RecreateCommandPipeline()
 
 
     // Create the texture
-    gridTexture.CreateTexture(SRC_DIR + std::string("/data/textures/TestGrid_1024.png"), cmdPoolManager);
-    earthTexture.CreateTexture(SRC_DIR + std::string("/data/textures/earthmap.jpg"), cmdPoolManager);
+    gridTexture.CreateTexture((SRC_DIR) + std::string("/data/textures/TestGrid_1024.png"), cmdPoolManager);
+    earthTexture.CreateTexture((SRC_DIR) + std::string("/data/textures/earthmap.jpg"), cmdPoolManager);
 
     // Create the push contants
     VkPushConstantRange modelPushConstant;
@@ -497,10 +497,10 @@ void Application::RecreateCommandPipeline()
     quadIBO.Create(whiteQuadIndices, cmdPoolManager);
 
     // Budda vbo and  ibo
-    LoadModel(SRC_DIR + std::string("/data/models/lowpolyTriSphere.obj"), buddaVertices, buddaIndices, buddaQuadIndices, true);
+    LoadModel((SRC_DIR) + std::string("/data/models/lowpolyTriSphere.obj"), buddaVertices, buddaIndices, buddaQuadIndices, true);
     buddaVBO.Create(buddaVertices, cmdPoolManager);
     buddaIBO.Create(buddaIndices, cmdPoolManager);
-    LoadModel(SRC_DIR + std::string("/data/models/lowpolyQuadSphere.obj"), buddaVertices, buddaIndices, buddaQuadIndices, false);
+    LoadModel((SRC_DIR) + std::string("/data/models/lowpolyQuadSphere.obj"), buddaVertices, buddaIndices, buddaQuadIndices, false);
     buddaQuadIBO.Create(buddaQuadIndices, cmdPoolManager);
 
     cubeVBO.Create(cubeVertices, cmdPoolManager);

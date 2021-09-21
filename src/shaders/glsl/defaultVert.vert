@@ -33,7 +33,7 @@ layout(location = 0) out vec3 fragPos;
 layout(location = 1) out vec3 fragNormal;
 layout(location = 2) out vec2 fragTexCoord;
 
-layout (push_constant)  uniform ModelPushConstantData{
+layout (push_constant) uniform ModelPushConstantData{
     mat4 model;
 }modelPushConstantData;
 

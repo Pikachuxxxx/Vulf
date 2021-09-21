@@ -164,8 +164,8 @@ namespace Vulf {
         /* Presents the rendered swapimages onto the window surface */
         void Present();
 
-        /* Creates the Synchorinization primitives for the application */
-        // Note:- The fences must be initially explicitly signalled
+        /* Creates the Synchronization primitives for the application */
+        // Note:- The fences must be initially explicitly signaled
         void CreateSynchronizationPrimitives();
     };
 }

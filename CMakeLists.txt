@@ -43,6 +43,8 @@ file(GLOB SHADERS
   COMMENT "Creating ${SHADER_BINARY_DIR}"
 )
 
+source_group(shaders "Shaders" FILES ${SHADERS})
+
 foreach(source IN LISTS SHADERS)
   get_filename_component(FILENAME ${source} NAME_WE)
   add_custom_command(
@@ -58,7 +60,7 @@ foreach(source IN LISTS SHADERS)
   list(APPEND SPV_SHADERS ${SHADER_BINARY_DIR}/${FILENAME}.spv)
 endforeach()
 
-add_custom_target(shaders ALL DEPENDS ${SPV_SHADERS})
+add_custom_target(shaders ALL DEPENDS ${SPV_SHADERS} SOURCES ${SHADERS})
 #===============================================================================
 
 
@@ -151,9 +153,12 @@ file(GLOB_RECURSE HEADER_FILES
 # 	${CMAKE_SOURCE_DIR}/vendor/imgui/*.h
 #     ${CMAKE_SOURCE_DIR}/vendor/imgui/*.hpp
 # )
-
+# source_group(TREE "${CMAKE_CURRENT_SOURCE_DIR}"
+#      PREFIX "Source"
+#      FILES ${SOURCE_FILES})
 #===============================================================================
 # Compile the source files for the executable
+source_group("src" FILES ${SOURCE_FILES})
 add_executable(Vulf ${HEADER_FILES} ${SOURCE_FILES} ${VENDOR_SOURCE_FILES})
 set_property(GLOBAL PROPERTY USE_FOLDERS ON)
 set_property(GLOBAL PROPERTY PREDEFINED_TARGETS_FOLDER "_CMakePredefinedTargets")
@@ -173,6 +178,8 @@ endif()
 add_compile_definitions(TRACY_ENABLE)
 target_compile_definitions(Vulf PRIVATE "SHADER_BINARY_DIR=\"${SHADER_BINARY_DIR}\"")
 target_compile_definitions(Vulf PRIVATE "SRC_DIR=\"${CMAKE_SOURCE_DIR}\"")
+add_dependencies(Vulf shaders)
+
 #===============================================================================
 # Run the binary built using 'make run' command
 add_custom_target(run

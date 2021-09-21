@@ -29,7 +29,7 @@ void VKRenderPass::Init(const VkFormat& format)
 
     VkAttachmentReference colorAttachmentRef{};
     colorAttachmentRef.attachment = 0;
-    colorAttachmentRef.layout = VK_IMAGE_LAYOUT_COLOR_ATTACHMENT_OPTIMAL; // This binds the attachment usage description with the Attahcment on the Vulkan side i.e. with the color attachment
+    colorAttachmentRef.layout = VK_IMAGE_LAYOUT_COLOR_ATTACHMENT_OPTIMAL; // This binds the attachment usage description with the Attachment on the Vulkan side i.e. with the color attachment
 
     VkAttachmentReference depthAttachmentRef{};
     depthAttachmentRef.attachment = 1;
