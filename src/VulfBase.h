@@ -72,12 +72,17 @@
 #include "Vulkan/VKTexture.h"
 #include "Vulkan/VKDepthImage.h"
 
+// Application Helper Defines
+#define STRINGIZE(s) #s
+
 // Execution command
 // make && cd ../ && ./build//HelloVulkan -w 1280 -h 720  && cd build
 
 namespace Vulf {
+
     /* The max number of frames that will be concurrently rendered to while the presentation is in process */
     const int MAX_FRAMES_IN_FLIGHT = 2;
+    const int SWAP_IMAGES_COUNT = 3;
 
     /*
      * Vulf Base class with application flow abstraction
@@ -96,7 +101,7 @@ namespace Vulf {
         VulfBase();
         /* Destroys any resources allocated by the client */
         virtual ~VulfBase();
-        /* Inits the application into runtime */
+        /* Initializes the application into runtime */
         void Run();
 
     protected:
@@ -110,20 +115,42 @@ namespace Vulf {
          * this method is just for styling purpose, makes code look neater,
          * (shaders must be added as members by the client thought)
          */
-        virtual void LoadShaders();
+        virtual void LoadShaders() = 0;
 
+        /* Builds the command pool */
+        virtual void BuildCommandPool();
+        /* Build swapchain */
+        virtual void BuildSwapchain();
+        /* Build the fixed pipelines and pipeline cache*/
+        virtual void BuildPipeline();
         /* Builds the command pipeline for the entire application */
-        virtual void BuildCommandPipeline();
+        virtual void BuildGraphicsPipeline();
         /* Build the render passes for the Vulf application */
         virtual void BuildRenderPass();
         /* Build the framebuffers with the proper render pass attachments and swapchain configuration */
         virtual void BuildFramebuffer();
+        /* Builds the command buffers that will be send to the graphics queue */
+        virtual void BuildCommandBuffers();
+        /* Build descriptor sets for Uniform buffers */
+        virtual void BuildDescriptorSets();
+
+        /* Create the Texture/image resources for the client */
+        virtual void CreateTextureResources();
+        /* Creates the necessary buffers resources */
+        virtual void CreateBufferResource() = 0;
+        /* Updates Uniform buffers, SSAO and other \buffer resources */
+        virtual void UpdateBuffers();
 
         /* The draw commands that will be executed */
-        virtual void Draw();
+        virtual void Draw() = 0;
+        /* Default image acquire + submission and command buffer submission */
+        virtual void RenderFrame();
+        /*  Presents the current image to the swap chain */
+        virtual void PresentFrame();
 
         /**
          * Called on every update loop
+         * 
          * @param dt The delta time taken to render a frame since the last frame
          */
         virtual void OnUpdate(double dt);
@@ -147,7 +174,7 @@ namespace Vulf {
         VKLogicalDevice             m_Device;                       /* The Vulkan physical and logical device abstraction                               */
         // TODO: Read (Rendering and presentation)[https://vulkan-tutorial.com/Drawing_a_triangle/Drawing/Rendering_and_presentation] and make proper article for the website
         std::vector<VkSemaphore>    m_ImageAvailableSemaphores;     /* Semaphore to tell when an image is free to use to draw onto (GPU-GPU)            */
-        std::vector<VkSemaphore>    m_RenderingFinishedSemaphores;  /* Semaphore to tell when the rendering to a particular swpachain image is done     */
+        std::vector<VkSemaphore>    m_RenderingFinishedSemaphores;  /* Semaphore to tell when the rendering to a particular swapchain image is done     */
         std::vector<VkFence>        m_InFlightFences;               /* Use to synchronize the GPU-CPU so that they draw onto the right image in flight  */
         std::vector<VkFence>        m_ImagesInFlight;
 
@@ -158,14 +185,50 @@ namespace Vulf {
         void InitWindow();
         /* Initializes basic Vulkan resources */
         void InitVulkan();
-        /* Inits ImGui for UI Overlay */
+        /* Initializes ImGui for UI Overlay */
         void InitImGui();
 
-        /* Presents the rendered swapimages onto the window surface */
+        /* Presents the rendered swap images onto the window surface */
         void Present();
 
         /* Creates the Synchronization primitives for the application */
         // Note:- The fences must be initially explicitly signaled
         void CreateSynchronizationPrimitives();
     };
+
+
+#define VULF_MAIN(appName)                                                                                                                                                                                      \
+    int main(int argc, char* argv[]) {                                                                                                                                                                          \
+                                                                                                                                                                                                                \
+        static std::vector<const char*> args;                                                                                                                                                                   \
+        for (size_t i = 0; i < argc; i++) {                                                                                                                                                                     \
+            std::cout << "Argument : " << argv[i] << std::endl;                                                                                                                                                 \
+            args.push_back(argv[i]);                                                                                                                                                                            \
+        }                                                                                                                                                                                                       \
+        ##appName exampleVulfapp_##appName;                                                                                                                                                                     \
+        exampleVulfapp_##appName.commandLineParser.Parse(args);                                                                                                                                                 \
+                                                                                                                                                                                                                \
+        if (exampleVulfapp_##appName.commandLineParser.IsSet("help")) {                                                                                                                                         \
+            exampleVulfapp_##appName.commandLineParser.PrintHelp();                                                                                                                                             \
+            exit(0);                                                                                                                                                                                            \
+        }                                                                                                                                                                                                       \
+        if (exampleVulfapp_##appName.commandLineParser.IsSet("validation")) {                                                                                                                                   \
+            VK_LOG("Enabling Validation Layers");                                                                                                                                                               \
+            exampleVulfapp_##appName.enableValidationLayers = true;                                                                                                                                             \
+        }                                                                                                                                                                                                       \
+        if (exampleVulfapp_##appName.commandLineParser.IsSet("width") || exampleVulfapp_##appName.commandLineParser.IsSet("height")) {                                                                          \
+            VK_LOG("Width : ", exampleVulfapp_##appName.commandLineParser.GetValueAsInt("width", 800), ", Height : ", exampleVulfapp_##appName.commandLineParser.GetValueAsInt("height", 600));                 \
+            exampleVulfapp_##appName.width = exampleVulfapp_##appName.commandLineParser.GetValueAsInt("width", 800);                                                                                            \
+            exampleVulfapp_##appName.height = exampleVulfapp_##appName.commandLineParser.GetValueAsInt("height", 600);                                                                                          \
+        }                                                                                                                                                                                                       \
+        try {                                                                                                                                                                                                   \
+            exampleVulfapp_##appName.Run();                                                                                                                                                                     \
+        }                                                                                                                                                                                                       \
+        catch (const std::exception& e) {                                                                                                                                                                       \
+            std::cerr << "\033[1;31m[VULKAN]\033[1;31m - ERROR : " << e.what() << " \033[0m\n";                                                                                                                 \
+            return EXIT_FAILURE;                                                                                                                                                                                \
+        }                                                                                                                                                                                                       \
+        return EXIT_SUCCESS;                                                                                                                                                                                    \
+    }                                                                                                                                                                                                           
 }
+        //{VK_LOG("Application Name : ", STRINGIZE(exampleVulfapp_##appName));    }                                                                                                                               \                                                          \

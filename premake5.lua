@@ -60,6 +60,26 @@ workspace ( "Vulf" )
         "vendor/SPIRVReflect/common/output_stream.cpp",
         "src/shaders/glsl/*.vert",
         "src/shaders/glsl/*.frag",
+        -- Examples
+        "examples-cpp/**.cpp"
+	}
+
+    includedirs
+	{
+        "%{IncludeDir.glfw}",
+        "%{IncludeDir.glm}",
+        "%{IncludeDir.ImGui}",
+        "%{IncludeDir.ImGuizmo}",
+        "%{IncludeDir.SPIRVReflect}",
+		"%{IncludeDir.stb}",
+        "%{IncludeDir.tinyobj}",
+        "%{IncludeDir.tracy}",
+        "%{IncludeDir.VULKAN_SDK}",
+        "%{IncludeDir.vendor}",
+        "./",
+        "./src/",
+        "./src/utils",
+        "./src/Vulkan"
 	}
 
 	sysincludedirs
@@ -73,7 +93,11 @@ workspace ( "Vulf" )
         "%{IncludeDir.tinyobj}",
         "%{IncludeDir.tracy}",
         "%{IncludeDir.VULKAN_SDK}",
-        "%{IncludeDir.vendor}"
+        "%{IncludeDir.vendor}",
+        "./",
+        "./src/",
+        "./src/utils",
+        "./src/Vulkan"
 	}
 
     links

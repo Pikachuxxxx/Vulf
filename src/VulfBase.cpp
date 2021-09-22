@@ -9,6 +9,10 @@
 // Profiling
 #include <Tracy.hpp>
 
+// TibyObj
+//#define TINYOBJLOADER_IMPLEMENTATION
+//#include <tinyobj/tiny_obj_loader.h>
+
 namespace Vulf {
 
 // Public
@@ -34,13 +38,22 @@ namespace Vulf {
 
 // Protected
 /*******************************************************************************
- *                  Client Side Customization(default behaviour)               *
+ *                  Client Side Customization(default behavior)                *
  ******************************************************************************/
-    void VulfBase::LoadShaders() {
+
+    void VulfBase::BuildCommandPool() {
 
     }
 
-    void VulfBase::BuildCommandPipeline() {
+    void VulfBase::BuildSwapchain() {
+
+    }
+
+    void VulfBase::BuildPipeline() {
+
+    }
+
+    void VulfBase::BuildGraphicsPipeline() {
 
     }
 
@@ -52,9 +65,38 @@ namespace Vulf {
 
     }
 
+    void VulfBase::BuildCommandBuffers() {
+
+    }
+
+    void VulfBase::BuildDescriptorSets() {
+
+    }
+
+//-----------------------------------------------------------------------------//
+
+    void VulfBase::CreateTextureResources() {
+
+    }
+
+    void VulfBase::UpdateBuffers() {
+
+    }
+ //-----------------------------------------------------------------------------//
+
     void VulfBase::Draw() {
         
     }
+
+    void VulfBase::RenderFrame() {
+
+    }
+
+    void VulfBase::PresentFrame() {
+
+    }
+
+//-----------------------------------------------------------------------------//
 
     void VulfBase::OnUpdate(double dt) {
 
@@ -70,7 +112,7 @@ namespace Vulf {
 
 // Private
 /*******************************************************************************
- *                          Init Application Resouces                          *
+ *                          Init Application Resources                         *
  ******************************************************************************/
     void VulfBase::InitResources() {
 
@@ -90,19 +132,21 @@ namespace Vulf {
 
         // Initialize the Command Pool
         _def_CommandPool.Init();
+
+        // Build the command pipeline
+
     }
 
     void VulfBase::InitImGui() {
 
     }
 
-    void VulfBase::Present()
-    {
+    void VulfBase::Present() {
 
     }
 
-    void VulfBase::CreateSynchronizationPrimitives()
-    {
+    void VulfBase::CreateSynchronizationPrimitives() {
+
         // Create the synchronization stuff
         VkSemaphoreCreateInfo semaphoreInfo{};
         semaphoreInfo.sType = VK_STRUCTURE_TYPE_SEMAPHORE_CREATE_INFO;
@@ -113,7 +157,7 @@ namespace Vulf {
         fenceInfo.sType = VK_STRUCTURE_TYPE_FENCE_CREATE_INFO;
         fenceInfo.flags = VK_FENCE_CREATE_SIGNALED_BIT;
         m_InFlightFences.resize(MAX_FRAMES_IN_FLIGHT);
-        m_ImagesInFlight.resize(3, VK_NULL_HANDLE); // 3 swapchain images are used
+        m_ImagesInFlight.resize(SWAP_IMAGES_COUNT, VK_NULL_HANDLE); // 3 swapchain images are used
 
         for (size_t i = 0; i < MAX_FRAMES_IN_FLIGHT; i++)
         {

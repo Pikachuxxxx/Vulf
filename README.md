@@ -20,6 +20,8 @@ Vulf is my personal Vulkan Renderer and Sandbox, I use this to experiment and le
 
 This sandbox has a very simple and brief ImGui integration that makes it easy to use while extending your potentially modified version of Alexander Overvoorde's hello triangle Application (I had a hard time understanding the tutorials of [frguthmann](https://frguthmann.github.io/posts/vulkan_imgui/) and [SaschaWillems](https://github.com/SaschaWillems/Vulkan/blob/master/examples/imgui/main.cpp) examples on the web while extending from the hello triangle, since none of them actually use Alexander Overvoorde's hello triangle), it doesn't use any `ImGui_Impl_VulkanH` functions, only uses the ImguiImplVulknan backend files to make the integration as smooth and simple as possible with existing rendering. Read below for a detailed explanation on ImGui Integration.
 
+**Read [VulfBaseDesign.md](./VulfBaseDesign.md) to understand the working of the `VulfBase` class**
+
 ## Screenshots
 ![](demo/democam.png)
 ![](demo/demomodel.png)
