@@ -282,7 +282,7 @@ void Application::MainLoop()
         ImGui_ImplVulkan_NewFrame();
         ImGui_ImplGlfw_NewFrame();
         ImGui::NewFrame();
-        // ImGuizmo Initializaiton
+        // ImGuizmo Initialization
         ImGuizmo::BeginFrame();
         ImGuiIO& io = ImGui::GetIO();
         // ImGuizmo::SetOrthographic(true);
@@ -301,7 +301,7 @@ void Application::MainLoop()
             ImGui::RenderPlatformWindowsDefault();
         }
 
-        vkDeviceWaitIdle(VKDEVICE);
+        //vkDeviceWaitIdle(VKDEVICE);
         RecordCommands();
         DrawFrame();
         FrameMark

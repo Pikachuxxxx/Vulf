@@ -80,6 +80,9 @@
 
 namespace Vulf {
 
+    using HighResClock = std::chrono::time_point<std::chrono::high_resolution_clock>;
+    using Ms = std::chrono::duration<double, std::milli>;
+
     /* The max number of frames that will be concurrently rendered to while the presentation is in process */
     const int MAX_FRAMES_IN_FLIGHT = 2;
     const int SWAP_IMAGES_COUNT = 3;
@@ -92,13 +95,13 @@ namespace Vulf {
     {
     public:
         CommandLineParser   commandLineParser;          /* Command Line options parser for the executable       */
-        bool                enableValidationLayers;     /* Enables Vulkan validation layers in debug build      */
+        bool                enableValidationLayers = 0; /* Enables Vulkan validation layers in debug build      */
         int                 width   = 800;              /* The Width of the window                              */
         int                 height  = 600;              /* The Height of the window                             */
 
     public:
         /* Initializes the application */
-        VulfBase();
+        VulfBase() = default;
         /* Destroys any resources allocated by the client */
         virtual ~VulfBase();
         /* Initializes the application into runtime */
@@ -162,23 +165,27 @@ namespace Vulf {
     private:
     // Application flow
         Window*                     m_Window;                       /* The window abstraction                                                           */
-        Camera3D                    m_Camera;                       /* The default free-fly camera in the scene                                         */
+        Camera3D                    m_Camera;                       /* The default free-fly camera in th e scene                                        */
         bool                        m_FramebufferResized;           /* Boolean to identify screen resize event                                          */
-        double                      m_LastTime    = 0;              /* Time taken from since the last frame was rendered                                */
-        double                      m_NbFrames    = 0;              /* Number of frames rendered in a second                                            */
-        double                      m_DeltaTime   = 0;              /* The time between the last and current frame                                      */
+        uint32_t                    m_FrameCounter    = 0;          /* Number of frames rendered in a second                                            */
+        Ms                          m_FrameTimer;                   /* Time taken for a single frame to render since the last frame was rendered        */
+        HighResClock                m_LastTimestamp;                /* High resolution clock to measure the last time when a frame was rendered         */
         uint32_t                    m_NextImageIndex;               /* The next image index from the swapchain images list                              */
         uint32_t                    m_CurrentFrameIndex;            /* The index of the current in-flight frame being rendered                          */
-    // Vulkan Stuff
+
+    private:
+        // Vulkan Stuff
         VKInstance                  m_Instance;                     /* The Vulkan abstracted Instance                                                   */
         VKLogicalDevice             m_Device;                       /* The Vulkan physical and logical device abstraction                               */
-        // TODO: Read (Rendering and presentation)[https://vulkan-tutorial.com/Drawing_a_triangle/Drawing/Rendering_and_presentation] and make proper article for the website
         std::vector<VkSemaphore>    m_ImageAvailableSemaphores;     /* Semaphore to tell when an image is free to use to draw onto (GPU-GPU)            */
         std::vector<VkSemaphore>    m_RenderingFinishedSemaphores;  /* Semaphore to tell when the rendering to a particular swapchain image is done     */
         std::vector<VkFence>        m_InFlightFences;               /* Use to synchronize the GPU-CPU so that they draw onto the right image in flight  */
         std::vector<VkFence>        m_ImagesInFlight;
 
     private:
+        /* The render loop that controls the application */
+        void RenderLoop();
+
         /* Initializes any resources before the application starts up */
         void InitResources();
         /* Creates the application window */
@@ -192,7 +199,7 @@ namespace Vulf {
         void Present();
 
         /* Creates the Synchronization primitives for the application */
-        // Note:- The fences must be initially explicitly signaled
+        // Note:- The fences must be initially explicitly signaled (Remove this note)
         void CreateSynchronizationPrimitives();
     };
 

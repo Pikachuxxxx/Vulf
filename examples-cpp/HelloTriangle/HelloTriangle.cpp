@@ -22,7 +22,7 @@ std::vector<const char*> deviceExtensions = {
 
 class HelloTriangle : public Vulf::VulfBase
 {
-protected:
+
     void LoadShaders() override {
         throw std::logic_error("The method or operation is not implemented.");
     }
@@ -95,24 +95,6 @@ protected:
     void PresentFrame() override {
         throw std::logic_error("The method or operation is not implemented.");
     }
-
-
-    void OnUpdate(double dt) override {
-        throw std::logic_error("The method or operation is not implemented.");
-    }
-
-
-    void OnRender() override {
-        throw std::logic_error("The method or operation is not implemented.");
-    }
-
-
-    void OnImGui() override {
-        throw std::logic_error("The method or operation is not implemented.");
-    }
-
 };
-
-using namespace Vulf;
 
 VULF_MAIN(HelloTriangle)

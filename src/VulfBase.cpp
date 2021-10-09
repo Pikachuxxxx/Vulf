@@ -19,12 +19,6 @@ namespace Vulf {
 /*******************************************************************************
  *                              Init Application                               *
  ******************************************************************************/
-    VulfBase::VulfBase() {
-        InitResources();
-        InitWindow();
-        InitVulkan();
-        InitImGui();
-    }
 
     VulfBase::~VulfBase() {
         _def_CommandPool.Destroy();
@@ -33,7 +27,68 @@ namespace Vulf {
     }
 
     void VulfBase::Run() {
+        InitResources();
+        InitWindow();
+        InitVulkan();
+        InitImGui();
 
+        RenderLoop();
+    }
+
+//-----------------------------------------------------------------------------//
+// Render Loop
+    void VulfBase::RenderLoop() {
+
+        /*
+        m_LastTime = glfwGetTime();
+        m_SecondTimer = glfwGetTime();
+        while (!m_Window->closed()) {
+            // Update the window for input events
+            m_Window->Update();
+
+            // Calculate the delta time taken to render the fame
+            double currentTIme = glfwGetTime();
+            m_DeltaTime = currentTIme - m_LastTime;
+
+            // OnUpdate
+            OnUpdate(m_DeltaTime);
+
+            // Render the scene
+            OnRender();
+            m_NbFrames++;
+
+            m_LastTime = currentTIme;
+            if (glfwGetTime() - m_SecondTimer > 1.0) {
+                m_SecondTimer += 1.0;
+                VK_LOG("FPS : ", m_NbFrames);
+                m_NbFrames = 0;
+
+            }
+                    
+        }
+        */
+
+        while (!m_Window->closed()) {                                       
+            
+            m_Window->Update();
+
+            auto tStart = std::chrono::high_resolution_clock::now();
+
+            OnRender();
+
+            m_FrameCounter++;
+            auto tEnd = std::chrono::high_resolution_clock::now();
+            m_FrameTimer = std::chrono::duration<double, std::milli>(tEnd - tStart); // in Ms
+
+            OnUpdate(m_FrameTimer.count());
+
+            float fpsTimer = std::chrono::duration<double, std::milli>(tEnd - m_LastTimestamp).count();
+            if (fpsTimer > 1000.0f) {
+                VK_LOG("FPS : ", m_FrameCounter);
+                m_FrameCounter = 0;
+                m_LastTimestamp = tEnd;
+            }
+        }
     }
 
 // Protected
@@ -99,6 +154,10 @@ namespace Vulf {
 //-----------------------------------------------------------------------------//
 
     void VulfBase::OnUpdate(double dt) {
+        // Update the camera
+        m_Camera.Update(*m_Window, dt);
+
+        //VK_LOG("deltaTime : ", std::setprecision(15) , dt);
 
     }
 
@@ -108,7 +167,7 @@ namespace Vulf {
 
     void VulfBase::OnImGui() {
 
-    }
+    }  
 
 // Private
 /*******************************************************************************
