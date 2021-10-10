@@ -9,8 +9,8 @@ layout(location = 0) out vec4 outColor;
 
 void main() {
 
-    outColor = vec4(fragNormal, 1.0f);
     outColor = vec4(fragTexCoord, 0.0f, 1.0f);
+    outColor = vec4(fragNormal, 1.0f);
 }
 
 

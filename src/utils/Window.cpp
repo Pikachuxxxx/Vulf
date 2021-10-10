@@ -32,13 +32,14 @@ Window::~Window()
 bool Window::init()
 {
     glfwSetErrorCallback(glfw_initialisation_error);
-    if(!glfwInit())
-        return false;
+    glfwInit();
 
     glfwWindowHint(GLFW_CLIENT_API, GLFW_NO_API);
     glfwWindowHint(GLFW_RESIZABLE, GLFW_TRUE);
     // Create the window
     m_Window = glfwCreateWindow(m_Width, m_Height, m_Title, NULL, NULL);
+
+    glfwSetWindowPos(m_Window, 800, 700);
     if(!m_Window)
     {
         glfwTerminate();

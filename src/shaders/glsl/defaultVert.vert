@@ -32,8 +32,8 @@ layout (push_constant) uniform ModelPushConstantData{
 
 void main() {
     gl_PointSize    = 5.0;
-    // gl_Position     = vec4(inPosition, 1.0);
-    gl_Position = vec4(positions[gl_VertexIndex], 0.0, 1.0);
+    gl_Position     = vec4(inPosition, 1.0);
+    //gl_Position = vec4(positions[gl_VertexIndex], 0.0, 1.0);
 
 
     // Outout variables from the vertex shader

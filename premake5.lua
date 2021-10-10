@@ -61,7 +61,7 @@ workspace ( "Vulf" )
         "src/shaders/glsl/*.vert",
         "src/shaders/glsl/*.frag",
         -- Examples
-        "examples-cpp/**.cpp"
+        "examples/cpp/**.cpp"
 	}
 
     includedirs

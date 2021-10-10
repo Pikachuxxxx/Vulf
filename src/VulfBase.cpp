@@ -54,6 +54,7 @@ namespace Vulf {
 
             OnUpdate(m_FrameTimer.count());
 
+            vkDeviceWaitIdle(VKDEVICE);
             OnRender();
 
             DrawFrame();
@@ -78,16 +79,16 @@ namespace Vulf {
         // Create Buffer Resources such as Vertex, Index and Uniform buffers
         BuildBufferResource();
 
-        // Build texture and image resources
-        BuildTextureResources();
-
         // Create the swapchain
         BuildSwapchain();
+
+        // Build texture and image resources
+        BuildTextureResources();
 
         // Build the fixed pipeline stage
         BuildFixedPipeline();
 
-        // Build renderpasses
+        // Build render passes
         BuildRenderPass();
 
         // Create the Graphics Pipeline
@@ -144,11 +145,14 @@ namespace Vulf {
 
     void VulfBase::CleanUpPipeline() {
 
+        // Default swapchain manager
+        _def_Swapchain.Destroy();
     }
 
  //-----------------------------------------------------------------------------//
 
     void VulfBase::DrawFrame() {
+
         vkWaitForFences(VKDEVICE, 1, &m_InFlightFences[m_CurrentImageIndex], VK_TRUE, UINT64_MAX);
 
         // Acquire the image to render onto
@@ -187,7 +191,14 @@ namespace Vulf {
         submitInfo.pWaitSemaphores = waitSemaphore;
         submitInfo.pWaitDstStageMask = waitStages;
         submitInfo.commandBufferCount = submissionCommandBuffers.size();
-        submitInfo.pCommandBuffers = submissionCommandBuffers.data();
+
+        std::vector<VkCommandBuffer> buffers(submissionCommandBuffers.size());
+        buffers.clear();
+        for (int i = 0; i < submissionCommandBuffers.size(); i++) {
+            buffers.push_back(submissionCommandBuffers[i].GetBufferAt(m_NextImageIndex));
+        }
+
+        submitInfo.pCommandBuffers = buffers.data();
         VkSemaphore signalSemaphores[] = {m_RenderingFinishedSemaphores[m_CurrentImageIndex]};
         submitInfo.signalSemaphoreCount = 1;
         submitInfo.pSignalSemaphores = signalSemaphores;
@@ -264,7 +275,7 @@ namespace Vulf {
         // Build the command pipelines
         BuildCommandPipeline();
 
-        // Create the synchironization primitives
+        // Create the synchronization primitives
         CreateSynchronizationPrimitives();
     }
 

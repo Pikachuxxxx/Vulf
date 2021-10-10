@@ -13,7 +13,7 @@ void VKCmdBuffer::AllocateBuffers(const VkCommandPool& pool)
     m_CommandBuffers.resize(3);
     if(VK_CALL(vkAllocateCommandBuffers(VKDEVICE, &allocInfo, m_CommandBuffers.data())))
         throw std::runtime_error("Cannot create command buffers!");
-    // else VK_LOG_SUCCESS("Command Buffers (3) succesfully Allocated!");
+    else VK_LOG("Command Buffers (3) succesfully Allocated!");
 }
 
 void VKCmdBuffer::DestroyBuffer(VkCommandBuffer& buffer)
@@ -32,7 +32,7 @@ void VKCmdBuffer::RecordBuffer(VkCommandBuffer& buffer)
     vkResetCommandBuffer(buffer, 0);
 	if (VK_CALL(vkBeginCommandBuffer(buffer, &beginInfo)))
 		throw std::runtime_error("Cannot record onto CommandBuffers");
-	// else VK_LOG("Recording to command buffer...");
+	//else VK_LOG("Recording to command buffer...");
 }
 
 void VKCmdBuffer::EndRecordingBuffer(VkCommandBuffer& buffer)

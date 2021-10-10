@@ -97,7 +97,7 @@ namespace Vulf {
         bool                enableValidationLayers = 0; /* Enables Vulkan validation layers in debug build      */
         int                 width   = 1280;             /* The Width of the window                              */
         int                 height  = 720;              /* The Height of the window                             */
-        std::vector<VkCommandBuffer> submissionCommandBuffers;
+        std::vector<VKCmdBuffer> submissionCommandBuffers;
 
     public:
         /* Initializes the application */
@@ -140,10 +140,8 @@ namespace Vulf {
         virtual void BuildCommandBuffers();
         /* Build descriptor sets for Uniform buffers */
         virtual void BuildDescriptorSets();
-        /* The entire command pipeline that needs to be rebuilt for swapchain er-creation */
-        virtual void BuildCommandPipeline();
 
-        /* Cleans Up the resrouces and also while recreateing the swapchain */
+        /* Cleans Up the resources and also while recreating the swapchain */
         virtual void CleanUpPipeline();
 
         /* The draw commands that will be executed */
@@ -164,17 +162,19 @@ namespace Vulf {
         /* ImGui Overlay */
         virtual void OnImGui();
 
+        uint32_t GetNextImageIndex() const { return m_NextImageIndex;  }
+
     private:
     // Application flow
-        std::string                 m_AppName;                      /* The name of the application */
+        std::string                 m_AppName;                      /* The name of the application                                                      */
         Window*                     m_Window;                       /* The window abstraction                                                           */
         Camera3D                    m_Camera;                       /* The default free-fly camera in th e scene                                        */
         bool                        m_FramebufferResized;           /* Boolean to identify screen resize event                                          */
         uint32_t                    m_FrameCounter    = 0;          /* Number of frames rendered in a second                                            */
         Ms                          m_FrameTimer;                   /* Time taken for a single frame to render since the last frame was rendered        */
         HighResClock                m_LastTimestamp;                /* High resolution clock to measure the last time when a frame was rendered         */
-        uint32_t                    m_NextImageIndex;               /* The next image index from the swapchain images list                              */
-        uint32_t                    m_CurrentImageIndex;            /* The index of the current in-flight frame being rendered                          */
+        uint32_t                    m_NextImageIndex = 0;           /* The next image index from the swapchain images list                              */
+        uint32_t                    m_CurrentImageIndex = 0;        /* The index of the current in-flight frame being rendered                          */
 
     private:
         // Vulkan Stuff
@@ -186,6 +186,9 @@ namespace Vulf {
         std::vector<VkFence>        m_ImagesInFlight;
 
     private:
+        /* The entire command pipeline that needs to be rebuilt for swapchain re-creation */
+        void BuildCommandPipeline();
+
         /* The render loop that controls the application */
         void RenderLoop();
 

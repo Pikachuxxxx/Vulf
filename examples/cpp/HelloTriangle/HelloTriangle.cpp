@@ -41,7 +41,6 @@ private:
 
     // Buffers
     VKVertexBuffer          helloTriangleVBO;
-    VKIndexBuffer           helloTriangleIBO;
 
     VKFixedPipelineFuncs    fixedFunctions;
 
@@ -70,7 +69,6 @@ private:
     void BuildBufferResource() override {
         // Triangle vertices and indices
         helloTriangleVBO.Create(rainbowTriangleVertices, _def_CommandPool);
-        helloTriangleIBO.Create(rainbowTriangleIndices, _def_CommandPool);
     }
 
     void BuildTextureResources() override {
@@ -105,10 +103,22 @@ private:
     // default
     void BuildCommandBuffers() override {
         simpleCommandBuffer.AllocateBuffers(_def_CommandPool.GetPool());
+
     }
 
     void UpdateBuffers() override {
 
+    }
+
+    void CleanUpPipeline() override {
+        
+        simpleFrameBuffer.Destroy();
+        depthImage.Destroy();
+        helloTriangleVBO.Destroy();
+        simpleGraphicsPipeline.Destroy();
+        simpleRenderPass.Destroy();
+        fixedFunctions.DestroyPipelineLayout();
+        _def_Swapchain.Destroy();
     }
 
 
@@ -116,33 +126,31 @@ private:
 
     void OnRender() override
     {
-        simpleRenderPass.SetClearColor(1.0f, 0.0f, 0.0f);
+        simpleRenderPass.SetClearColor(0.0f, 0.0f, 0.0f);
         auto cmdBuffers = simpleCommandBuffer.GetBuffers();
         auto framebuffers = simpleFrameBuffer.GetFramebuffers();
 
+        //int i = GetNextImageIndex();
         for (int i = 0; i <  cmdBuffers.size(); i++) {
             simpleCommandBuffer.RecordBuffer(cmdBuffers[i]);
             simpleRenderPass.BeginRenderPass(cmdBuffers[i], framebuffers[i], _def_Swapchain.GetSwapExtent());
 
             simpleGraphicsPipeline.Bind(cmdBuffers[i]);
 
-            // Bind the push contants
+            // Bind the push constants
             modelPCData.model = glm::rotate(glm::mat4(1.0f), (float)glm::radians(90.0f * 2.0f), glm::vec3(0.0f, 1.0f, 0.0f));
             vkCmdPushConstants(cmdBuffers[i], fixedFunctions.GetPipelineLayout(), VK_SHADER_STAGE_VERTEX_BIT | VK_SHADER_STAGE_FRAGMENT_BIT, 0, sizeof(ModelPushConstant), &modelPCData);
 
             helloTriangleVBO.Bind(cmdBuffers[i]);
-            helloTriangleIBO.Bind(cmdBuffers[i]);
 
-            vkCmdDrawIndexed(cmdBuffers[i], rainbowTriangleIndices.size(), 1, 0, 0, 0);
+            vkCmdDraw(cmdBuffers[i], rainbowTriangleVertices.size(), 1, 0, 0);
 
             simpleRenderPass.EndRenderPass(cmdBuffers[i]);
             simpleCommandBuffer.EndRecordingBuffer(cmdBuffers[i]);
         }
-    }
 
-private:
-    void CleanUpPipeline() override {
-
+            submissionCommandBuffers.clear();
+            submissionCommandBuffers.push_back(simpleCommandBuffer);
     }
 };
 
