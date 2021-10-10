@@ -4,6 +4,17 @@
 #include "../utils/VulkanCheckResult.h"
 #include "../utils/vertex.h"
 
+
+void VKFixedPipelineFuncs::SetFixedPipelineStage(VkPrimitiveTopology topology, const VkExtent2D& swapchainExtent, bool enableWireFrameMode)
+{
+    SetInputAssemblyStageInfo(topology);
+    SetViewportSCI(swapchainExtent);
+    SetRasterizerSCI(enableWireFrameMode);
+    SetMultiSampleSCI();
+    SetDepthStencilSCI();
+    SetColorBlendSCI();
+    SetDynamicSCI();
+}
 // TODO: Add methods to add bindings and attributes dynamically
 
 void VKFixedPipelineFuncs::SetVertexInputSCI()
@@ -144,11 +155,11 @@ void VKFixedPipelineFuncs::SetColorBlendSCI()
 
 void VKFixedPipelineFuncs::SetDynamicSCI() { }
 
-void VKFixedPipelineFuncs::SetPipelineLayout(VkDescriptorSetLayout& layout, VkPushConstantRange& pushConstants)
+void VKFixedPipelineFuncs::SetPipelineLayout(VkDescriptorSetLayout layout, VkPushConstantRange& pushConstants)
 {
 
     layoutCI.sType = VK_STRUCTURE_TYPE_PIPELINE_LAYOUT_CREATE_INFO;
-    layoutCI.setLayoutCount = 1;
+    layoutCI.setLayoutCount = layout == VK_NULL_HANDLE ? 0 : 1;
     layoutCI.pSetLayouts = &layout;
     layoutCI.pushConstantRangeCount = 1;
     layoutCI.pPushConstantRanges = &pushConstants;

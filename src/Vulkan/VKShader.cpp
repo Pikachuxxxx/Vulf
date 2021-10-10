@@ -17,7 +17,7 @@ void VKShader::CreateShader(const std::string& path, ShaderType type)
 
     if(VK_CALL(vkCreateShaderModule(VKDEVICE, &shaderCI, nullptr, &m_Module)))
         throw std::runtime_error("Cannot Create shader module!");
-    else VK_LOG(GetShaderTypeString(), " shader module created!");
+    else VK_LOG(GetShaderTypeString(), "shader module created!");
 
     // Create the pipeline shader stage create info
     m_ShaderStageInfo = {};

@@ -13,15 +13,17 @@ void VKGraphicsPipeline::Create(std::vector<VkPipelineShaderStageCreateInfo> sha
 
     auto bindingDescription = Vertex::getBindingDescription();
     auto attributeDescriptions = Vertex::getAttributeDescription();
+
+
     // we need the vertex binding information and attribute info to create the Input create info struct
     VkPipelineVertexInputStateCreateInfo m_VertexInputSCI = {};
     m_VertexInputSCI.sType = VK_STRUCTURE_TYPE_PIPELINE_VERTEX_INPUT_STATE_CREATE_INFO;
     m_VertexInputSCI.flags = 0;
     m_VertexInputSCI.pNext = nullptr;
-    m_VertexInputSCI.vertexBindingDescriptionCount = 1;
-    m_VertexInputSCI.vertexAttributeDescriptionCount = attributeDescriptions.size();
-    m_VertexInputSCI.pVertexBindingDescriptions = &bindingDescription;
-    m_VertexInputSCI.pVertexAttributeDescriptions = attributeDescriptions.data();
+    m_VertexInputSCI.vertexBindingDescriptionCount      = 1;
+    m_VertexInputSCI.pVertexBindingDescriptions         = &bindingDescription;
+    m_VertexInputSCI.vertexAttributeDescriptionCount    = attributeDescriptions.size();
+    m_VertexInputSCI.pVertexAttributeDescriptions       = attributeDescriptions.data();
 
     graphicsCI.pVertexInputState    = &m_VertexInputSCI;
     graphicsCI.pInputAssemblyState  = &fixedfunctions.GetInputAssemblySCI();
@@ -39,7 +41,7 @@ void VKGraphicsPipeline::Create(std::vector<VkPipelineShaderStageCreateInfo> sha
 
     if(VK_CALL(vkCreateGraphicsPipelines(VKDEVICE, VK_NULL_HANDLE, 1, &graphicsCI, nullptr, &m_GraphicsPipeline)))
         throw std::runtime_error("Cannot create Graphics pipeline!");
-    else VK_LOG_SUCCESS("Graphics Pipeline succesfully crreated!");
+    else VK_LOG_SUCCESS("Graphics Pipeline succesfully created!");
 }
 
 void VKGraphicsPipeline::Destroy()

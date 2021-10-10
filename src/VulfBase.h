@@ -30,7 +30,6 @@
 #define GLM_ENABLE_EXPERIMENTAL
 #include <glm/glm.hpp>
 #include <glm/gtc/matrix_transform.hpp>
-#include <glm/gtc/matrix_inverse.hpp>
 #include <glm/gtc/type_ptr.hpp>
 
 // Imgui
@@ -96,12 +95,13 @@ namespace Vulf {
     public:
         CommandLineParser   commandLineParser;          /* Command Line options parser for the executable       */
         bool                enableValidationLayers = 0; /* Enables Vulkan validation layers in debug build      */
-        int                 width   = 800;              /* The Width of the window                              */
-        int                 height  = 600;              /* The Height of the window                             */
+        int                 width   = 1280;             /* The Width of the window                              */
+        int                 height  = 720;              /* The Height of the window                             */
+        std::vector<VkCommandBuffer> submissionCommandBuffers;
 
     public:
         /* Initializes the application */
-        VulfBase() = default;
+        VulfBase(std::string appName) : m_AppName(appName) {}
         /* Destroys any resources allocated by the client */
         virtual ~VulfBase();
         /* Initializes the application into runtime */
@@ -109,7 +109,7 @@ namespace Vulf {
 
     protected:
         VKCmdPool           _def_CommandPool;           /* The default command pool used to allocate buffer     */
-
+        VKSwapchain         _def_Swapchain;
     protected:
         /**
          * Creates the Shader resources to be used by the pipeline
@@ -122,38 +122,40 @@ namespace Vulf {
 
         /* Builds the command pool */
         virtual void BuildCommandPool();
+        /* Creates the necessary buffers resources */
+        virtual void BuildBufferResource() = 0;
+        /* Create the Texture/image resources for the client */
+        virtual void BuildTextureResources();
         /* Build swapchain */
         virtual void BuildSwapchain();
         /* Build the fixed pipelines and pipeline cache*/
-        virtual void BuildPipeline();
-        /* Builds the command pipeline for the entire application */
-        virtual void BuildGraphicsPipeline();
+        virtual void BuildFixedPipeline();
         /* Build the render passes for the Vulf application */
         virtual void BuildRenderPass();
+        /* Builds the command pipeline for the entire application */
+        virtual void BuildGraphicsPipeline();
         /* Build the framebuffers with the proper render pass attachments and swapchain configuration */
         virtual void BuildFramebuffer();
         /* Builds the command buffers that will be send to the graphics queue */
         virtual void BuildCommandBuffers();
         /* Build descriptor sets for Uniform buffers */
         virtual void BuildDescriptorSets();
+        /* The entire command pipeline that needs to be rebuilt for swapchain er-creation */
+        virtual void BuildCommandPipeline();
 
-        /* Create the Texture/image resources for the client */
-        virtual void CreateTextureResources();
-        /* Creates the necessary buffers resources */
-        virtual void CreateBufferResource() = 0;
-        /* Updates Uniform buffers, SSAO and other \buffer resources */
-        virtual void UpdateBuffers();
+        /* Cleans Up the resrouces and also while recreateing the swapchain */
+        virtual void CleanUpPipeline();
 
         /* The draw commands that will be executed */
-        virtual void Draw() = 0;
+        virtual void DrawFrame();
+        /* Updates Uniform buffers, SSAO and other \buffer resources */
+        virtual void UpdateBuffers();
         /* Default image acquire + submission and command buffer submission */
-        virtual void RenderFrame();
-        /*  Presents the current image to the swap chain */
-        virtual void PresentFrame();
+        virtual void SubmitFrame();
 
         /**
          * Called on every update loop
-         * 
+         *
          * @param dt The delta time taken to render a frame since the last frame
          */
         virtual void OnUpdate(double dt);
@@ -164,6 +166,7 @@ namespace Vulf {
 
     private:
     // Application flow
+        std::string                 m_AppName;                      /* The name of the application */
         Window*                     m_Window;                       /* The window abstraction                                                           */
         Camera3D                    m_Camera;                       /* The default free-fly camera in th e scene                                        */
         bool                        m_FramebufferResized;           /* Boolean to identify screen resize event                                          */
@@ -171,7 +174,7 @@ namespace Vulf {
         Ms                          m_FrameTimer;                   /* Time taken for a single frame to render since the last frame was rendered        */
         HighResClock                m_LastTimestamp;                /* High resolution clock to measure the last time when a frame was rendered         */
         uint32_t                    m_NextImageIndex;               /* The next image index from the swapchain images list                              */
-        uint32_t                    m_CurrentFrameIndex;            /* The index of the current in-flight frame being rendered                          */
+        uint32_t                    m_CurrentImageIndex;            /* The index of the current in-flight frame being rendered                          */
 
     private:
         // Vulkan Stuff
@@ -195,24 +198,22 @@ namespace Vulf {
         /* Initializes ImGui for UI Overlay */
         void InitImGui();
 
-        /* Presents the rendered swap images onto the window surface */
-        void Present();
-
         /* Creates the Synchronization primitives for the application */
         // Note:- The fences must be initially explicitly signaled (Remove this note)
         void CreateSynchronizationPrimitives();
+
+        void RecreateSwapchain();
     };
 
 
 #define VULF_MAIN(appName)                                                                                                                                                                                      \
     int main(int argc, char* argv[]) {                                                                                                                                                                          \
-                                                                                                                                                                                                                \
         static std::vector<const char*> args;                                                                                                                                                                   \
         for (size_t i = 0; i < argc; i++) {                                                                                                                                                                     \
             std::cout << "Argument : " << argv[i] << std::endl;                                                                                                                                                 \
             args.push_back(argv[i]);                                                                                                                                                                            \
         }                                                                                                                                                                                                       \
-        ##appName exampleVulfapp_##appName;                                                                                                                                                                     \
+        Vulf##appName exampleVulfapp_##appName;                                                                                                                                                                 \
         exampleVulfapp_##appName.commandLineParser.Parse(args);                                                                                                                                                 \
                                                                                                                                                                                                                 \
         if (exampleVulfapp_##appName.commandLineParser.IsSet("help")) {                                                                                                                                         \
@@ -236,6 +237,6 @@ namespace Vulf {
             return EXIT_FAILURE;                                                                                                                                                                                \
         }                                                                                                                                                                                                       \
         return EXIT_SUCCESS;                                                                                                                                                                                    \
-    }                                                                                                                                                                                                           
+    }
 }
         //{VK_LOG("Application Name : ", STRINGIZE(exampleVulfapp_##appName));    }                                                                                                                               \                                                          \

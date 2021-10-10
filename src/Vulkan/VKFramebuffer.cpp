@@ -25,7 +25,7 @@ void VKFramebuffer::Create(const VkRenderPass& renderpass, std::vector<VkImageVi
 
         if(VK_CALL(vkCreateFramebuffer(VKDEVICE, &bufCI, nullptr, &m_Framebuffers[i])))
             throw std::runtime_error("Cannot create framebuffer!");
-        // else VK_LOG("Framebuffer ", i ,"succesfully created!");
+        else VK_LOG("Framebuffer ", i ," succesfully created!");
     }
 }
 

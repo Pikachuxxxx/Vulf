@@ -466,7 +466,6 @@ void Application::RecreateCommandPipeline()
         wireframeFixedTopologyPipelineFuncs[i].SetDepthStencilSCI();
         wireframeFixedTopologyPipelineFuncs[i].SetColorBlendSCI();
         wireframeFixedTopologyPipelineFuncs[i].SetDynamicSCI();
-        wireframeFixedTopologyPipelineFuncs[i].SetPipelineLayout(layout, modelPushConstant);
 
         fixedTopologyPipelines[i].SetPipelineLayout(layout, modelPushConstant);
         wireframeFixedTopologyPipelineFuncs[i].SetPipelineLayout(layout, modelPushConstant);

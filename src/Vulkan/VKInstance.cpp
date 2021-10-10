@@ -32,7 +32,7 @@ void VKInstance::Init(std::string appname, GLFWwindow* window, bool enableValida
     appCI.pNext = nullptr;
     appCI.pApplicationName = appname.c_str();
     appCI.applicationVersion = VK_MAKE_VERSION(1, 0, 0);
-    appCI.pEngineName = "Vulf";
+    appCI.pEngineName = "Vulf Renderer";
     appCI.engineVersion = VK_MAKE_VERSION(1, 0, 0);
     appCI.apiVersion = VK_API_VERSION_1_0;
 

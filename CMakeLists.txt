@@ -86,6 +86,9 @@ include_directories(
     "${CMAKE_SOURCE_DIR}/vendor/TracyProfiler"
     #SPIRV-Reflect
     "${CMAKE_SOURCE_DIR}/vendor/SPIRVReflect"
+    # Vulf
+    "${CMAKE_SOURCE_DIR}/src"
+    "${CMAKE_SOURCE_DIR}/src/Vulkan"
 )
 
 link_directories(
@@ -112,6 +115,9 @@ include_directories(
     "${CMAKE_SOURCE_DIR}/vendor/TracyProfiler"
     #SPIRV-Reflect
     "${CMAKE_SOURCE_DIR}/vendor/SPIRVReflect"
+    # Vulf
+    "${CMAKE_SOURCE_DIR}/src"
+    "${CMAKE_SOURCE_DIR}/src/Vulkan"
 )
 
 link_directories(
@@ -126,6 +132,7 @@ endif()
 file(GLOB_RECURSE SOURCE_FILES
 	${CMAKE_SOURCE_DIR}/src/*.c
     ${CMAKE_SOURCE_DIR}/src/*.cpp
+    ${CMAKE_SOURCE_DIR}/examples/cpp/*.cpp
 )
 
 file(GLOB_RECURSE VENDOR_SOURCE_FILES

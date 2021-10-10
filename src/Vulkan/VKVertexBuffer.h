@@ -3,6 +3,7 @@
 #include "VKBuffer.h"
 #include "VKCmdPool.h"
 
+// TODO: Rename to VertexBuffer
 class VKVertexBuffer
 {
 public:

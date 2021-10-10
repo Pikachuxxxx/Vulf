@@ -23,6 +23,7 @@ struct LightUniformBufferObject
     alignas(16) glm::vec3 _padding;
 };
 
+// TODO: Rename to UniformBuffer
 class VKUniformBuffer
 {
 public:

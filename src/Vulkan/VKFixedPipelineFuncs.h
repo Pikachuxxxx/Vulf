@@ -13,6 +13,7 @@ class VKFixedPipelineFuncs
 {
 public:
     VKFixedPipelineFuncs() = default;
+    void SetFixedPipelineStage(VkPrimitiveTopology topology, const VkExtent2D& swapchainExtent, bool enableWireFrameMode);
     const VkPipelineVertexInputStateCreateInfo& GetVertexInputSCI() { return m_VertexInputSCI; }
     const VkPipelineInputAssemblyStateCreateInfo& GetInputAssemblySCI() { return m_InputAssemblySCI; }
     const VkPipelineViewportStateCreateInfo& GetViewportStateCI() { return m_ViewportSCI; }
@@ -30,7 +31,7 @@ public:
     void SetDepthStencilSCI();
     void SetColorBlendSCI();
     void SetDynamicSCI();
-    void SetPipelineLayout(VkDescriptorSetLayout& layout, VkPushConstantRange& pushConstants);
+    void SetPipelineLayout(VkDescriptorSetLayout layout, VkPushConstantRange& pushConstants);
     void DestroyPipelineLayout();
 private:
     VkPipelineVertexInputStateCreateInfo m_VertexInputSCI;
