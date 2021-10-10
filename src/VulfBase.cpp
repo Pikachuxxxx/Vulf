@@ -6,8 +6,6 @@
 // Utilities
 #include "utils/VulkanCheckResult.h"
 
-// Profiling
-#include <Tracy.hpp>
 
 // TibyObj
 //#define TINYOBJLOADER_IMPLEMENTATION
@@ -154,6 +152,7 @@ namespace Vulf {
  //-----------------------------------------------------------------------------//
 
     void VulfBase::DrawFrame() {
+        ZoneScopedC(0xff0000);
 
         vkWaitForFences(VKDEVICE, 1, &m_InFlightFences[m_CurrentImageIndex], VK_TRUE, UINT64_MAX);
 
@@ -178,10 +177,12 @@ namespace Vulf {
     }
 
     void VulfBase::UpdateBuffers() {
+        ZoneScopedC(0xffff00);
 
     }
 
     void VulfBase::SubmitFrame() {
+        ZoneScopedC(0x0000ff);
 
         VkResult result;
 
@@ -263,7 +264,7 @@ namespace Vulf {
     void VulfBase::InitVulkan() {
         // Create the Vulkan Instance
         // TODO: Use a proper signature for the application name (same is given for the window as well)
-        VKInstance::GetInstanceManager()->Init(m_AppName.c_str(), m_Window->getGLFWwindow(), enableValidationLayers);
+        Instance::GetInstanceManager()->Init(m_AppName.c_str(), m_Window->getGLFWwindow(), enableValidationLayers);
 
         // Create the Device
         VKLogicalDevice::GetDeviceManager()->Init();
@@ -310,6 +311,7 @@ namespace Vulf {
     }
 
     void VulfBase::RecreateSwapchain() {
+        ZoneScopedC(0xff00ff);
         VK_LOG_SUCCESS("Recreating Swapchain..........");
         vkDeviceWaitIdle(VKDEVICE);
 

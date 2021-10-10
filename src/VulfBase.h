@@ -44,6 +44,9 @@
 // SPIRV-Reflect
 #include <spirv_reflect.h>
 
+// Profiling
+#include <Tracy.hpp>
+
 // Helper utilities
 #include "utils/vertex.h"
 #include "utils/Window.h"
@@ -54,22 +57,22 @@
 #include "utils/CommandLineParser.h"
 
 // Vulkan Abstractions
-#include "Vulkan/VKInstance.h"
+#include "Vulkan/Instance.h"
 #include "Vulkan/VKDevice.h"
-#include "Vulkan/VKSwapchain.h"
-#include "Vulkan/VKShader.h"
-#include "Vulkan/VKFixedPipelineFuncs.h"
-#include "Vulkan/VKRenderPass.h"
-#include "Vulkan/VKGraphicsPipeline.h"
-#include "Vulkan/VKFramebuffer.h"
-#include "Vulkan/VKCmdPool.h"
-#include "Vulkan/VKCmdBuffer.h"
-#include "Vulkan/VKVertexBuffer.h"
-#include "Vulkan/VKIndexBuffer.h"
-#include "Vulkan/VKUniformBuffer.h"
-#include "Vulkan/VKImage.h"
-#include "Vulkan/VKTexture.h"
-#include "Vulkan/VKDepthImage.h"
+#include "Vulkan/Swapchain.h"
+#include "Vulkan/Shader.h"
+#include "Vulkan/FixedPipelineFuncs.h"
+#include "Vulkan/RenderPass.h"
+#include "Vulkan/GraphicsPipeline.h"
+#include "Vulkan/Framebuffer.h"
+#include "Vulkan/CmdPool.h"
+#include "Vulkan/CmdBuffer.h"
+#include "Vulkan/VertexBuffer.h"
+#include "Vulkan/IndexBuffer.h"
+#include "Vulkan/UniformBuffer.h"
+#include "Vulkan/Image.h"
+#include "Vulkan/Texture.h"
+#include "Vulkan/DepthImage.h"
 
 // Application Helper Defines
 #define STRINGIZE(s) #s
@@ -97,7 +100,7 @@ namespace Vulf {
         bool                enableValidationLayers = 0; /* Enables Vulkan validation layers in debug build      */
         int                 width   = 1280;             /* The Width of the window                              */
         int                 height  = 720;              /* The Height of the window                             */
-        std::vector<VKCmdBuffer> submissionCommandBuffers;
+        std::vector<CmdBuffer> submissionCommandBuffers;
 
     public:
         /* Initializes the application */
@@ -108,8 +111,8 @@ namespace Vulf {
         void Run();
 
     protected:
-        VKCmdPool           _def_CommandPool;           /* The default command pool used to allocate buffer     */
-        VKSwapchain         _def_Swapchain;
+        CmdPool           _def_CommandPool;           /* The default command pool used to allocate buffer     */
+        Swapchain         _def_Swapchain;
     protected:
         /**
          * Creates the Shader resources to be used by the pipeline
@@ -178,7 +181,7 @@ namespace Vulf {
 
     private:
         // Vulkan Stuff
-        VKInstance                  m_Instance;                     /* The Vulkan abstracted Instance                                                   */
+        Instance                  m_Instance;                     /* The Vulkan abstracted Instance                                                   */
         VKLogicalDevice             m_Device;                       /* The Vulkan physical and logical device abstraction                               */
         std::vector<VkSemaphore>    m_ImageAvailableSemaphores;     /* Semaphore to tell when an image is free to use to draw onto (GPU-GPU)            */
         std::vector<VkSemaphore>    m_RenderingFinishedSemaphores;  /* Semaphore to tell when the rendering to a particular swapchain image is done     */

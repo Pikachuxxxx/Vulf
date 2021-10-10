@@ -1,6 +1,6 @@
 #include "VKDevice.h"
 
-#include "VKInstance.h"
+#include "Instance.h"
 #include <iostream>
 #include <set>
 
@@ -10,9 +10,9 @@
 void VKPhysicalDevice::Init()
 {
     uint32_t numGPUs = 0;
-    vkEnumeratePhysicalDevices(VKInstance::GetInstanceManager()->GetInstance(), &numGPUs, nullptr);
+    vkEnumeratePhysicalDevices(Instance::GetInstanceManager()->GetInstance(), &numGPUs, nullptr);
     std::vector<VkPhysicalDevice> availableGPUs(numGPUs);
-    vkEnumeratePhysicalDevices(VKInstance::GetInstanceManager()->GetInstance(), &numGPUs, availableGPUs.data());
+    vkEnumeratePhysicalDevices(Instance::GetInstanceManager()->GetInstance(), &numGPUs, availableGPUs.data());
     for (size_t i = 0; i < numGPUs; ++i)
     {
         if(isDeviceSuitable(availableGPUs[i]))
@@ -47,7 +47,7 @@ void VKPhysicalDevice::findQueueFamilyIndices(VkPhysicalDevice gpu)
 
             // Check for presentation support
             VkBool32 presentationSupported = false;
-            vkGetPhysicalDeviceSurfaceSupportKHR(gpu, i, VKInstance::GetInstanceManager()->GetSurface(), &presentationSupported);
+            vkGetPhysicalDeviceSurfaceSupportKHR(gpu, i, Instance::GetInstanceManager()->GetSurface(), &presentationSupported);
 
             if(presentationSupported)
                 m_QueueFamilyIndices.presentFamily = i;

@@ -30,21 +30,21 @@
 #include "utils/CommandLineParser.h"
 
 
-#include "Vulkan/VKInstance.h"
+#include "Vulkan/Instance.h"
 #include "Vulkan/VKDevice.h"
-#include "Vulkan/VKSwapchain.h"
-#include "Vulkan/VKShader.h"
-#include "Vulkan/VKFixedPipelineFuncs.h"
-#include "Vulkan/VKRenderPass.h"
-#include "Vulkan/VKGraphicsPipeline.h"
-#include "Vulkan/VKFramebuffer.h"
-#include "Vulkan/VKCmdPool.h"
-#include "Vulkan/VKCmdBuffer.h"
-#include "Vulkan/VKVertexBuffer.h"
-#include "Vulkan/VKIndexBuffer.h"
-#include "Vulkan/VKUniformBuffer.h"
-#include "Vulkan/VKTexture.h"
-#include "Vulkan/VKDepthImage.h"
+#include "Vulkan/Swapchain.h"
+#include "Vulkan/Shader.h"
+#include "Vulkan/FixedPipelineFuncs.h"
+#include "Vulkan/RenderPass.h"
+#include "Vulkan/GraphicsPipeline.h"
+#include "Vulkan/Framebuffer.h"
+#include "Vulkan/CmdPool.h"
+#include "Vulkan/CmdBuffer.h"
+#include "Vulkan/VertexBuffer.h"
+#include "Vulkan/IndexBuffer.h"
+#include "Vulkan/UniformBuffer.h"
+#include "Vulkan/Texture.h"
+#include "Vulkan/DepthImage.h"
 
 // Imgui
 #include <imgui.h>
@@ -90,50 +90,50 @@ private:
     void OnUpdate(double dt);
     void LoadModel(std::string path, std::vector<Vertex>& vertices, std::vector<uint16_t>& indices, std::vector<uint16_t>& quadIndices, bool triangulate = true);
 /***************************** Vulkan Encapsulation ***************************/
-VKSwapchain swapchainManager;
-VKShader vertexShader;
-VKShader fragmentShader;
-VKShader outlineFragmentShader;
-VKFixedPipelineFuncs fixedPipelineFuncs;
-VKFixedPipelineFuncs wireframeFixedPipelineFuncs;
-VKRenderPass renderPassManager;
-VKGraphicsPipeline graphicsPipeline;
-VKGraphicsPipeline wireframeGraphicsPipeline;
-VKFramebuffer framebufferManager;
-VKCmdPool cmdPoolManager;
-VKCmdBuffer swapCmdBuffers;
+Swapchain swapchainManager;
+Shader vertexShader;
+Shader fragmentShader;
+Shader outlineFragmentShader;
+FixedPipelineFuncs fixedPipelineFuncs;
+FixedPipelineFuncs wireframeFixedPipelineFuncs;
+RenderPass renderPassManager;
+GraphicsPipeline graphicsPipeline;
+GraphicsPipeline wireframeGraphicsPipeline;
+Framebuffer framebufferManager;
+CmdPool cmdPoolManager;
+CmdBuffer swapCmdBuffers;
 
-std::vector<VKFixedPipelineFuncs> fixedTopologyPipelines;
-std::vector<VKFixedPipelineFuncs>  wireframeFixedTopologyPipelineFuncs;
+std::vector<FixedPipelineFuncs> fixedTopologyPipelines;
+std::vector<FixedPipelineFuncs>  wireframeFixedTopologyPipelineFuncs;
 
-std::vector<VKGraphicsPipeline> graphicsPipelines;
-std::vector<VKGraphicsPipeline> wireframeGraphicsPipelines;
+std::vector<GraphicsPipeline> graphicsPipelines;
+std::vector<GraphicsPipeline> wireframeGraphicsPipelines;
 
-VKVertexBuffer triVBO;
-VKIndexBuffer triIBO;
+VertexBuffer triVBO;
+IndexBuffer triIBO;
 
-VKVertexBuffer quadVBO;
-VKIndexBuffer quadIBO;
+VertexBuffer quadVBO;
+IndexBuffer quadIBO;
 
 // Happy budda model
 std::vector<Vertex> buddaVertices;
 std::vector<uint16_t> buddaIndices;
 std::vector<uint16_t> buddaQuadIndices;
-VKVertexBuffer buddaVBO;
-VKIndexBuffer buddaIBO;
-VKIndexBuffer buddaQuadIBO;
+VertexBuffer buddaVBO;
+IndexBuffer buddaIBO;
+IndexBuffer buddaQuadIBO;
 
 // Cube
-VKVertexBuffer cubeVBO;
+VertexBuffer cubeVBO;
 
 // Sphere
 std::vector<Vertex> sphereVertexData;
-VKVertexBuffer sphereVBO;
-VKIndexBuffer sphereIBO;
-VKIndexBuffer sphereQuadIBO;
+VertexBuffer sphereVBO;
+IndexBuffer sphereIBO;
+IndexBuffer sphereQuadIBO;
 
 // Descriptor and uniforms shit!
-VKUniformBuffer mvpUniformBuffer;
+UniformBuffer mvpUniformBuffer;
 
 // Imgui Render pass
 VkRenderPass imguiRenderPass;
@@ -141,13 +141,13 @@ VkRenderPass imguiRenderPass;
 // ImGui Descriptor pool
 VkDescriptorPool imguiDescriptorPool;
 VkCommandBuffer imguiCmdBuffer;
-VKCmdBuffer imguiCmdBuffers;
+CmdBuffer imguiCmdBuffers;
 float clearColor[4] = {0.24, 0.24, 0.24, 1.0f};
 bool enableWireframe = true;
 
 //Grid image texure
-VKTexture gridTexture;
-VKTexture earthTexture;
+Texture gridTexture;
+Texture earthTexture;
 ImTextureID imguiGridTexture;
 ImTextureID imguiEarthTexture;
 
@@ -160,7 +160,7 @@ Transform modelTransform;
 ImGuizmo::OPERATION globalOperation = ImGuizmo::TRANSLATE;
 
 // Depth Image
-VKDepthImage depthImage;
+DepthImage depthImage;
 /******************************************************************************/
 // Light settings
 glm::vec3 objectColor = glm::vec3(1.0f, 0.5f, 0.32f);

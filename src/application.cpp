@@ -88,7 +88,7 @@ void Application::InitWindow()
 
 void Application::InitVulkan()
 {
-    VKInstance::GetInstanceManager()->Init("Hello Vulkan", window->getGLFWwindow(), enableValidationLayers);
+    Instance::GetInstanceManager()->Init("Hello Vulkan", window->getGLFWwindow(), enableValidationLayers);
 
     VKLogicalDevice::GetDeviceManager()->Init();
 
@@ -211,7 +211,7 @@ void Application::InitImGui()
     // Setup Platform/Renderer bindings
     ImGui_ImplGlfw_InitForVulkan(window->getGLFWwindow(), true);
     ImGui_ImplVulkan_InitInfo init_info = {};
-    init_info.Instance = VKInstance::GetInstanceManager()->GetInstance();
+    init_info.Instance = Instance::GetInstanceManager()->GetInstance();
     init_info.PhysicalDevice = VKLogicalDevice::GetDeviceManager()->GetGPUManager().GetGPU();
     init_info.Device = VKDEVICE;
     init_info.QueueFamily = VKLogicalDevice::GetDeviceManager()->GetGPUManager().GetGraphicsFamilyIndex();
@@ -398,7 +398,7 @@ void Application::CleanUp()
     fragmentShader.DestroyModule();
     outlineFragmentShader.DestroyModule();
     VKLogicalDevice::GetDeviceManager()->Destroy();
-    VKInstance::GetInstanceManager()->Destroy();
+    Instance::GetInstanceManager()->Destroy();
 }
 /******************************************************************************/
 

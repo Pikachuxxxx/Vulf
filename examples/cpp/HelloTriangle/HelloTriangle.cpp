@@ -32,7 +32,7 @@ public:
         defaultVertShader.DestroyModule();
         defaultFragShader.DestroyModule();
         VKLogicalDevice::GetDeviceManager()->Destroy();
-        VKInstance::GetInstanceManager()->Destroy();
+        Instance::GetInstanceManager()->Destroy();
     }
 
 // Types
@@ -44,26 +44,26 @@ private:
 private:
     using ShaderStage = std::vector<VkPipelineShaderStageCreateInfo>;
     // Shaders
-    VKShader                defaultVertShader;
-    VKShader                defaultFragShader;
+    Shader                defaultVertShader;
+    Shader                defaultFragShader;
     ShaderStage             defaultShaders;
 
     // Buffers
-    VKVertexBuffer          helloTriangleVBO;
+    VertexBuffer          helloTriangleVBO;
 
-    VKFixedPipelineFuncs    fixedFunctions;
+    FixedPipelineFuncs    fixedFunctions;
 
-    VKRenderPass            simpleRenderPass;
+    RenderPass            simpleRenderPass;
 
-    VKGraphicsPipeline      simpleGraphicsPipeline;
+    GraphicsPipeline      simpleGraphicsPipeline;
 
     VkPushConstantRange     modelPushConstant;
 
-    VKDepthImage            depthImage;
+    DepthImage            depthImage;
 
-    VKFramebuffer           simpleFrameBuffer;
+    Framebuffer           simpleFrameBuffer;
 
-    VKCmdBuffer             simpleCommandBuffer;
+    CmdBuffer             simpleCommandBuffer;
 
 private:
     void LoadShaders() override {
@@ -120,7 +120,8 @@ private:
     }
 
     void CleanUpPipeline() override {
-        
+        ZoneScopedC(0xffffff);
+
         simpleFrameBuffer.Destroy();
         depthImage.Destroy();
         helloTriangleVBO.Destroy();
@@ -135,11 +136,12 @@ private:
 
     void OnRender() override
     {
+        ZoneScopedC(0xffa500);
+
         simpleRenderPass.SetClearColor(0.0f, 0.0f, 0.0f);
         auto cmdBuffers = simpleCommandBuffer.GetBuffers();
         auto framebuffers = simpleFrameBuffer.GetFramebuffers();
 
-        //int i = GetNextImageIndex();
         for (int i = 0; i <  cmdBuffers.size(); i++) {
             simpleCommandBuffer.RecordBuffer(cmdBuffers[i]);
             simpleRenderPass.BeginRenderPass(cmdBuffers[i], framebuffers[i], _def_Swapchain.GetSwapExtent());
@@ -147,7 +149,7 @@ private:
             simpleGraphicsPipeline.Bind(cmdBuffers[i]);
 
             // Bind the push constants
-            modelPCData.model = glm::rotate(glm::mat4(1.0f), (float)glm::radians(90.0f * 2.0f), glm::vec3(0.0f, 1.0f, 0.0f));
+            modelPCData.model = glm::rotate(glm::mat4(1.0f), (float)glm::radians(90.0f * 2.0f), glm::vec3(0.0f, 0.0f, 1.0f));
             vkCmdPushConstants(cmdBuffers[i], fixedFunctions.GetPipelineLayout(), VK_SHADER_STAGE_VERTEX_BIT | VK_SHADER_STAGE_FRAGMENT_BIT, 0, sizeof(ModelPushConstant), &modelPCData);
 
             helloTriangleVBO.Bind(cmdBuffers[i]);
