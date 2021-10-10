@@ -26,6 +26,15 @@ class VulfHelloTriangle : public Vulf::VulfBase
 public:
     VulfHelloTriangle() : VulfBase("Hello Triangle") {}
 
+    ~VulfHelloTriangle() {
+        _def_CommandPool.Destroy();
+        CleanUpPipeline();
+        defaultVertShader.DestroyModule();
+        defaultFragShader.DestroyModule();
+        VKLogicalDevice::GetDeviceManager()->Destroy();
+        VKInstance::GetInstanceManager()->Destroy();
+    }
+
 // Types
 private:
     struct ModelPushConstant{

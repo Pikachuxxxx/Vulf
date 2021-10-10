@@ -39,7 +39,6 @@ bool Window::init()
     // Create the window
     m_Window = glfwCreateWindow(m_Width, m_Height, m_Title, NULL, NULL);
 
-    glfwSetWindowPos(m_Window, 800, 700);
     if(!m_Window)
     {
         glfwTerminate();

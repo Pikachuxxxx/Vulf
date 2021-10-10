@@ -20,11 +20,7 @@ namespace Vulf {
  *                              Init Application                               *
  ******************************************************************************/
 
-    VulfBase::~VulfBase() {
-        _def_CommandPool.Destroy();
-        VKLogicalDevice::GetDeviceManager()->Destroy();
-        VKInstance::GetInstanceManager()->Destroy();
-    }
+    VulfBase::~VulfBase() { }
 
     void VulfBase::Run() {
         InitResources();
@@ -67,6 +63,12 @@ namespace Vulf {
             }
         }
         vkDeviceWaitIdle(VKDEVICE);
+
+        for (size_t i = 0; i < MAX_FRAMES_IN_FLIGHT; i++) {
+            vkDestroySemaphore(VKDEVICE, m_ImageAvailableSemaphores[i], nullptr);
+            vkDestroySemaphore(VKDEVICE, m_RenderingFinishedSemaphores[i], nullptr);
+            vkDestroyFence(VKDEVICE, m_InFlightFences[i], nullptr);
+        }
     }
 
 // Protected
