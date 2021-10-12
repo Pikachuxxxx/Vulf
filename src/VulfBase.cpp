@@ -27,13 +27,19 @@ namespace Vulf {
         InitImGui();
 
         RenderLoop();
+#ifdef _WIN32
+        OPTICK_SHUTDOWN();
+#endif
     }
 
 //-----------------------------------------------------------------------------//
 // Render Loop
     void VulfBase::RenderLoop() {
         while (!m_Window->closed()) {
-
+#ifdef _WIN32
+            OPTICK_FRAME("MainThread");
+            OPTICK_EVENT();
+#endif
             // Update the window for input events
             m_Window->Update();
 
@@ -48,7 +54,6 @@ namespace Vulf {
 
             OnUpdate(m_FrameTimer.count());
 
-            vkDeviceWaitIdle(VKDEVICE);
             OnRender();
 
             DrawFrame();
@@ -152,7 +157,10 @@ namespace Vulf {
  //-----------------------------------------------------------------------------//
 
     void VulfBase::DrawFrame() {
-        ZoneScopedC(0xff0000);
+        ZoneScopedC(0xff0000)
+#ifdef _WIN32
+        OPTICK_EVENT();
+#endif
 
         vkWaitForFences(VKDEVICE, 1, &m_InFlightFences[m_CurrentImageIndex], VK_TRUE, UINT64_MAX);
 
@@ -169,11 +177,14 @@ namespace Vulf {
 
         if(m_ImagesInFlight[m_NextImageIndex] != VK_NULL_HANDLE)
             vkWaitForFences(VKDEVICE, 1, &m_ImagesInFlight[m_NextImageIndex], VK_TRUE, UINT64_MAX);
+
         m_ImagesInFlight[m_NextImageIndex] = m_InFlightFences[m_CurrentImageIndex];
 
         UpdateBuffers();
 
         SubmitFrame();
+
+        FrameMark
     }
 
     void VulfBase::UpdateBuffers() {
@@ -183,6 +194,9 @@ namespace Vulf {
 
     void VulfBase::SubmitFrame() {
         ZoneScopedC(0x0000ff);
+#ifdef _WIN32
+        OPTICK_EVENT();
+#endif
 
         VkResult result;
 
@@ -268,6 +282,10 @@ namespace Vulf {
 
         // Create the Device
         VKLogicalDevice::GetDeviceManager()->Init();
+        //void InitGpuVulkan(VkDevice * vkDevices, VkPhysicalDevice * vkPhysicalDevices, VkQueue * vkQueues, uint32_t * cmdQueuesFamily, uint32_t numQueues, const VulkanFunctions * functions)
+
+        uint32_t numQueues = VKLogicalDevice::GetDeviceManager()->GetGPUManager().GetGraphicsFamilyIndex();
+        //OPTICK_GPU_INIT_VULKAN(&(VKLogicalDevice::GetDeviceManager()->GetLogicalDevice()), &(VKLogicalDevice::GetDeviceManager()->GetGPUManager().GetGPU()), &(VKLogicalDevice::GetDeviceManager()->GetGraphicsQueue()), &numQueues, 1);
 
         // Load the shaders
         LoadShaders();

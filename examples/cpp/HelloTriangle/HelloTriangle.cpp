@@ -46,7 +46,7 @@ private:
     // Shaders
     Shader                defaultVertShader;
     Shader                defaultFragShader;
-    ShaderStage             defaultShaders;
+    ShaderStage           defaultShaders;
 
     // Buffers
     VertexBuffer          helloTriangleVBO;
@@ -57,7 +57,7 @@ private:
 
     GraphicsPipeline      simpleGraphicsPipeline;
 
-    VkPushConstantRange     modelPushConstant;
+    VkPushConstantRange   modelPushConstant;
 
     DepthImage            depthImage;
 
@@ -86,7 +86,7 @@ private:
     }
 
     void BuildFixedPipeline() override {
-        // Create the push contants
+        // Create the push constants
         modelPushConstant.stageFlags    = VK_SHADER_STAGE_VERTEX_BIT | VK_SHADER_STAGE_FRAGMENT_BIT;
         modelPushConstant.offset        = 0;
         modelPushConstant.size          = sizeof(ModelPushConstant);
@@ -137,6 +137,7 @@ private:
     void OnRender() override
     {
         ZoneScopedC(0xffa500);
+        OPTICK_EVENT();
 
         simpleRenderPass.SetClearColor(0.0f, 0.0f, 0.0f);
         auto cmdBuffers = simpleCommandBuffer.GetBuffers();
@@ -160,8 +161,9 @@ private:
             simpleCommandBuffer.EndRecordingBuffer(cmdBuffers[i]);
         }
 
-            submissionCommandBuffers.clear();
-            submissionCommandBuffers.push_back(simpleCommandBuffer);
+        submissionCommandBuffers.clear();
+        submissionCommandBuffers.push_back(simpleCommandBuffer);
+            
     }
 };
 

@@ -46,6 +46,10 @@
 
 // Profiling
 #include <Tracy.hpp>
+#ifdef _WIN32
+// Optick
+#include <optick.h>
+#endif
 
 // Helper utilities
 #include "utils/vertex.h"
@@ -97,7 +101,7 @@ namespace Vulf {
     {
     public:
         CommandLineParser   commandLineParser;          /* Command Line options parser for the executable       */
-        bool                enableValidationLayers = 0; /* Enables Vulkan validation layers in debug build      */
+        bool                enableValidationLayers = 1; /* Enables Vulkan validation layers in debug build      */
         int                 width   = 1280;             /* The Width of the window                              */
         int                 height  = 720;              /* The Height of the window                             */
         std::vector<CmdBuffer> submissionCommandBuffers;
@@ -221,7 +225,6 @@ namespace Vulf {
         }                                                                                                                                                                                                       \
         Vulf##appName exampleVulfapp_##appName;                                                                                                                                                                 \
         exampleVulfapp_##appName.commandLineParser.Parse(args);                                                                                                                                                 \
-                                                                                                                                                                                                                \
         if (exampleVulfapp_##appName.commandLineParser.IsSet("help")) {                                                                                                                                         \
             exampleVulfapp_##appName.commandLineParser.PrintHelp();                                                                                                                                             \
             exit(0);                                                                                                                                                                                            \

@@ -7,6 +7,7 @@ IncludeDir["SPIRVReflect"]  = "vendor/SPIRVReflect"
 IncludeDir["stb"]           = "vendor/stb"
 IncludeDir["tinyobj"]       = "vendor/tinyobj"
 IncludeDir["tracy"]         = "vendor/TracyProfiler"
+IncludeDir["optick"]        = "vendor/optick/src"
 IncludeDir["vendor"]        = "vendor"
 VulkanSDK = os.getenv("VULKAN_SDK")
 print(VulkanSDK)
@@ -58,6 +59,9 @@ workspace ( "Vulf" )
         "vendor/SPIRVReflect/spirv_reflect.c",
         "vendor/SPIRVReflect/common/output_stream.h",
         "vendor/SPIRVReflect/common/output_stream.cpp",
+        "vendor/optick/**",
+        "vendor/optick/src/optick_gpu.d3d12.cpp",
+        "vendor/optick/src/optick_gpu.vulkan.cpp",
         "src/shaders/glsl/*.vert",
         "src/shaders/glsl/*.frag",
         -- Examples
@@ -74,6 +78,7 @@ workspace ( "Vulf" )
 		"%{IncludeDir.stb}",
         "%{IncludeDir.tinyobj}",
         "%{IncludeDir.tracy}",
+        "%{IncludeDir.optick}",
         "%{IncludeDir.VULKAN_SDK}",
         "%{IncludeDir.vendor}",
         "./",
@@ -92,6 +97,7 @@ workspace ( "Vulf" )
 		"%{IncludeDir.stb}",
         "%{IncludeDir.tinyobj}",
         "%{IncludeDir.tracy}",
+        "%{IncludeDir.optick}",
         "%{IncludeDir.VULKAN_SDK}",
         "%{IncludeDir.vendor}",
         "./",
@@ -121,6 +127,14 @@ workspace ( "Vulf" )
         {
             "SRC_DIR=\"%{root_dir}\"",
             "SHADER_BINARY_DIR=\"%{root_dir}/src/shaders/spir-v\""
+        }
+
+         links
+        {
+            "Dbghelp",
+            "d3d11",
+            "D3DCompiler",
+            "dxgi"
         }
 
         includedirs { VulkanSDK .. "/include" }
