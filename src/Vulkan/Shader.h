@@ -4,12 +4,12 @@
 #include <vector>
 #include <string>
 
-enum class ShaderType
+enum ShaderType
 {
-    VERTEX_SHADER,
+    VERTEX_SHADER = VK_SHADER_STAGE_VERTEX_BIT,
     // GEOMETRY_SHADER,
     // TESSELATION_SHADER,
-    FRAGMENT_SHADER,
+    FRAGMENT_SHADER = VK_SHADER_STAGE_FRAGMENT_BIT,
     // COMPUTE_SHADER
 };
 

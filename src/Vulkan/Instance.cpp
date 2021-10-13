@@ -160,8 +160,7 @@ VKAPI_ATTR VkBool32 VKAPI_CALL Instance::DebugCallback(VkDebugUtilsMessageSeveri
     // TODO: Add option to choose minimum severity level and use <=> to select levels
     // TODO: Formate the message id and stuff for colors etc
 
-    if(!message_severity)
-        return VK_FALSE;
+    //std::cerr << "Validation layer: " << callback_data->pMessage << std::endl;
 
     if(message_severity == VK_DEBUG_UTILS_MESSAGE_SEVERITY_ERROR_BIT_EXT)
     {

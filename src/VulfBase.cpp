@@ -32,45 +32,73 @@ namespace Vulf {
 #endif
     }
 
-//-----------------------------------------------------------------------------//
-// Render Loop
-    void VulfBase::RenderLoop() {
-        while (!m_Window->closed()) {
-#ifdef _WIN32
-            OPTICK_FRAME("MainThread");
-            OPTICK_EVENT();
-#endif
-            // Update the window for input events
-            m_Window->Update();
+// Private
+/*******************************************************************************
+ *                              Init Application                               *
+ ******************************************************************************/
+    void VulfBase::InitResources() {
 
-            auto tStart = std::chrono::high_resolution_clock::now();
+    }
 
-            m_FrameCounter++;
-            auto tEnd = std::chrono::high_resolution_clock::now();
-            m_FrameTimer = std::chrono::duration<double, std::milli>(tEnd - tStart); // in Ms
+    void VulfBase::InitWindow() {
+        //
+        m_Window = new Window(m_AppName.c_str(), width, height);
+    }
 
-            // Update the camera
-            m_Camera.Update(*m_Window, m_FrameTimer.count());
+    void VulfBase::InitVulkan() {
+        // Create the Vulkan Instance
+        // TODO: Use a proper signature for the application name (same is given for the window as well)
+        Instance::GetInstanceManager()->Init(m_AppName.c_str(), m_Window->getGLFWwindow(), true);
 
-            OnUpdate(m_FrameTimer.count());
+        // Create the Device
+        VKLogicalDevice::GetDeviceManager()->Init();
+        //void InitGpuVulkan(VkDevice * vkDevices, VkPhysicalDevice * vkPhysicalDevices, VkQueue * vkQueues, uint32_t * cmdQueuesFamily, uint32_t numQueues, const VulkanFunctions * functions)
 
-            OnRender();
+        auto device = VKLogicalDevice::GetDeviceManager()->GetLogicalDevice();
+        auto physicalDevice = VKLogicalDevice::GetDeviceManager()->GetGPUManager().GetGPU();
+        auto queuefam = VKLogicalDevice::GetDeviceManager()->GetGraphicsQueue();
+        uint32_t numQueues = VKLogicalDevice::GetDeviceManager()->GetGPUManager().GetGraphicsFamilyIndex();
+        OPTICK_GPU_INIT_VULKAN(&device, &physicalDevice, &queuefam, &numQueues, 1, nullptr);
 
-            DrawFrame();
+        // Load the shaders
+        LoadShaders();
 
-            float fpsTimer = std::chrono::duration<double, std::milli>(tEnd - m_LastTimestamp).count();
-            if (fpsTimer > 1000.0f) {
-                VK_LOG("FPS : ", m_FrameCounter);
-                m_FrameCounter = 0;
-                m_LastTimestamp = tEnd;
-            }
-        }
-        vkDeviceWaitIdle(VKDEVICE);
+        // Initialize the Command Pool and Build
+        BuildCommandPool();
+
+        // Build the command pipelines
+        BuildCommandPipeline();
+
+        // Create the synchronization primitives
+        CreateSynchronizationPrimitives();
+
+        OnStart();
+    }
+
+    void VulfBase::InitImGui() {
+
+    }
+
+    void VulfBase::CreateSynchronizationPrimitives() {
+
+        // Create the synchronization stuff
+        VkSemaphoreCreateInfo semaphoreInfo{};
+        semaphoreInfo.sType = VK_STRUCTURE_TYPE_SEMAPHORE_CREATE_INFO;
+        m_ImageAvailableSemaphores.resize(MAX_FRAMES_IN_FLIGHT);
+        m_RenderingFinishedSemaphores.resize(MAX_FRAMES_IN_FLIGHT);
+
+        VkFenceCreateInfo fenceInfo{};
+        fenceInfo.sType = VK_STRUCTURE_TYPE_FENCE_CREATE_INFO;
+        fenceInfo.flags = VK_FENCE_CREATE_SIGNALED_BIT;
+        m_InFlightFences.resize(MAX_FRAMES_IN_FLIGHT);
+        m_ImagesInFlight.resize(SWAP_IMAGES_COUNT, VK_NULL_HANDLE); // 3 swapchain images are used
 
         for (size_t i = 0; i < MAX_FRAMES_IN_FLIGHT; i++) {
-            vkDestroySemaphore(VKDEVICE, m_ImageAvailableSemaphores[i], nullptr);
-            vkDestroySemaphore(VKDEVICE, m_RenderingFinishedSemaphores[i], nullptr);
-            vkDestroyFence(VKDEVICE, m_InFlightFences[i], nullptr);
+            if (VK_CALL(vkCreateSemaphore(VKDEVICE, &semaphoreInfo, nullptr, &m_ImageAvailableSemaphores[i])) ||
+                VK_CALL(vkCreateSemaphore(VKDEVICE, &semaphoreInfo, nullptr, &m_RenderingFinishedSemaphores[i])) ||
+                VK_CALL(vkCreateFence(VKDEVICE, &fenceInfo, nullptr, &m_InFlightFences[i]))) {
+                throw std::runtime_error("Cannot create Synchronization primitives!");
+            }
         }
     }
 
@@ -147,25 +175,61 @@ namespace Vulf {
     }
 
 //-----------------------------------------------------------------------------//
+// Render Loop
+    void VulfBase::RenderLoop() {
+        while (!m_Window->closed()) {
+#ifdef _WIN32
+            OPTICK_FRAME("MainThread");
+            OPTICK_EVENT();
+#endif
+            // Update the window for input events
+            m_Window->Update();
 
-    void VulfBase::CleanUpPipeline() {
+            auto tStart = std::chrono::high_resolution_clock::now();
 
-        // Default swapchain manager
-        _def_Swapchain.Destroy();
+            m_FrameCounter++;
+            auto tEnd = std::chrono::high_resolution_clock::now();
+            m_FrameTimer = std::chrono::duration<double, std::milli>(tEnd - tStart); // in Ms
+
+            // Update the camera
+            m_Camera.Update(*m_Window, m_FrameTimer.count());
+
+            OnUpdate(m_FrameTimer.count());
+
+            OnRender();
+
+            DrawFrame();
+
+            float fpsTimer = std::chrono::duration<double, std::milli>(tEnd - m_LastTimestamp).count();
+            if (fpsTimer > 1000.0f) {
+                //VK_LOG("FPS : ", m_FrameCounter);
+                m_FrameCounter = 0;
+                m_LastTimestamp = tEnd;
+            }
+        }
+        vkDeviceWaitIdle(VKDEVICE);
+
+        for (size_t i = 0; i < MAX_FRAMES_IN_FLIGHT; i++) {
+            vkDestroySemaphore(VKDEVICE, m_ImageAvailableSemaphores[i], nullptr);
+            vkDestroySemaphore(VKDEVICE, m_RenderingFinishedSemaphores[i], nullptr);
+            vkDestroyFence(VKDEVICE, m_InFlightFences[i], nullptr);
+        }
     }
 
- //-----------------------------------------------------------------------------//
+//-----------------------------------------------------------------------------//
 
     void VulfBase::DrawFrame() {
         ZoneScopedC(0xff0000)
 #ifdef _WIN32
         OPTICK_EVENT();
 #endif
+        OPTICK_GPU_EVENT("Draw Frame");
 
-        vkWaitForFences(VKDEVICE, 1, &m_InFlightFences[m_CurrentImageIndex], VK_TRUE, UINT64_MAX);
+        vkWaitForFences(VKDEVICE, 1, &m_InFlightFences[m_CurrentFrame], VK_TRUE, UINT64_MAX);
+
 
         // Acquire the image to render onto
-        VkResult result = vkAcquireNextImageKHR(VKDEVICE, _def_Swapchain.GetSwapchainKHR(), UINT64_MAX, m_ImageAvailableSemaphores[m_CurrentImageIndex], VK_NULL_HANDLE, &m_NextImageIndex);
+        VkResult result = vkAcquireNextImageKHR(VKDEVICE, _def_Swapchain.GetSwapchainKHR(), UINT64_MAX, m_ImageAvailableSemaphores[m_CurrentFrame], VK_NULL_HANDLE, &m_ImageIndex);
 
         if(result == VK_ERROR_OUT_OF_DATE_KHR) {
             RecreateSwapchain();
@@ -175,19 +239,19 @@ namespace Vulf {
             throw std::runtime_error("Cannot acquire next image!");
         }
 
-        if(m_ImagesInFlight[m_NextImageIndex] != VK_NULL_HANDLE)
-            vkWaitForFences(VKDEVICE, 1, &m_ImagesInFlight[m_NextImageIndex], VK_TRUE, UINT64_MAX);
+        if(m_ImagesInFlight[m_ImageIndex] != VK_NULL_HANDLE)
+            vkWaitForFences(VKDEVICE, 1, &m_ImagesInFlight[m_ImageIndex], VK_TRUE, UINT64_MAX);
 
-        m_ImagesInFlight[m_NextImageIndex] = m_InFlightFences[m_CurrentImageIndex];
+        m_ImagesInFlight[m_ImageIndex] = m_InFlightFences[m_CurrentFrame];
 
-        UpdateBuffers();
+        UpdateBuffers(m_ImageIndex);
 
         SubmitFrame();
 
         FrameMark
     }
 
-    void VulfBase::UpdateBuffers() {
+    void VulfBase::UpdateBuffers(uint32_t imageIndex) {
         ZoneScopedC(0xffff00);
 
     }
@@ -197,12 +261,11 @@ namespace Vulf {
 #ifdef _WIN32
         OPTICK_EVENT();
 #endif
-
         VkResult result;
 
         VkSubmitInfo submitInfo{};
         submitInfo.sType = VK_STRUCTURE_TYPE_SUBMIT_INFO;
-        VkSemaphore waitSemaphore[] = { m_ImageAvailableSemaphores[m_CurrentImageIndex] };
+        VkSemaphore waitSemaphore[] = { m_ImageAvailableSemaphores[m_CurrentFrame] };
         VkPipelineStageFlags waitStages[] = {VK_PIPELINE_STAGE_COLOR_ATTACHMENT_OUTPUT_BIT};
         submitInfo.waitSemaphoreCount = 1;
         submitInfo.pWaitSemaphores = waitSemaphore;
@@ -212,16 +275,21 @@ namespace Vulf {
         std::vector<VkCommandBuffer> buffers(submissionCommandBuffers.size());
         buffers.clear();
         for (int i = 0; i < submissionCommandBuffers.size(); i++) {
-            buffers.push_back(submissionCommandBuffers[i].GetBufferAt(m_NextImageIndex));
+            buffers.push_back(submissionCommandBuffers[i].GetBufferAt(m_ImageIndex));
         }
 
         submitInfo.pCommandBuffers = buffers.data();
-        VkSemaphore signalSemaphores[] = {m_RenderingFinishedSemaphores[m_CurrentImageIndex]};
+        VkSemaphore signalSemaphores[] = {m_RenderingFinishedSemaphores[m_CurrentFrame]};
         submitInfo.signalSemaphoreCount = 1;
         submitInfo.pSignalSemaphores = signalSemaphores;
 
-        vkResetFences(VKDEVICE, 1, &m_InFlightFences[m_CurrentImageIndex]);
-        if(VK_CALL(vkQueueSubmit(VKLogicalDevice::GetDeviceManager()->GetGraphicsQueue(), 1, &submitInfo, m_InFlightFences[m_CurrentImageIndex]))) {
+        OPTICK_GPU_EVENT("Reset In Flight Fences");
+
+        vkResetFences(VKDEVICE, 1, &m_InFlightFences[m_CurrentFrame]);
+
+        OPTICK_GPU_EVENT("Queue Submit");
+
+        if(VK_CALL(vkQueueSubmit(VKLogicalDevice::GetDeviceManager()->GetGraphicsQueue(), 1, &submitInfo, m_InFlightFences[m_CurrentFrame]))) {
             throw std::runtime_error("Cannot submit command buffer!");
         }
 
@@ -232,7 +300,9 @@ namespace Vulf {
         VkSwapchainKHR swapChains[] = {_def_Swapchain.GetSwapchainKHR()};
         presentInfo.swapchainCount = 1;
         presentInfo.pSwapchains = swapChains;
-        presentInfo.pImageIndices = &m_NextImageIndex;
+        presentInfo.pImageIndices = &m_ImageIndex;
+
+        OPTICK_GPU_EVENT("Queue Present");
 
         result = vkQueuePresentKHR(VKLogicalDevice::GetDeviceManager()->GetPresentQueue(), &presentInfo);
 
@@ -245,10 +315,14 @@ namespace Vulf {
             throw std::runtime_error("Cannot submit presentation queue!");
         }
 
-        m_CurrentImageIndex = (m_CurrentImageIndex + 1 ) % MAX_FRAMES_IN_FLIGHT;
+        m_CurrentFrame = (m_CurrentFrame + 1 ) % MAX_FRAMES_IN_FLIGHT;
     }
 
 //-----------------------------------------------------------------------------//
+
+    void VulfBase::OnStart() {
+
+    }
 
     void VulfBase::OnUpdate(double dt) {
 
@@ -262,72 +336,8 @@ namespace Vulf {
 
     }
 
-// Private
-/*******************************************************************************
- *                          Init Application Resources                         *
- ******************************************************************************/
-    void VulfBase::InitResources() {
-
-    }
-
-    void VulfBase::InitWindow() {
-        //
-        m_Window = new Window(m_AppName.c_str(), width, height);
-    }
-
-    void VulfBase::InitVulkan() {
-        // Create the Vulkan Instance
-        // TODO: Use a proper signature for the application name (same is given for the window as well)
-        Instance::GetInstanceManager()->Init(m_AppName.c_str(), m_Window->getGLFWwindow(), enableValidationLayers);
-
-        // Create the Device
-        VKLogicalDevice::GetDeviceManager()->Init();
-        //void InitGpuVulkan(VkDevice * vkDevices, VkPhysicalDevice * vkPhysicalDevices, VkQueue * vkQueues, uint32_t * cmdQueuesFamily, uint32_t numQueues, const VulkanFunctions * functions)
-
-        uint32_t numQueues = VKLogicalDevice::GetDeviceManager()->GetGPUManager().GetGraphicsFamilyIndex();
-        //OPTICK_GPU_INIT_VULKAN(&(VKLogicalDevice::GetDeviceManager()->GetLogicalDevice()), &(VKLogicalDevice::GetDeviceManager()->GetGPUManager().GetGPU()), &(VKLogicalDevice::GetDeviceManager()->GetGraphicsQueue()), &numQueues, 1);
-
-        // Load the shaders
-        LoadShaders();
-
-        // Initialize the Command Pool and Build
-        BuildCommandPool();
-
-        // Build the command pipelines
-        BuildCommandPipeline();
-
-        // Create the synchronization primitives
-        CreateSynchronizationPrimitives();
-    }
-
-    void VulfBase::InitImGui() {
-
-    }
-
-    void VulfBase::CreateSynchronizationPrimitives() {
-
-        // Create the synchronization stuff
-        VkSemaphoreCreateInfo semaphoreInfo{};
-        semaphoreInfo.sType = VK_STRUCTURE_TYPE_SEMAPHORE_CREATE_INFO;
-        m_ImageAvailableSemaphores.resize(MAX_FRAMES_IN_FLIGHT);
-        m_RenderingFinishedSemaphores.resize(MAX_FRAMES_IN_FLIGHT);
-
-        VkFenceCreateInfo fenceInfo{};
-        fenceInfo.sType = VK_STRUCTURE_TYPE_FENCE_CREATE_INFO;
-        fenceInfo.flags = VK_FENCE_CREATE_SIGNALED_BIT;
-        m_InFlightFences.resize(MAX_FRAMES_IN_FLIGHT);
-        m_ImagesInFlight.resize(SWAP_IMAGES_COUNT, VK_NULL_HANDLE); // 3 swapchain images are used
-
-        for (size_t i = 0; i < MAX_FRAMES_IN_FLIGHT; i++)
-        {
-            if( VK_CALL(vkCreateSemaphore(VKDEVICE, &semaphoreInfo, nullptr, &m_ImageAvailableSemaphores[i])) ||
-                VK_CALL(vkCreateSemaphore(VKDEVICE, &semaphoreInfo, nullptr, &m_RenderingFinishedSemaphores[i])) ||
-                VK_CALL(vkCreateFence(VKDEVICE, &fenceInfo, nullptr, &m_InFlightFences[i]))) {
-                throw std::runtime_error("Cannot create Synchronization primitives!");
-            }
-        }
-    }
-
+    //-----------------------------------------------------------------------------//
+    
     void VulfBase::RecreateSwapchain() {
         ZoneScopedC(0xff00ff);
         VK_LOG_SUCCESS("Recreating Swapchain..........");
@@ -338,6 +348,13 @@ namespace Vulf {
         BuildCommandPipeline();
         
         OnRender();
+        OnStart();
+    }
+
+    void VulfBase::CleanUpPipeline() {
+
+        // Default swapchain manager
+        _def_Swapchain.Destroy();
     }
 
 /******************************************************************************/

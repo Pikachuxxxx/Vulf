@@ -154,10 +154,12 @@ namespace Vulf {
         /* The draw commands that will be executed */
         virtual void DrawFrame();
         /* Updates Uniform buffers, SSAO and other \buffer resources */
-        virtual void UpdateBuffers();
+        virtual void UpdateBuffers(uint32_t imageIndex);
         /* Default image acquire + submission and command buffer submission */
         virtual void SubmitFrame();
 
+        /* Called once before the app begins rendering and after the pipeline has been built */ 
+        virtual void OnStart();
         /**
          * Called on every update loop
          *
@@ -169,7 +171,7 @@ namespace Vulf {
         /* ImGui Overlay */
         virtual void OnImGui();
 
-        uint32_t GetNextImageIndex() const { return m_NextImageIndex;  }
+        uint32_t GetNextImageIndex() const { return m_ImageIndex;  }
 
     private:
     // Application flow
@@ -180,12 +182,12 @@ namespace Vulf {
         uint32_t                    m_FrameCounter    = 0;          /* Number of frames rendered in a second                                            */
         Ms                          m_FrameTimer;                   /* Time taken for a single frame to render since the last frame was rendered        */
         HighResClock                m_LastTimestamp;                /* High resolution clock to measure the last time when a frame was rendered         */
-        uint32_t                    m_NextImageIndex = 0;           /* The next image index from the swapchain images list                              */
-        uint32_t                    m_CurrentImageIndex = 0;        /* The index of the current in-flight frame being rendered                          */
+        uint32_t                    m_ImageIndex = 0;           /* The next image index from the swapchain images list                              */
+        uint32_t                    m_CurrentFrame = 0;        /* The index of the current in-flight frame being rendered                          */
 
     private:
         // Vulkan Stuff
-        Instance                  m_Instance;                     /* The Vulkan abstracted Instance                                                   */
+        Instance                    m_Instance;                     /* The Vulkan abstracted Instance                                                   */
         VKLogicalDevice             m_Device;                       /* The Vulkan physical and logical device abstraction                               */
         std::vector<VkSemaphore>    m_ImageAvailableSemaphores;     /* Semaphore to tell when an image is free to use to draw onto (GPU-GPU)            */
         std::vector<VkSemaphore>    m_RenderingFinishedSemaphores;  /* Semaphore to tell when the rendering to a particular swapchain image is done     */

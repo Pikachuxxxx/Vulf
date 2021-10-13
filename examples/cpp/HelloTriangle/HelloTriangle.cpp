@@ -14,6 +14,7 @@ std::vector<const char*> instanceExtensions = {
 
 std::vector<const char*> deviceExtensions = {
    VK_KHR_SWAPCHAIN_EXTENSION_NAME,
+   "VK_EXT_debug_marker"
 #if (__APPLE__)
    "VK_KHR_portability_subset"
 #endif
@@ -41,6 +42,14 @@ private:
         alignas(16) glm::mat4 model;
     }modelPCData;
 
+    struct ViewProjectionUBOData
+    {
+        alignas(16) glm::mat4 view;
+        alignas(16) glm::mat4 proj;
+        alignas(16) glm::mat4 _padding1;
+        alignas(16) glm::mat4 _padding2;
+    }vpUBOData;
+
 private:
     using ShaderStage = std::vector<VkPipelineShaderStageCreateInfo>;
     // Shaders
@@ -50,6 +59,7 @@ private:
 
     // Buffers
     VertexBuffer          helloTriangleVBO;
+    UniformBuffer         viewProjUBO;
 
     FixedPipelineFuncs    fixedFunctions;
 
@@ -78,6 +88,10 @@ private:
     void BuildBufferResource() override {
         // Triangle vertices and indices
         helloTriangleVBO.Create(rainbowTriangleVertices, _def_CommandPool);
+
+        // View Projection Uniform Buffer
+        viewProjUBO.AddDescriptor(UniformBuffer::DescriptorInfo(0, ShaderType::VERTEX_SHADER, sizeof(ViewProjectionUBOData), 0));
+        viewProjUBO.CreateUniformBuffer(3, sizeof(ViewProjectionUBOData));
     }
 
     void BuildTextureResources() override {
@@ -92,7 +106,7 @@ private:
         modelPushConstant.size          = sizeof(ModelPushConstant);
 
         fixedFunctions.SetFixedPipelineStage(VK_PRIMITIVE_TOPOLOGY_TRIANGLE_LIST, _def_Swapchain.GetSwapExtent(), false);
-        fixedFunctions.SetPipelineLayout(VK_NULL_HANDLE, modelPushConstant);
+        fixedFunctions.SetPipelineLayout(viewProjUBO.GetDescriptorSetLayout(), modelPushConstant);
     }
 
     // default
@@ -115,8 +129,11 @@ private:
 
     }
 
-    void UpdateBuffers() override {
+    void UpdateBuffers(uint32_t imageIndex) override {
+        vpUBOData.view = glm::mat4(1.0f);
+        vpUBOData.proj = glm::mat4(1.0f);
 
+        viewProjUBO.UpdateBuffer(&vpUBOData, sizeof(ViewProjectionUBOData), imageIndex);
     }
 
     void CleanUpPipeline() override {
@@ -124,6 +141,7 @@ private:
 
         simpleFrameBuffer.Destroy();
         depthImage.Destroy();
+        viewProjUBO.Destroy();
         helloTriangleVBO.Destroy();
         simpleGraphicsPipeline.Destroy();
         simpleRenderPass.Destroy();
@@ -134,23 +152,29 @@ private:
 
 private:
 
-    void OnRender() override
+    void OnStart() override  
     {
-        ZoneScopedC(0xffa500);
-        OPTICK_EVENT();
 
         simpleRenderPass.SetClearColor(0.0f, 0.0f, 0.0f);
         auto cmdBuffers = simpleCommandBuffer.GetBuffers();
         auto framebuffers = simpleFrameBuffer.GetFramebuffers();
+        auto descriptorSets = viewProjUBO.GetSets();
 
-        for (int i = 0; i <  cmdBuffers.size(); i++) {
+        for (int i = 0; i < cmdBuffers.size(); i++) {
+
+            OPTICK_GPU_CONTEXT(cmdBuffers[i]);
+            OPTICK_GPU_EVENT("Recording cmd buffers");
+
             simpleCommandBuffer.RecordBuffer(cmdBuffers[i]);
             simpleRenderPass.BeginRenderPass(cmdBuffers[i], framebuffers[i], _def_Swapchain.GetSwapExtent());
 
             simpleGraphicsPipeline.Bind(cmdBuffers[i]);
 
+            // Bind the appropriate descriptor sets
+            vkCmdBindDescriptorSets(cmdBuffers[i], VK_PIPELINE_BIND_POINT_GRAPHICS, fixedFunctions.GetPipelineLayout(), 0, 1, &descriptorSets[i], 0, nullptr);
+
             // Bind the push constants
-            modelPCData.model = glm::rotate(glm::mat4(1.0f), (float)glm::radians(90.0f * 2.0f), glm::vec3(0.0f, 0.0f, 1.0f));
+            modelPCData.model = glm::rotate(glm::mat4(1.0f), (float) glm::radians(90.0f * 2.0f), glm::vec3(0.0f, 0.0f, 1.0f));
             vkCmdPushConstants(cmdBuffers[i], fixedFunctions.GetPipelineLayout(), VK_SHADER_STAGE_VERTEX_BIT | VK_SHADER_STAGE_FRAGMENT_BIT, 0, sizeof(ModelPushConstant), &modelPCData);
 
             helloTriangleVBO.Bind(cmdBuffers[i]);
@@ -163,7 +187,12 @@ private:
 
         submissionCommandBuffers.clear();
         submissionCommandBuffers.push_back(simpleCommandBuffer);
-            
+    }
+
+    void OnRender() override
+    {
+        ZoneScopedC(0xffa500);
+        //OPTICK_EVENT();   
     }
 };
 
