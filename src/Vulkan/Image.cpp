@@ -148,8 +148,8 @@ void Image::TransitionImageLayout(VkFormat format, VkImageLayout oldLayout, VkIm
 
 void Image::Destroy()
 {
+    vkFreeMemory(VKDEVICE, m_ImageMemory, nullptr);
     vkDestroySampler(VKDEVICE, m_ImageSampler, nullptr);
     vkDestroyImageView(VKDEVICE, m_ImageView, nullptr);
     vkDestroyImage(VKDEVICE, m_Image, nullptr);
-    vkFreeMemory(VKDEVICE, m_ImageMemory, nullptr);
 }

@@ -55,9 +55,14 @@ void UniformBuffer::CreateDescriptorSetLayout()
 void UniformBuffer::CreatePool()
 {
     // Create the descriptor pool to create the sets using the layouts
-    std::array<VkDescriptorPoolSize, 1> poolSizes{};
-    poolSizes[0].type = VK_DESCRIPTOR_TYPE_UNIFORM_BUFFER;
-    poolSizes[0].descriptorCount = static_cast<uint32_t>(m_UniformBuffers.size());
+    std::vector<VkDescriptorPoolSize> poolSizes;
+    for (size_t i = 0; i < m_Descriptors.size(); i++) {
+        VkDescriptorPoolSize poolSize;
+        poolSize.type = (VkDescriptorType) m_Descriptors[i].type;
+        poolSize.descriptorCount = static_cast<uint32_t>(m_UniformBuffers.size());
+        
+        poolSizes.push_back(poolSize);
+    }
 
     VkDescriptorPoolCreateInfo poolInfo{};
     poolInfo.sType = VK_STRUCTURE_TYPE_DESCRIPTOR_POOL_CREATE_INFO;
@@ -119,8 +124,8 @@ void UniformBuffer::UpdateDescriptorSetConfig( )
 
         std::vector<VkWriteDescriptorSet> descriptorWrites;
 
+        int buffCount = 0;
         for (size_t k = 0; k < m_Descriptors.size(); k++) {
-
             switch (m_Descriptors[k].type) {
                 case DescriptorInfo::DescriptorType::BUFFER:
                 {
@@ -136,6 +141,7 @@ void UniformBuffer::UpdateDescriptorSetConfig( )
                     descriptorWrite.pTexelBufferView    = nullptr;
 
                     descriptorWrites.push_back(descriptorWrite);
+                    buffCount++;
                     break;
                 }
                 case DescriptorInfo::DescriptorType::IMAGE:
@@ -147,7 +153,8 @@ void UniformBuffer::UpdateDescriptorSetConfig( )
                     descriptorWrite.dstArrayElement     = 0;
                     descriptorWrite.descriptorType      = VK_DESCRIPTOR_TYPE_COMBINED_IMAGE_SAMPLER;
                     descriptorWrite.descriptorCount     = 1;
-                    descriptorWrite.pImageInfo          = &m_VkDescriptorImageInfos[k];
+
+                    descriptorWrite.pImageInfo          = &m_VkDescriptorImageInfos[k - buffCount];
 
                     descriptorWrites.push_back(descriptorWrite);
                     break;
@@ -169,6 +176,7 @@ void UniformBuffer::UpdateBuffer(void* buffer, uint32_t bufferSize, uint32_t ind
 void UniformBuffer::Destroy()
 {
     m_LayoutBindings.clear();
+    m_Descriptors.clear();
     m_UniformBuffers.clear();
     m_DescriptorSets.clear();
     vkDestroyDescriptorPool(VKDEVICE, m_DescriptorPool, nullptr);

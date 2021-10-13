@@ -48,6 +48,8 @@
 #include <Tracy.hpp>
 #ifdef _WIN32
 // Optick
+#define USE_OPTICK 1
+#define OPTICK_ENABLE_GPU
 #include <optick.h>
 #endif
 
@@ -129,10 +131,10 @@ namespace Vulf {
 
         /* Builds the command pool */
         virtual void BuildCommandPool();
-        /* Creates the necessary buffers resources */
-        virtual void BuildBufferResource() = 0;
         /* Create the Texture/image resources for the client */
         virtual void BuildTextureResources();
+        /* Creates the necessary buffers resources */
+        virtual void BuildBufferResource() = 0;
         /* Build swapchain */
         virtual void BuildSwapchain();
         /* Build the fixed pipelines and pipeline cache*/

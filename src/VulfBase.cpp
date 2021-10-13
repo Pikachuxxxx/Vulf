@@ -109,14 +109,14 @@ namespace Vulf {
 
     ////////////////////////////////////////////////////////////////////////////
     void VulfBase::BuildCommandPipeline() {
-        // Create Buffer Resources such as Vertex, Index and Uniform buffers
-        BuildBufferResource();
-
         // Create the swapchain
         BuildSwapchain();
 
         // Build texture and image resources
         BuildTextureResources();
+
+        // Create Buffer Resources such as Vertex, Index and Uniform buffers
+        BuildBufferResource();
 
         // Build the fixed pipeline stage
         BuildFixedPipeline();
