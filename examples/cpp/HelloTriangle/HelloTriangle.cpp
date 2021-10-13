@@ -46,8 +46,8 @@ private:
     {
         alignas(16) glm::mat4 view;
         alignas(16) glm::mat4 proj;
-        alignas(16) glm::mat4 _padding1;
-        alignas(16) glm::mat4 _padding2;
+        alignas(16) glm::mat4 _padding1 = glm::mat4(0.0f);
+        alignas(16) glm::mat4 _padding2 = glm::mat4(0.0f);
     }vpUBOData;
 
 private:

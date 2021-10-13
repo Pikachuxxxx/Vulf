@@ -55,9 +55,14 @@ void UniformBuffer::CreateDescriptorSetLayout()
 void UniformBuffer::CreatePool()
 {
     // Create the descriptor pool to create the sets using the layouts
-    std::array<VkDescriptorPoolSize, 1> poolSizes{};
-    poolSizes[0].type = VK_DESCRIPTOR_TYPE_UNIFORM_BUFFER;
-    poolSizes[0].descriptorCount = static_cast<uint32_t>(m_UniformBuffers.size());
+    std::vector<VkDescriptorPoolSize> poolSizes;
+    for (size_t i = 0; i < m_Descriptors.size(); i++) {
+        VkDescriptorPoolSize poolSize;
+        poolSize.type = (VkDescriptorType) m_Descriptors[i].type;
+        poolSize.descriptorCount = static_cast<uint32_t>(m_UniformBuffers.size());
+        
+        poolSizes.push_back(poolSize);
+    }
 
     VkDescriptorPoolCreateInfo poolInfo{};
     poolInfo.sType = VK_STRUCTURE_TYPE_DESCRIPTOR_POOL_CREATE_INFO;

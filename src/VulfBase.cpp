@@ -202,7 +202,7 @@ namespace Vulf {
 
             float fpsTimer = std::chrono::duration<double, std::milli>(tEnd - m_LastTimestamp).count();
             if (fpsTimer > 1000.0f) {
-                //VK_LOG("FPS : ", m_FrameCounter);
+                VK_LOG("FPS : ", m_FrameCounter);
                 m_FrameCounter = 0;
                 m_LastTimestamp = tEnd;
             }

@@ -48,6 +48,8 @@
 #include <Tracy.hpp>
 #ifdef _WIN32
 // Optick
+#define USE_OPTICK 1
+#define OPTICK_ENABLE_GPU
 #include <optick.h>
 #endif
 
