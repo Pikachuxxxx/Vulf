@@ -14,7 +14,6 @@ std::vector<const char*> instanceExtensions = {
 
 std::vector<const char*> deviceExtensions = {
    VK_KHR_SWAPCHAIN_EXTENSION_NAME,
-   "VK_EXT_debug_marker"
 #if (__APPLE__)
    "VK_KHR_portability_subset"
 #endif
@@ -152,7 +151,7 @@ private:
 
 private:
 
-    void OnStart() override  
+    void OnStart() override
     {
 
         simpleRenderPass.SetClearColor(0.0f, 0.0f, 0.0f);
@@ -162,9 +161,10 @@ private:
 
         for (int i = 0; i < cmdBuffers.size(); i++) {
 
+#ifdef _WIN32
             OPTICK_GPU_CONTEXT(cmdBuffers[i]);
             OPTICK_GPU_EVENT("Recording cmd buffers");
-
+#endif
             simpleCommandBuffer.RecordBuffer(cmdBuffers[i]);
             simpleRenderPass.BeginRenderPass(cmdBuffers[i], framebuffers[i], _def_Swapchain.GetSwapExtent());
 
@@ -192,7 +192,7 @@ private:
     void OnRender() override
     {
         ZoneScopedC(0xffa500);
-        //OPTICK_EVENT();   
+        //OPTICK_EVENT();
     }
 };
 
