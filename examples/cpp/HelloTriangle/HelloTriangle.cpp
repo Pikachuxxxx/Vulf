@@ -14,7 +14,6 @@ std::vector<const char*> instanceExtensions = {
 
 std::vector<const char*> deviceExtensions = {
    VK_KHR_SWAPCHAIN_EXTENSION_NAME,
-   "VK_EXT_debug_marker"
 #if (__APPLE__)
    "VK_KHR_portability_subset"
 #endif
@@ -51,29 +50,34 @@ private:
     }vpUBOData;
 
 private:
+    // Basic Stuff
+    FixedPipelineFuncs      fixedFunctions;
+
+    RenderPass              simpleRenderPass;
+
+    GraphicsPipeline        simpleGraphicsPipeline;
+
+    VkPushConstantRange     modelPushConstant;
+
+    DepthImage              depthImage;
+
+    Framebuffer             simpleFrameBuffer;
+
+    CmdBuffer               simpleCommandBuffer;
+
     using ShaderStage = std::vector<VkPipelineShaderStageCreateInfo>;
     // Shaders
-    Shader                defaultVertShader;
-    Shader                defaultFragShader;
-    ShaderStage           defaultShaders;
+    Shader                  defaultVertShader;
+    Shader                  defaultFragShader;
+    ShaderStage             defaultShaders;
 
     // Buffers
-    VertexBuffer          helloTriangleVBO;
-    UniformBuffer         viewProjUBO;
+    UniformBuffer           viewProjUBO;
+    VertexBuffer            helloTriangleVBO;
 
-    FixedPipelineFuncs    fixedFunctions;
-
-    RenderPass            simpleRenderPass;
-
-    GraphicsPipeline      simpleGraphicsPipeline;
-
-    VkPushConstantRange   modelPushConstant;
-
-    DepthImage            depthImage;
-
-    Framebuffer           simpleFrameBuffer;
-
-    CmdBuffer             simpleCommandBuffer;
+    // Textures
+    Texture                 gridTexture;
+    Texture                 checkerTexture;
 
 private:
     void LoadShaders() override {
@@ -84,6 +88,17 @@ private:
         defaultShaders.push_back(defaultVertShader.GetShaderStageInfo());
         defaultShaders.push_back(defaultFragShader.GetShaderStageInfo());
     }
+    
+    void BuildTextureResources() override {
+        // default
+        depthImage.CreateDepthImage(_def_Swapchain.GetSwapExtent().width, _def_Swapchain.GetSwapExtent().height, _def_CommandPool);
+
+        // Grid Texture
+        gridTexture.CreateTexture((SRC_DIR) + std::string("/data/textures/TestGrid_256.png"), _def_CommandPool);
+
+        // Checker Texture;
+        checkerTexture.CreateTexture((SRC_DIR) + std::string("/data/textures/TestCheckerMap.png"), _def_CommandPool);
+    }
 
     void BuildBufferResource() override {
         // Triangle vertices and indices
@@ -91,12 +106,9 @@ private:
 
         // View Projection Uniform Buffer
         viewProjUBO.AddDescriptor(UniformBuffer::DescriptorInfo(0, ShaderType::VERTEX_SHADER, sizeof(ViewProjectionUBOData), 0));
+        viewProjUBO.AddDescriptor(UniformBuffer::DescriptorInfo(1, ShaderType::FRAGMENT_SHADER, gridTexture));
+        viewProjUBO.AddDescriptor(UniformBuffer::DescriptorInfo(2, ShaderType::FRAGMENT_SHADER, checkerTexture));
         viewProjUBO.CreateUniformBuffer(3, sizeof(ViewProjectionUBOData));
-    }
-
-    void BuildTextureResources() override {
-        // default
-        depthImage.CreateDepthImage(_def_Swapchain.GetSwapExtent().width, _def_Swapchain.GetSwapExtent().height, _def_CommandPool);
     }
 
     void BuildFixedPipeline() override {
@@ -140,6 +152,8 @@ private:
         ZoneScopedC(0xffffff);
 
         simpleFrameBuffer.Destroy();
+        gridTexture.Destroy();
+        checkerTexture.Destroy();
         depthImage.Destroy();
         viewProjUBO.Destroy();
         helloTriangleVBO.Destroy();
