@@ -72,7 +72,7 @@ private:
     ShaderStage             defaultShaders;
 
     // Buffers
-    UniformBuffer           viewProjUBO;
+    UniformBuffer           helloTriangleUBO;
     VertexBuffer            helloTriangleVBO;
 
     // Textures
@@ -88,7 +88,7 @@ private:
         defaultShaders.push_back(defaultVertShader.GetShaderStageInfo());
         defaultShaders.push_back(defaultFragShader.GetShaderStageInfo());
     }
-    
+
     void BuildTextureResources() override {
         // default
         depthImage.CreateDepthImage(_def_Swapchain.GetSwapExtent().width, _def_Swapchain.GetSwapExtent().height, _def_CommandPool);
@@ -105,20 +105,20 @@ private:
         helloTriangleVBO.Create(rainbowTriangleVertices, _def_CommandPool);
 
         // View Projection Uniform Buffer
-        viewProjUBO.AddDescriptor(UniformBuffer::DescriptorInfo(0, ShaderType::VERTEX_SHADER, sizeof(ViewProjectionUBOData), 0));
-        viewProjUBO.AddDescriptor(UniformBuffer::DescriptorInfo(1, ShaderType::FRAGMENT_SHADER, gridTexture));
-        viewProjUBO.AddDescriptor(UniformBuffer::DescriptorInfo(2, ShaderType::FRAGMENT_SHADER, checkerTexture));
-        viewProjUBO.CreateUniformBuffer(3, sizeof(ViewProjectionUBOData));
+        helloTriangleUBO.AddDescriptor(UniformBuffer::DescriptorInfo(0, ShaderType::VERTEX_SHADER, sizeof(ViewProjectionUBOData), 0));
+        helloTriangleUBO.AddDescriptor(UniformBuffer::DescriptorInfo(1, ShaderType::FRAGMENT_SHADER, gridTexture));
+        helloTriangleUBO.AddDescriptor(UniformBuffer::DescriptorInfo(2, ShaderType::FRAGMENT_SHADER, checkerTexture));
+        helloTriangleUBO.CreateUniformBuffer(3, sizeof(ViewProjectionUBOData));
     }
 
     void BuildFixedPipeline() override {
         // Create the push constants
-        modelPushConstant.stageFlags    = VK_SHADER_STAGE_VERTEX_BIT | VK_SHADER_STAGE_FRAGMENT_BIT;
+        modelPushConstant.stageFlags    = ShaderType::VERTEX_SHADER | ShaderType::FRAGMENT_SHADER;
         modelPushConstant.offset        = 0;
         modelPushConstant.size          = sizeof(ModelPushConstant);
 
         fixedFunctions.SetFixedPipelineStage(VK_PRIMITIVE_TOPOLOGY_TRIANGLE_LIST, _def_Swapchain.GetSwapExtent(), false);
-        fixedFunctions.SetPipelineLayout(viewProjUBO.GetDescriptorSetLayout(), modelPushConstant);
+        fixedFunctions.SetPipelineLayout(helloTriangleUBO.GetDescriptorSetLayout(), modelPushConstant);
     }
 
     // default
@@ -145,7 +145,7 @@ private:
         vpUBOData.view = glm::mat4(1.0f);
         vpUBOData.proj = glm::mat4(1.0f);
 
-        viewProjUBO.UpdateBuffer(&vpUBOData, sizeof(ViewProjectionUBOData), imageIndex);
+        helloTriangleUBO.UpdateBuffer(&vpUBOData, sizeof(ViewProjectionUBOData), imageIndex);
     }
 
     void CleanUpPipeline() override {
@@ -155,7 +155,7 @@ private:
         gridTexture.Destroy();
         checkerTexture.Destroy();
         depthImage.Destroy();
-        viewProjUBO.Destroy();
+        helloTriangleUBO.Destroy();
         helloTriangleVBO.Destroy();
         simpleGraphicsPipeline.Destroy();
         simpleRenderPass.Destroy();
@@ -172,7 +172,7 @@ private:
         simpleRenderPass.SetClearColor(0.0f, 0.0f, 0.0f);
         auto cmdBuffers = simpleCommandBuffer.GetBuffers();
         auto framebuffers = simpleFrameBuffer.GetFramebuffers();
-        auto descriptorSets = viewProjUBO.GetSets();
+        auto descriptorSets = helloTriangleUBO.GetSets();
 
         for (int i = 0; i < cmdBuffers.size(); i++) {
 

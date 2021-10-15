@@ -80,7 +80,6 @@ bool Window::isKeyReleased(unsigned int keycode)
 
 bool Window::isKeyHeld(unsigned int keycode) const
 {
-	// TODO: Log this
 	if (keycode >= MAX_KEYS)
 		return false;
 
@@ -111,7 +110,6 @@ bool Window::isMouseButtonReleased(unsigned int button)
 
 bool Window::isMouseButtonHeld(unsigned int button) const
 {
-	// TODO: Log this
 	if (button >= MAX_BUTTONS)
 		return false;
 

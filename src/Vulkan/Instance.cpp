@@ -157,8 +157,6 @@ VKAPI_ATTR VkBool32 VKAPI_CALL Instance::DebugCallback(VkDebugUtilsMessageSeveri
     // Select prefix depending on flags passed to the callback
     // Note that multiple flags may be set for a single validation message
     // Error that may result in undefined behaviour
-    // TODO: Add option to choose minimum severity level and use <=> to select levels
-    // TODO: Formate the message id and stuff for colors etc
 
     //std::cerr << "Validation layer: " << callback_data->pMessage << std::endl;
 

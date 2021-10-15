@@ -3,7 +3,6 @@
 #include "Buffer.h"
 #include "CmdPool.h"
 
-// TODO: Rename to VertexBuffer
 class VertexBuffer
 {
 public:

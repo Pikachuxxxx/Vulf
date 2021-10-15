@@ -3,7 +3,6 @@
 
 ////////////////////////////////////////////////////////////////////////////////
 // Uncecessayt stuff
-// TODO: Create a separate descriptro sets that use these vertex-fragment shaders pair 
 layout(binding = 2) uniform LightUniformBufferObject {
     vec3 objectColor;
     vec3 lightColor;

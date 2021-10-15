@@ -1,9 +1,11 @@
 #version 450
 #extension GL_ARB_separate_shader_objects : enable
 
-layout(location = 0) in vec3 fragPos;
-layout(location = 1) in vec3 fragNormal;
-layout(location = 2) in vec2 fragTexCoord;
+layout(location = 0) in VS_OUT {
+    vec3 FragPos;
+    vec3 Normal;
+    vec2 TexCoords;
+} vs_in;
 
 layout(location = 0) out vec4 outColor;
 
@@ -12,12 +14,12 @@ layout(binding = 2) uniform sampler2D checkerTex;
 
 void main() {
 
-    outColor = vec4(fragTexCoord, 0.0f, 1.0f);
-    outColor = vec4(fragNormal, 1.0f);
+    outColor = vec4(vs_in.TexCoords, 0.0f, 1.0f);
+    outColor = vec4(vs_in.Normal, 1.0f);
     if(gl_FragCoord.x < 700)
-        outColor = texture(checkerTex, fragTexCoord);
+        outColor = texture(checkerTex, vs_in.TexCoords);
     else
-        outColor = texture(texSampler, fragTexCoord);
+        outColor = texture(texSampler, vs_in.TexCoords);
 }
 
 

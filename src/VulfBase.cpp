@@ -47,7 +47,7 @@ namespace Vulf {
 
     void VulfBase::InitVulkan() {
         // Create the Vulkan Instance
-        // TODO: Use a proper signature for the application name (same is given for the window as well)
+        // TODO: [ICEBOX] Use a proper signature for the application name (same is given for the window as well)
         Instance::GetInstanceManager()->Init(m_AppName.c_str(), m_Window->getGLFWwindow(), true);
 
         // Create the Device
