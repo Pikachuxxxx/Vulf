@@ -156,7 +156,7 @@ VKAPI_ATTR VkBool32 VKAPI_CALL Instance::DebugCallback(VkDebugUtilsMessageSeveri
 {
     // Select prefix depending on flags passed to the callback
     // Note that multiple flags may be set for a single validation message
-    // Error that may result in undefined behaviour
+    // Error that may result in undefined behavior
     // TODO: Add option to choose minimum severity level and use <=> to select levels
     // TODO: Formate the message id and stuff for colors etc
 
@@ -165,15 +165,20 @@ VKAPI_ATTR VkBool32 VKAPI_CALL Instance::DebugCallback(VkDebugUtilsMessageSeveri
     if(message_severity == VK_DEBUG_UTILS_MESSAGE_SEVERITY_ERROR_BIT_EXT)
     {
         std::cout << "\033[1;31m *****************************************************************" << std::endl;
-        std::cout << "\033[1;32m[VULKAN] \033[1;31m - Validation ERROR : \033[0m \nmessage ID : " << callback_data->messageIdNumber << "\nID Name : " << callback_data->pMessageIdName << "\nMessage : " << callback_data->pMessage  << std::endl;
+        std::cout << "\033[1;32m[VULKAN] \033[1;31m - Validation ERROR : \033[0m \nmessage ID : " << callback_data->messageIdNumber << "\nID Name : " << callback_data->pMessageIdName << "\nMessage : " << callback_data->pMessage << std::endl;
+        if (callback_data->pObjects->pObjectName != nullptr) {
+            auto objName = callback_data->pObjects->pObjectName;
+            std::cout << "\nObJect Name : " << std::string(objName) << std::endl;
+        }
         std::cout << "\033[1;31m *****************************************************************" << std::endl;
     };
     // Warnings may hint at unexpected / non-spec API usage
     if(message_severity == VK_DEBUG_UTILS_MESSAGE_SEVERITY_WARNING_BIT_EXT)
     {
         std::cout << "\033[1;33m *****************************************************************" << std::endl;
-        std::cout << "\033[1;32m[VULKAN] \033[1;33m - Validation WARNING : \033[0m \nmessage ID : " << callback_data->messageIdNumber << "\nID Name : " << callback_data->pMessageIdName << "\nMessage : " << callback_data->pMessage  << std::endl;
+        std::cout << "\033[1;32m[VULKAN] \033[1;33m - Validation WARNING : \033[0m \nmessage ID : " << callback_data->messageIdNumber << "\nID Name : " << callback_data->pMessageIdName << "\nMessage : " << callback_data->pMessage << "\nObJect Name : " << callback_data->pObjects->pObjectName << std::endl;
         std::cout << "\033[1;33m *****************************************************************" << std::endl;
+
     };
     // Informal messages that may become handy during debugging
     if(message_severity == VK_DEBUG_UTILS_MESSAGE_SEVERITY_INFO_BIT_EXT)

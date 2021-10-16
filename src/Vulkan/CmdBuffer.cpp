@@ -3,6 +3,8 @@
 #include "VKDevice.h"
 #include "../utils/VulkanCheckResult.h"
 
+#include <string>
+
 void CmdBuffer::AllocateBuffers(const VkCommandPool& pool)
 {
     VkCommandBufferAllocateInfo allocInfo{};
@@ -14,12 +16,21 @@ void CmdBuffer::AllocateBuffers(const VkCommandPool& pool)
     if(VK_CALL(vkAllocateCommandBuffers(VKDEVICE, &allocInfo, m_CommandBuffers.data())))
         throw std::runtime_error("Cannot create command buffers!");
     else VK_LOG("Command Buffers (3) succesfully Allocated!");
+
+    for (size_t i = 0; i < m_CommandBuffers.size(); i++) {
+
+        VkDebugUtilsObjectNameInfoEXT name_info = { VK_STRUCTURE_TYPE_DEBUG_UTILS_OBJECT_NAME_INFO_EXT };
+        name_info.objectType = VK_OBJECT_TYPE_COMMAND_BUFFER;
+        name_info.objectHandle = (uint64_t) m_CommandBuffers[i];
+        name_info.pObjectName = (std::string("Command Buffer : ") + std::to_string(i)).c_str();
+        auto vkSetDebugUtilsObjectNameEXT = (PFN_vkSetDebugUtilsObjectNameEXT) vkGetDeviceProcAddr(VKDEVICE, "vkSetDebugUtilsObjectNameEXT");
+        vkSetDebugUtilsObjectNameEXT(VKDEVICE, &name_info);
+    }
 }
 
-void CmdBuffer::DestroyBuffer(VkCommandBuffer& buffer)
-{
-    // vkFreeCommandBuffers(VKDEVICE, buffer, nullptr);
-	throw std::runtime_error("Unmiplemented method!");
+void CmdBuffer::Destroy(const VkCommandPool& pool)
+{   
+    vkFreeCommandBuffers(VKDEVICE, pool, m_CommandBuffers.size(), m_CommandBuffers.data());
 }
 
 void CmdBuffer::RecordBuffer(VkCommandBuffer& buffer)

@@ -99,7 +99,16 @@ namespace Vulf {
                 VK_CALL(vkCreateFence(VKDEVICE, &fenceInfo, nullptr, &m_InFlightFences[i]))) {
                 throw std::runtime_error("Cannot create Synchronization primitives!");
             }
+            else {
+                VkDebugUtilsObjectNameInfoEXT name_info = { VK_STRUCTURE_TYPE_DEBUG_UTILS_OBJECT_NAME_INFO_EXT };
+                name_info.objectType = VK_OBJECT_TYPE_FENCE;
+                name_info.objectHandle = (uint64_t) m_InFlightFences[i];
+                name_info.pObjectName = (std::string("Fence : ") + std::to_string(i)).c_str();
+                //vkSetDebugUtilsObjectNameEXT(VKDEVICE, &name_info);
+            }
         }
+
+
     }
 
 // Protected

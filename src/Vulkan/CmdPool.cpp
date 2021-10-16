@@ -13,6 +13,13 @@ void CmdPool::Init()
     if(VK_CALL(vkCreateCommandPool(VKDEVICE, &poolCI, nullptr, &m_CommandPool)))
         throw std::runtime_error("Cannot create command pool");
     else VK_LOG_SUCCESS("Command pool created succesfully!");
+
+    VkDebugUtilsObjectNameInfoEXT name_info = { VK_STRUCTURE_TYPE_DEBUG_UTILS_OBJECT_NAME_INFO_EXT };
+    name_info.objectType = VK_OBJECT_TYPE_COMMAND_POOL;
+    name_info.objectHandle = (uint64_t) m_CommandPool;
+    name_info.pObjectName = "Default Command Pool";
+    auto vkSetDebugUtilsObjectNameEXT = (PFN_vkSetDebugUtilsObjectNameEXT) vkGetDeviceProcAddr(VKDEVICE, "vkSetDebugUtilsObjectNameEXT");
+    vkSetDebugUtilsObjectNameEXT(VKDEVICE, &name_info);
 }
 
 VkCommandBuffer CmdPool::AllocateBuffer()

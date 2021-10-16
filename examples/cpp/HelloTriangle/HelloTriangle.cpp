@@ -9,7 +9,8 @@ std::vector<const char*> validationLayers = {
 };
 
 std::vector<const char*> instanceExtensions = {
-    "VK_KHR_get_physical_device_properties2"
+    "VK_KHR_get_physical_device_properties2",
+    VK_EXT_DEBUG_UTILS_EXTENSION_NAME
 };
 
 std::vector<const char*> deviceExtensions = {
@@ -26,13 +27,13 @@ class VulfHelloTriangle : public Vulf::VulfBase
 public:
     VulfHelloTriangle() : VulfBase("Hello Triangle") {}
 
-    ~VulfHelloTriangle() {
-        _def_CommandPool.Destroy();
+     ~VulfHelloTriangle() {
         CleanUpPipeline();
+        _def_CommandPool.Destroy();
         defaultVertShader.DestroyModule();
         defaultFragShader.DestroyModule();
-        VKLogicalDevice::GetDeviceManager()->Destroy();
-        Instance::GetInstanceManager()->Destroy();
+        //VKLogicalDevice::GetDeviceManager()->Destroy();
+        //Instance::GetInstanceManager()->Destroy();
     }
 
 // Types
@@ -72,7 +73,7 @@ private:
     ShaderStage             defaultShaders;
 
     // Buffers
-    UniformBuffer           viewProjUBO;
+    UniformBuffer           helloTriangleUBO;
     VertexBuffer            helloTriangleVBO;
 
     // Textures
@@ -105,10 +106,10 @@ private:
         helloTriangleVBO.Create(rainbowTriangleVertices, _def_CommandPool);
 
         // View Projection Uniform Buffer
-        viewProjUBO.AddDescriptor(UniformBuffer::DescriptorInfo(0, ShaderType::VERTEX_SHADER, sizeof(ViewProjectionUBOData), 0));
-        viewProjUBO.AddDescriptor(UniformBuffer::DescriptorInfo(1, ShaderType::FRAGMENT_SHADER, gridTexture));
-        viewProjUBO.AddDescriptor(UniformBuffer::DescriptorInfo(2, ShaderType::FRAGMENT_SHADER, checkerTexture));
-        viewProjUBO.CreateUniformBuffer(3, sizeof(ViewProjectionUBOData));
+        helloTriangleUBO.AddDescriptor(UniformBuffer::DescriptorInfo(0, ShaderType::VERTEX_SHADER, sizeof(ViewProjectionUBOData), 0));
+        helloTriangleUBO.AddDescriptor(UniformBuffer::DescriptorInfo(1, ShaderType::FRAGMENT_SHADER, gridTexture));
+        helloTriangleUBO.AddDescriptor(UniformBuffer::DescriptorInfo(2, ShaderType::FRAGMENT_SHADER, checkerTexture));
+        helloTriangleUBO.CreateUniformBuffer(3, sizeof(ViewProjectionUBOData));
     }
 
     void BuildFixedPipeline() override {
@@ -118,7 +119,7 @@ private:
         modelPushConstant.size          = sizeof(ModelPushConstant);
 
         fixedFunctions.SetFixedPipelineStage(VK_PRIMITIVE_TOPOLOGY_TRIANGLE_LIST, _def_Swapchain.GetSwapExtent(), false);
-        fixedFunctions.SetPipelineLayout(viewProjUBO.GetDescriptorSetLayout(), modelPushConstant);
+        fixedFunctions.SetPipelineLayout(helloTriangleUBO.GetDescriptorSetLayout(), modelPushConstant);
     }
 
     // default
@@ -145,17 +146,18 @@ private:
         vpUBOData.view = glm::mat4(1.0f);
         vpUBOData.proj = glm::mat4(1.0f);
 
-        viewProjUBO.UpdateBuffer(&vpUBOData, sizeof(ViewProjectionUBOData), imageIndex);
+        helloTriangleUBO.UpdateBuffer(&vpUBOData, sizeof(ViewProjectionUBOData), imageIndex);
     }
 
     void CleanUpPipeline() override {
         ZoneScopedC(0xffffff);
 
+        simpleCommandBuffer.Destroy(_def_CommandPool.GetPool());
         simpleFrameBuffer.Destroy();
         gridTexture.Destroy();
         checkerTexture.Destroy();
         depthImage.Destroy();
-        viewProjUBO.Destroy();
+        helloTriangleUBO.Destroy();
         helloTriangleVBO.Destroy();
         simpleGraphicsPipeline.Destroy();
         simpleRenderPass.Destroy();
@@ -170,9 +172,9 @@ private:
     {
 
         simpleRenderPass.SetClearColor(0.0f, 0.0f, 0.0f);
-        auto cmdBuffers = simpleCommandBuffer.GetBuffers();
+        auto& cmdBuffers = simpleCommandBuffer.GetBuffers();
         auto framebuffers = simpleFrameBuffer.GetFramebuffers();
-        auto descriptorSets = viewProjUBO.GetSets();
+        auto& descriptorSets = helloTriangleUBO.GetSets();
 
         for (int i = 0; i < cmdBuffers.size(); i++) {
 
