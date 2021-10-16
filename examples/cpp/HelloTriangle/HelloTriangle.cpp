@@ -89,7 +89,7 @@ private:
         defaultShaders.push_back(defaultVertShader.GetShaderStageInfo());
         defaultShaders.push_back(defaultFragShader.GetShaderStageInfo());
     }
-    
+
     void BuildTextureResources() override {
         // default
         depthImage.CreateDepthImage(_def_Swapchain.GetSwapExtent().width, _def_Swapchain.GetSwapExtent().height, _def_CommandPool);
@@ -114,7 +114,7 @@ private:
 
     void BuildFixedPipeline() override {
         // Create the push constants
-        modelPushConstant.stageFlags    = VK_SHADER_STAGE_VERTEX_BIT | VK_SHADER_STAGE_FRAGMENT_BIT;
+        modelPushConstant.stageFlags    = ShaderType::VERTEX_SHADER | ShaderType::FRAGMENT_SHADER;
         modelPushConstant.offset        = 0;
         modelPushConstant.size          = sizeof(ModelPushConstant);
 
@@ -168,19 +168,20 @@ private:
 
 private:
 
-    void OnStart() override  
+    void OnStart() override
     {
 
         simpleRenderPass.SetClearColor(0.0f, 0.0f, 0.0f);
         auto& cmdBuffers = simpleCommandBuffer.GetBuffers();
         auto framebuffers = simpleFrameBuffer.GetFramebuffers();
-        auto& descriptorSets = helloTriangleUBO.GetSets();
+        auto descriptorSets = helloTriangleUBO.GetSets();
 
         for (int i = 0; i < cmdBuffers.size(); i++) {
 
+#ifdef _WIN32
             OPTICK_GPU_CONTEXT(cmdBuffers[i]);
             OPTICK_GPU_EVENT("Recording cmd buffers");
-
+#endif
             simpleCommandBuffer.RecordBuffer(cmdBuffers[i]);
             simpleRenderPass.BeginRenderPass(cmdBuffers[i], framebuffers[i], _def_Swapchain.GetSwapExtent());
 
@@ -208,7 +209,7 @@ private:
     void OnRender() override
     {
         ZoneScopedC(0xffa500);
-        //OPTICK_EVENT();   
+        //OPTICK_EVENT();
     }
 };
 

@@ -26,7 +26,6 @@ private:
     int m_BPP;
     Buffer m_ImageStagingBuffer;
     VkSampler m_TextureSampler;
-    // TODO: Read about these in detail!
     VkPipelineStageFlags m_ImageSourceStage;
     VkPipelineStageFlags m_ImageDestinationStage;
     // Abstarcted Image

@@ -135,6 +135,8 @@ file(GLOB_RECURSE SOURCE_FILES
     ${CMAKE_SOURCE_DIR}/examples/cpp/*.cpp
 )
 
+list(REMOVE_ITEM SOURCE_FILES ${CMAKE_CURRENT_SOURCE_DIR}/src/application.cpp)
+
 file(GLOB_RECURSE VENDOR_SOURCE_FILES
 	${CMAKE_SOURCE_DIR}/vendor/imgui/*.c
     ${CMAKE_SOURCE_DIR}/vendor/imgui/*.cpp
@@ -155,6 +157,7 @@ file(GLOB_RECURSE HEADER_FILES
     ${CMAKE_SOURCE_DIR}/src/*.hpp
     # ${CMAKE_SOURCE_DIR}/vendor/tracy/Tracy.hpp
 )
+list(REMOVE_ITEM HEADER_FILES ${CMAKE_CURRENT_SOURCE_DIR}/src/application.h)
 #===============================================================================
 # file(GLOB_RECURSE VENDOR_HEADER_FILES
 # 	${CMAKE_SOURCE_DIR}/vendor/imgui/*.h

@@ -84,7 +84,6 @@ void FixedPipelineFuncs::SetRasterizerSCI(bool enableWireFrameMode)
     m_RasterizerSCI.sType = VK_STRUCTURE_TYPE_PIPELINE_RASTERIZATION_STATE_CREATE_INFO;
     m_RasterizerSCI.depthClampEnable = VK_FALSE;
     m_RasterizerSCI.rasterizerDiscardEnable = VK_FALSE;
-    // TODO: Add arguments to set polygonMode functionality
     if(enableWireFrameMode)
         m_RasterizerSCI.polygonMode = VK_POLYGON_MODE_LINE;
     else
@@ -155,6 +154,7 @@ void FixedPipelineFuncs::SetColorBlendSCI()
 
 void FixedPipelineFuncs::SetDynamicSCI() { }
 
+// TODO: Make this dynamic to support usage of multiple uniform buffers
 void FixedPipelineFuncs::SetPipelineLayout(VkDescriptorSetLayout layout, VkPushConstantRange& pushConstants)
 {
 

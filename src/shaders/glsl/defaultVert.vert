@@ -5,7 +5,6 @@ layout(location = 0) in vec3 inPosition;
 layout(location = 1) in vec3 inNormal;
 layout(location = 2) in vec2 inTexCoord;
 
-
 layout(binding = 0) uniform UniformBufferObject {
     mat4 view;
     mat4 proj;
@@ -13,10 +12,11 @@ layout(binding = 0) uniform UniformBufferObject {
     mat4 _padding2;
 } ubo;
 
-// TODO: Add this to a VOUT struct
-layout(location = 0) out vec3 fragPos;
-layout(location = 1) out vec3 fragNormal;
-layout(location = 2) out vec2 fragTexCoord;
+layout(location = 0) out VS_OUT {
+    vec3 FragPos;
+    vec3 Normal;
+    vec2 TexCoords;
+} vs_out;
 
 layout (push_constant) uniform ModelPushConstantData{
     mat4 model;
@@ -27,7 +27,11 @@ void main() {
     gl_Position     = ubo.proj * ubo.view * modelPushConstantData.model * vec4(inPosition, 1.0);
 
     // Outout variables from the vertex shader
-    fragPos         = inPosition;
-    fragNormal      = inNormal;
-    fragTexCoord    = inTexCoord;
+    // fragPos         = inPosition;
+    // fragNormal      = inNormal;
+    // fragTexCoord    = inTexCoord;
+
+    vs_out.FragPos = inPosition;
+    vs_out.Normal = inNormal;
+    vs_out.TexCoords = inTexCoord;
 }

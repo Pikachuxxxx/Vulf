@@ -47,19 +47,19 @@ namespace Vulf {
 
     void VulfBase::InitVulkan() {
         // Create the Vulkan Instance
-        // TODO: Use a proper signature for the application name (same is given for the window as well)
+        // TODO: [ICEBOX] Use a proper signature for the application name (same is given for the window as well)
         Instance::GetInstanceManager()->Init(m_AppName.c_str(), m_Window->getGLFWwindow(), true);
 
         // Create the Device
         VKLogicalDevice::GetDeviceManager()->Init();
         //void InitGpuVulkan(VkDevice * vkDevices, VkPhysicalDevice * vkPhysicalDevices, VkQueue * vkQueues, uint32_t * cmdQueuesFamily, uint32_t numQueues, const VulkanFunctions * functions)
-
+#ifdef _WIN32
         auto device = VKLogicalDevice::GetDeviceManager()->GetLogicalDevice();
         auto physicalDevice = VKLogicalDevice::GetDeviceManager()->GetGPUManager().GetGPU();
         auto queuefam = VKLogicalDevice::GetDeviceManager()->GetGraphicsQueue();
         uint32_t numQueues = VKLogicalDevice::GetDeviceManager()->GetGPUManager().GetGraphicsFamilyIndex();
         OPTICK_GPU_INIT_VULKAN(&device, &physicalDevice, &queuefam, &numQueues, 1, nullptr);
-
+#endif
         // Load the shaders
         LoadShaders();
 
@@ -231,9 +231,8 @@ namespace Vulf {
         ZoneScopedC(0xff0000)
 #ifdef _WIN32
         OPTICK_EVENT();
-#endif
         OPTICK_GPU_EVENT("Draw Frame");
-
+#endif
         vkWaitForFences(VKDEVICE, 1, &m_InFlightFences[m_CurrentFrame], VK_TRUE, UINT64_MAX);
 
 
@@ -291,13 +290,14 @@ namespace Vulf {
         VkSemaphore signalSemaphores[] = {m_RenderingFinishedSemaphores[m_CurrentFrame]};
         submitInfo.signalSemaphoreCount = 1;
         submitInfo.pSignalSemaphores = signalSemaphores;
-
+#ifdef _WIN32
         OPTICK_GPU_EVENT("Reset In Flight Fences");
-
+#endif
         vkResetFences(VKDEVICE, 1, &m_InFlightFences[m_CurrentFrame]);
 
+#ifdef _WIN32
         OPTICK_GPU_EVENT("Queue Submit");
-
+#endif
         if(VK_CALL(vkQueueSubmit(VKLogicalDevice::GetDeviceManager()->GetGraphicsQueue(), 1, &submitInfo, m_InFlightFences[m_CurrentFrame]))) {
             throw std::runtime_error("Cannot submit command buffer!");
         }
@@ -311,8 +311,9 @@ namespace Vulf {
         presentInfo.pSwapchains = swapChains;
         presentInfo.pImageIndices = &m_ImageIndex;
 
+#ifdef _WIN32
         OPTICK_GPU_EVENT("Queue Present");
-
+#endif
         result = vkQueuePresentKHR(VKLogicalDevice::GetDeviceManager()->GetPresentQueue(), &presentInfo);
 
         if(result == VK_ERROR_OUT_OF_DATE_KHR || result == VK_SUBOPTIMAL_KHR || m_Window->IsResized()) {
@@ -346,7 +347,7 @@ namespace Vulf {
     }
 
     //-----------------------------------------------------------------------------//
-    
+
     void VulfBase::RecreateSwapchain() {
         ZoneScopedC(0xff00ff);
         VK_LOG_SUCCESS("Recreating Swapchain..........");
@@ -355,7 +356,7 @@ namespace Vulf {
         CleanUpPipeline();
 
         BuildCommandPipeline();
-        
+
         OnRender();
         OnStart();
     }

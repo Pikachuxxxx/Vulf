@@ -3,7 +3,6 @@
 #include <vulkan/vulkan.h>
 #include <vector>
 
-// TODO: Add more primitive types
 enum class Topology
 {
     POINTS, LINES, TRIANGLES, LINE_STRIP

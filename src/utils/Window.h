@@ -50,7 +50,7 @@ public:
     bool isKeyHeld(unsigned int keycode) const;
     /// Tells if a particular key on the Mouse button was pressed or not.
     bool isMouseButtonPressed(unsigned int button);
-    // TODO: To be implemented
+    // Tells if a particula mouse button was releases after it was presses
     bool isMouseButtonReleased(unsigned int button);
     /// Tells if a particular key on the Mouse button is being held or not.
     bool isMouseButtonHeld(unsigned int button) const;

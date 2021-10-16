@@ -51,7 +51,6 @@ void UniformBuffer::CreateDescriptorSetLayout()
     else VK_LOG_SUCCESS("Descriptor Set Layout successuflly created!");
 }
 
-// TODO: Add buffer and image info for this too!
 void UniformBuffer::CreatePool()
 {
     // Create the descriptor pool to create the sets using the layouts
@@ -60,7 +59,7 @@ void UniformBuffer::CreatePool()
         VkDescriptorPoolSize poolSize;
         poolSize.type = (VkDescriptorType) m_Descriptors[i].type;
         poolSize.descriptorCount = static_cast<uint32_t>(m_UniformBuffers.size());
-        
+
         poolSizes.push_back(poolSize);
     }
 
