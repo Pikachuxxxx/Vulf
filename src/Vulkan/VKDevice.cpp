@@ -134,11 +134,109 @@ void VKLogicalDevice::Init()
         VK_LOG_SUCCESS("Logical Device succesfully created!");
 
     CreateQueues();
+        
+    // Create a default command pool to allocate command buffers on fly
+    VkCommandPoolCreateInfo cmdPoolInfo = {};
+    cmdPoolInfo.sType = VK_STRUCTURE_TYPE_COMMAND_POOL_CREATE_INFO;
+    cmdPoolInfo.queueFamilyIndex = m_GPUManager.GetQueueFamilyIndices().graphicsFamily.value();
+    cmdPoolInfo.flags = VK_COMMAND_POOL_CREATE_RESET_COMMAND_BUFFER_BIT;
+    VK_CALL(vkCreateCommandPool(m_Device, &cmdPoolInfo, nullptr, &m_InstantaneousCmdPool));
 }
 
 void VKLogicalDevice::Destroy()
 {
+    vkDestroyCommandPool(m_Device, m_InstantaneousCmdPool, nullptr);
     vkDestroyDevice(m_Device, nullptr);
+}
+
+VkCommandBuffer VKLogicalDevice::createCmdBuffer(VkCommandBufferLevel level, bool begin /*= false*/) {
+    VkCommandBufferAllocateInfo cmdBufAllocateInfo{};
+    cmdBufAllocateInfo.sType = VK_STRUCTURE_TYPE_COMMAND_BUFFER_ALLOCATE_INFO;
+    cmdBufAllocateInfo.commandPool = m_InstantaneousCmdPool;
+    cmdBufAllocateInfo.level = level;
+    cmdBufAllocateInfo.commandBufferCount = 1;
+
+    VkCommandBuffer cmdBuffer;
+    VK_CALL(vkAllocateCommandBuffers(m_Device, &cmdBufAllocateInfo, &cmdBuffer));
+
+    // If requested, also start recording for the new command buffer
+    if (begin) {
+        VkCommandBufferBeginInfo commandBufferBI{};
+        commandBufferBI.sType = VK_STRUCTURE_TYPE_COMMAND_BUFFER_BEGIN_INFO;
+        VK_CALL(vkBeginCommandBuffer(cmdBuffer, &commandBufferBI));
+    }
+
+    return cmdBuffer;
+}
+
+void VKLogicalDevice::flushCommandBuffer(VkCommandBuffer commandBuffer, VkQueue queue, bool free /*= true*/) {
+
+    VK_CALL(vkEndCommandBuffer(commandBuffer));
+
+    VkSubmitInfo submitInfo{};
+    submitInfo.sType = VK_STRUCTURE_TYPE_SUBMIT_INFO;
+    submitInfo.commandBufferCount = 1;
+    submitInfo.pCommandBuffers = &commandBuffer;
+
+    // Create fence to ensure that the command buffer has finished executing
+    VkFenceCreateInfo fenceInfo{};
+    fenceInfo.sType = VK_STRUCTURE_TYPE_FENCE_CREATE_INFO;
+    VkFence fence;
+    VK_CALL(vkCreateFence(m_Device, &fenceInfo, nullptr, &fence));
+
+    // Submit to the queue
+    VK_CALL(vkQueueSubmit(queue, 1, &submitInfo, fence));
+    // Wait for the fence to signal that command buffer has finished executing
+    VK_CALL(vkWaitForFences(m_Device, 1, &fence, VK_TRUE, 100000000000));
+
+    vkDestroyFence(m_Device, fence, nullptr);
+
+    if (free) {
+        vkFreeCommandBuffers(m_Device, m_InstantaneousCmdPool, 1, &commandBuffer);
+    }
+}
+
+VkResult VKLogicalDevice::createBuffer(VkBufferUsageFlags usageFlags, VkMemoryPropertyFlags memoryPropertyFlags, VkDeviceSize size, VkBuffer* buffer, VkDeviceMemory* memory, void* data /*= nullptr*/) {
+
+    // Create the buffer handle
+    VkBufferCreateInfo bufferCreateInfo{};
+    bufferCreateInfo.sType = VK_STRUCTURE_TYPE_BUFFER_CREATE_INFO;
+    bufferCreateInfo.usage = usageFlags;
+    bufferCreateInfo.size = size;
+    bufferCreateInfo.sharingMode = VK_SHARING_MODE_EXCLUSIVE;
+    VK_CALL(vkCreateBuffer(m_Device, &bufferCreateInfo, nullptr, buffer));
+
+    // Create the memory backing up the buffer handle
+    VkMemoryRequirements memReqs;
+    VkMemoryAllocateInfo memAlloc{};
+    memAlloc.sType = VK_STRUCTURE_TYPE_MEMORY_ALLOCATE_INFO;
+    vkGetBufferMemoryRequirements(m_Device, *buffer, &memReqs);
+    memAlloc.allocationSize = memReqs.size;
+    // Find a memory type index that fits the properties of the buffer
+    memAlloc.memoryTypeIndex = GetGPUManager().FindMemoryTypeIndex(memReqs.memoryTypeBits, memoryPropertyFlags);
+    VK_CALL(vkAllocateMemory(m_Device, &memAlloc, nullptr, memory));
+
+    // If a pointer to the buffer data has been passed, map the buffer and copy over the data
+    if (data != nullptr) {
+        void* mapped;
+        VK_CALL(vkMapMemory(m_Device, *memory, 0, size, 0, &mapped));
+        memcpy(mapped, data, size);
+        // If host coherency hasn't been requested, do a manual flush to make writes visible
+        if ((memoryPropertyFlags & VK_MEMORY_PROPERTY_HOST_COHERENT_BIT) == 0) {
+            VkMappedMemoryRange mappedRange{};
+            mappedRange.sType = VK_STRUCTURE_TYPE_MAPPED_MEMORY_RANGE;
+            mappedRange.memory = *memory;
+            mappedRange.offset = 0;
+            mappedRange.size = size;
+            vkFlushMappedMemoryRanges(m_Device, 1, &mappedRange);
+        }
+        vkUnmapMemory(m_Device, *memory);
+    }
+
+    // Attach the memory to the buffer object
+    VK_CALL(vkBindBufferMemory(m_Device, *buffer, *memory, 0));
+
+    return VK_SUCCESS;
 }
 
 void VKLogicalDevice::CreateQueues()

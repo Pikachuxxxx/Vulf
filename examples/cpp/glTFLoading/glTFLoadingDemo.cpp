@@ -3,7 +3,6 @@
 #include <VulfBase.h>
 #include "utils/VulkanCheckResult.h"
 
-/*
 // Load the Instance extensions/layers and device Extensions
 std::vector<const char*> validationLayers = {
     "VK_LAYER_KHRONOS_validation",
@@ -20,25 +19,25 @@ std::vector<const char*> deviceExtensions = {
    "VK_KHR_portability_subset"
 #endif
 };
-*/
 
 #include "VulfBase.h"
 
-class VulfHelloTriangle : public Vulf::VulfBase
+class VulfglTFLoadingDemo : public Vulf::VulfBase
 {
 public:
-    VulfHelloTriangle() : VulfBase("Hello Triangle") {}
+    VulfglTFLoadingDemo() : VulfBase("glF Loading Demo") {}
 
-     ~VulfHelloTriangle() {
+    ~VulfglTFLoadingDemo() {
         CleanUpPipeline();
         _def_CommandPool.Destroy();
-        defaultVertShader.DestroyModule();
-        defaultFragShader.DestroyModule();
+        cubeVertShader.DestroyModule();
+        cubeFragShader.DestroyModule();
     }
 
-// Types
+    // Types
 private:
-    struct ModelPushConstant{
+    struct ModelPushConstant
+    {
         alignas(16) glm::mat4 model;
     }modelPCData;
 
@@ -68,55 +67,61 @@ private:
 
     using ShaderStage = std::vector<VkPipelineShaderStageCreateInfo>;
     // Shaders
-    Shader                  defaultVertShader;
-    Shader                  defaultFragShader;
-    ShaderStage             defaultShaders;
+    Shader                  cubeVertShader;
+    Shader                  cubeFragShader;
+    ShaderStage             cubeShaders;
 
     // Buffers
     UniformBuffer           helloTriangleUBO;
-    VertexBuffer            helloTriangleVBO;
 
     // Textures
     Texture                 gridTexture;
     Texture                 checkerTexture;
 
+    // Models
+    vkglTF::Model           testModel;
+
 private:
     void LoadShaders() override {
 
         // Default shaders
-        defaultVertShader.CreateShader((SHADER_BINARY_DIR) + std::string("/defaultVert.spv"), ShaderType::VERTEX_SHADER);
-        defaultFragShader.CreateShader((SHADER_BINARY_DIR) + std::string("/defaultFrag.spv"), ShaderType::FRAGMENT_SHADER);
-        defaultShaders.push_back(defaultVertShader.GetShaderStageInfo());
-        defaultShaders.push_back(defaultFragShader.GetShaderStageInfo());
+        cubeVertShader.CreateShader((SHADER_BINARY_DIR) + std::string("/cubeVert.spv"), ShaderType::VERTEX_SHADER);
+        cubeFragShader.CreateShader((SHADER_BINARY_DIR) + std::string("/cubeFrag.spv"), ShaderType::FRAGMENT_SHADER);
+        cubeShaders.push_back(cubeVertShader.GetShaderStageInfo());
+        cubeShaders.push_back(cubeFragShader.GetShaderStageInfo());
     }
+
+    void LoadAssets() override {
+        const uint32_t glTFLoadingFlags = vkglTF::FileLoadingFlags::PreTransformVertices | vkglTF::FileLoadingFlags::PreMultiplyVertexColors | vkglTF::FileLoadingFlags::FlipY;
+        testModel.loadFromFile((ASSETS_DIR) + std::string("/models/sponza/sponza.gltf"), VKLogicalDevice::GetDeviceManager()->GetGraphicsQueue(), glTFLoadingFlags);
+    }
+
 
     void BuildTextureResources() override {
         // default
         depthImage.CreateDepthImage(_def_Swapchain.GetSwapExtent().width, _def_Swapchain.GetSwapExtent().height, _def_CommandPool);
 
         // Grid Texture
-        gridTexture.CreateTexture((SRC_DIR) + std::string("/data/textures/TestGrid_256.png"), _def_CommandPool);
+        gridTexture.CreateTexture((SRC_DIR) +std::string("/data/textures/TestGrid_256.png"), _def_CommandPool);
 
         // Checker Texture;
-        checkerTexture.CreateTexture((SRC_DIR) + std::string("/data/textures/TestCheckerMap.png"), _def_CommandPool);
+        checkerTexture.CreateTexture((SRC_DIR) +std::string("/data/textures/TestCheckerMap.png"), _def_CommandPool);
     }
 
     void BuildBufferResource() override {
         // Triangle vertices and indices
-        helloTriangleVBO.Create(rainbowTriangleVertices, _def_CommandPool);
 
         // View Projection Uniform Buffer
         helloTriangleUBO.AddDescriptor(UniformBuffer::DescriptorInfo(0, ShaderType::VERTEX_SHADER, sizeof(ViewProjectionUBOData), 0));
         helloTriangleUBO.AddDescriptor(UniformBuffer::DescriptorInfo(1, ShaderType::FRAGMENT_SHADER, gridTexture));
-        helloTriangleUBO.AddDescriptor(UniformBuffer::DescriptorInfo(2, ShaderType::FRAGMENT_SHADER, checkerTexture));
         helloTriangleUBO.CreateUniformBuffer(3, sizeof(ViewProjectionUBOData));
     }
 
     void BuildFixedPipeline() override {
         // Create the push constants
-        modelPushConstant.stageFlags    = ShaderType::VERTEX_SHADER | ShaderType::FRAGMENT_SHADER;
-        modelPushConstant.offset        = 0;
-        modelPushConstant.size          = sizeof(ModelPushConstant);
+        modelPushConstant.stageFlags = ShaderType::VERTEX_SHADER | ShaderType::FRAGMENT_SHADER;
+        modelPushConstant.offset = 0;
+        modelPushConstant.size = sizeof(ModelPushConstant);
 
         fixedFunctions.SetFixedPipelineStage(VK_PRIMITIVE_TOPOLOGY_TRIANGLE_LIST, _def_Swapchain.GetSwapExtent(), false);
         fixedFunctions.SetPipelineLayout(helloTriangleUBO.GetDescriptorSetLayout(), modelPushConstant);
@@ -128,7 +133,7 @@ private:
     }
 
     void BuildGraphicsPipeline() override {
-        simpleGraphicsPipeline.Create(defaultShaders, fixedFunctions, simpleRenderPass.GetRenderPass());
+        simpleGraphicsPipeline.Create(cubeShaders, fixedFunctions, simpleRenderPass.GetRenderPass());
     }
 
     // default
@@ -143,9 +148,9 @@ private:
     }
 
     void UpdateBuffers(uint32_t imageIndex) override {
-        vpUBOData.view = glm::mat4(1.0f);
-        vpUBOData.proj = glm::mat4(1.0f);
-
+        vpUBOData.view = getCamera().GetViewMatrix(); // glm::mat4(1.0f); //
+        vpUBOData.proj = glm::perspective(45.0f, (float) _def_Swapchain.GetSwapExtent().width / (float) _def_Swapchain.GetSwapExtent().height, 0.01f, 100.0f);
+        vpUBOData.proj[1][1] *= -1;
         helloTriangleUBO.UpdateBuffer(&vpUBOData, sizeof(ViewProjectionUBOData), imageIndex);
     }
 
@@ -158,7 +163,6 @@ private:
         checkerTexture.Destroy();
         depthImage.Destroy();
         helloTriangleUBO.Destroy();
-        helloTriangleVBO.Destroy();
         simpleGraphicsPipeline.Destroy();
         simpleRenderPass.Destroy();
         fixedFunctions.DestroyPipelineLayout();
@@ -168,8 +172,7 @@ private:
 
 private:
 
-    void OnStart() override
-    {
+    void OnStart() override {
 
         simpleRenderPass.SetClearColor(0.0f, 0.0f, 0.0f);
         auto& cmdBuffers = simpleCommandBuffer.GetBuffers();
@@ -191,12 +194,12 @@ private:
             vkCmdBindDescriptorSets(cmdBuffers[i], VK_PIPELINE_BIND_POINT_GRAPHICS, fixedFunctions.GetPipelineLayout(), 0, 1, &descriptorSets[i], 0, nullptr);
 
             // Bind the push constants
-            modelPCData.model = glm::rotate(glm::mat4(1.0f), (float) glm::radians(90.0f * 2.0f), glm::vec3(0.0f, 0.0f, 1.0f));
+            modelPCData.model = glm::scale(glm::mat4(1.0f), glm::vec3(0.03f));
             vkCmdPushConstants(cmdBuffers[i], fixedFunctions.GetPipelineLayout(), VK_SHADER_STAGE_VERTEX_BIT | VK_SHADER_STAGE_FRAGMENT_BIT, 0, sizeof(ModelPushConstant), &modelPCData);
 
-            helloTriangleVBO.Bind(cmdBuffers[i]);
+            testModel.bindBuffers(cmdBuffers[i]);
 
-            vkCmdDraw(cmdBuffers[i], rainbowTriangleVertices.size(), 1, 0, 0);
+            testModel.draw(cmdBuffers[i]);
 
             simpleRenderPass.EndRenderPass(cmdBuffers[i]);
             simpleCommandBuffer.EndRecordingBuffer(cmdBuffers[i]);
@@ -206,11 +209,10 @@ private:
         submissionCommandBuffers.push_back(simpleCommandBuffer);
     }
 
-    void OnRender() override
-    {
+    void OnRender() override {
         ZoneScopedC(0xffa500);
         //OPTICK_EVENT();
     }
 };
 
-//VULF_MAIN(HelloTriangle)
+VULF_MAIN(glTFLoadingDemo)

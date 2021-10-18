@@ -61,6 +61,7 @@
 #include "utils/cube.h"
 #include "utils/sphere.h"
 #include "utils/CommandLineParser.h"
+#include "utils/VulkanglTFModel.h"
 
 // Vulkan Abstractions
 #include "Vulkan/Instance.h"
@@ -116,6 +117,7 @@ namespace Vulf {
         /* Initializes the application into runtime */
         void Run();
 
+        Camera3D& getCamera() { return m_Camera; }
     protected:
         CmdPool           _def_CommandPool;           /* The default command pool used to allocate buffer     */
         Swapchain         _def_Swapchain;
@@ -128,6 +130,8 @@ namespace Vulf {
          * (shaders must be added as members by the client thought)
          */
         virtual void LoadShaders() = 0;
+
+        virtual void LoadAssets() {}
 
         /* Builds the command pool */
         virtual void BuildCommandPool();

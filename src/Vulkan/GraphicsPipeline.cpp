@@ -4,6 +4,8 @@
 #include "../utils/VulkanCheckResult.h"
 #include "../utils/vertex.h"
 
+#include "VulkanglTFModel.h"
+
 void GraphicsPipeline::Create(std::vector<VkPipelineShaderStageCreateInfo> shaderStages, FixedPipelineFuncs& fixedfunctions, VkRenderPass& renderpass)
 {
     VkGraphicsPipelineCreateInfo graphicsCI{};
@@ -13,7 +15,6 @@ void GraphicsPipeline::Create(std::vector<VkPipelineShaderStageCreateInfo> shade
 
     auto bindingDescription = Vertex::getBindingDescription();
     auto attributeDescriptions = Vertex::getAttributeDescription();
-
 
     // we need the vertex binding information and attribute info to create the Input create info struct
     VkPipelineVertexInputStateCreateInfo m_VertexInputSCI = {};
@@ -25,7 +26,7 @@ void GraphicsPipeline::Create(std::vector<VkPipelineShaderStageCreateInfo> shade
     m_VertexInputSCI.vertexAttributeDescriptionCount    = attributeDescriptions.size();
     m_VertexInputSCI.pVertexAttributeDescriptions       = attributeDescriptions.data();
 
-    graphicsCI.pVertexInputState    = &m_VertexInputSCI;
+    graphicsCI.pVertexInputState    = vkglTF::Vertex::getPipelineVertexInputState({ vkglTF::VertexComponent::Position, vkglTF::VertexComponent::Normal, vkglTF::VertexComponent::UV, vkglTF::VertexComponent::Color });
     graphicsCI.pInputAssemblyState  = &fixedfunctions.GetInputAssemblySCI();
     graphicsCI.pViewportState       = &fixedfunctions.GetViewportStateCI();
     graphicsCI.pRasterizationState  = &fixedfunctions.GetRazterizerSCI();

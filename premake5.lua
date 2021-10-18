@@ -1,11 +1,13 @@
 IncludeDir = {}
 IncludeDir["glfw"]          = "vendor/glfw/include"
 IncludeDir["glm"]           = "vendor/glm"
+IncludeDir["ktx"]           = "vendor/ktx/include"
 IncludeDir["ImGui"]         = "vendor/imgui"
 IncludeDir["ImGuizmo"]      = "vendor/ImGuizmo"
 IncludeDir["SPIRVReflect"]  = "vendor/SPIRVReflect"
 IncludeDir["stb"]           = "vendor/stb"
 IncludeDir["tinyobj"]       = "vendor/tinyobj"
+IncludeDir["tinygltf"]      = "vendor/tinygltf"
 IncludeDir["tracy"]         = "vendor/TracyProfiler"
 IncludeDir["optick"]        = "vendor/optick/src"
 IncludeDir["vendor"]        = "vendor"
@@ -62,6 +64,11 @@ workspace ( "Vulf" )
         "vendor/optick/**",
         "vendor/optick/src/optick_gpu.d3d12.cpp",
         "vendor/optick/src/optick_gpu.vulkan.cpp",
+        "vendor/ktx/lib/*.cpp",
+        "vendor/ktx/lib/*.hpp",
+        "vendor/ktx/lib/*.c",
+        "vendor/ktx/lib/*.h",
+        "vendor/ktx/other_include/**",
         "src/shaders/glsl/*.vert",
         "src/shaders/glsl/*.frag",
         -- Examples
@@ -72,11 +79,14 @@ workspace ( "Vulf" )
 	{
         "%{IncludeDir.glfw}",
         "%{IncludeDir.glm}",
+        "%{IncludeDir.ktx}",
+                "%{IncludeDir.ktx}/../other_include",
         "%{IncludeDir.ImGui}",
         "%{IncludeDir.ImGuizmo}",
         "%{IncludeDir.SPIRVReflect}",
 		"%{IncludeDir.stb}",
         "%{IncludeDir.tinyobj}",
+        "%{IncludeDir.tinygltf}",
         "%{IncludeDir.tracy}",
         "%{IncludeDir.optick}",
         "%{IncludeDir.VULKAN_SDK}",
@@ -91,11 +101,14 @@ workspace ( "Vulf" )
 	{
         "%{IncludeDir.glfw}",
         "%{IncludeDir.glm}",
+        "%{IncludeDir.ktx}",
+                        "%{IncludeDir.ktx}/../other_include",
         "%{IncludeDir.ImGui}",
         "%{IncludeDir.ImGuizmo}",
         "%{IncludeDir.SPIRVReflect}",
 		"%{IncludeDir.stb}",
         "%{IncludeDir.tinyobj}",
+        "%{IncludeDir.tinygltf}",
         "%{IncludeDir.tracy}",
         "%{IncludeDir.optick}",
         "%{IncludeDir.VULKAN_SDK}",
@@ -126,7 +139,8 @@ workspace ( "Vulf" )
         defines
         {
             "SRC_DIR=\"%{root_dir}\"",
-            "SHADER_BINARY_DIR=\"%{root_dir}/src/shaders/spir-v\""
+            "SHADER_BINARY_DIR=\"%{root_dir}/src/shaders/spir-v\"",
+            "ASSETS_DIR=\"%{root_dir}/../Vulkan/data\""
         }
 
          links

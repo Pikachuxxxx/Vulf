@@ -63,6 +63,9 @@ namespace Vulf {
         // Load the shaders
         LoadShaders();
 
+        // Load Assets such as Models and Audio files etc.
+        LoadAssets();
+
         // Initialize the Command Pool and Build
         BuildCommandPool();
 

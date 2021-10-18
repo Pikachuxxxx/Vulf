@@ -52,12 +52,18 @@ public:
     VKPhysicalDevice& GetGPUManager() { return m_GPUManager; }
     VkQueue GetGraphicsQueue() { return graphicsQueue; }
     VkQueue GetPresentQueue() { return presentQueue; }
+    VkCommandPool getDevicecmdPool() { return m_InstantaneousCmdPool; }
+
+    VkCommandBuffer createCmdBuffer(VkCommandBufferLevel level, bool begin = false);
+    void flushCommandBuffer(VkCommandBuffer commandBuffer, VkQueue queue, bool free = true);
+    VkResult createBuffer(VkBufferUsageFlags usageFlags, VkMemoryPropertyFlags memoryPropertyFlags, VkDeviceSize size, VkBuffer* buffer, VkDeviceMemory* memory, void* data = nullptr);
 private:
     VkDevice m_Device;
     VKPhysicalDevice m_GPUManager;
     static VKLogicalDevice* s_Instance;
     VkQueue graphicsQueue;
     VkQueue presentQueue;
+    VkCommandPool m_InstantaneousCmdPool;
 private:
     void CreateQueues();
 };
