@@ -6,10 +6,12 @@ project(Vulf)
 # specify the C++ standard and making it mandatory
 set(CMAKE_CXX_STANDARD 17)
 set(CMAKE_CXX_STANDARD_REQUIRED True)
-set(CMAKE_SUPPRESS_REGENERATION true)
 set_property(GLOBAL PROPERTY USE_FOLDERS ON)
 set_property(GLOBAL PROPERTY PREDEFINED_TARGETS_FOLDER "_CMakePredefinedTargets")
-set_property(DIRECTORY ${CMAKE_CURRENT_SOURCE_DIR} PROPERTY VS_STARTUP_PROJECT Vulf)
+# Set the startup project - HelloTriangle
+set_property(DIRECTORY ${CMAKE_CURRENT_SOURCE_DIR} PROPERTY VS_STARTUP_PROJECT HelloTriangle)
+#===============================================================================
+# TODO: Download the necesary assets here
 #===============================================================================
 # COMPILE SHADERS
 
@@ -27,7 +29,7 @@ set(SHADER_SOURCE_DIR ${CMAKE_CURRENT_SOURCE_DIR}/src/shaders/glsl)
 set(SHADER_BINARY_DIR ${CMAKE_CURRENT_SOURCE_DIR}/src/shaders/spir-v)
 
 # Add the glsl shader files
-file(GLOB SHADERS
+file(GLOB_RECURSE SHADERS
   ${SHADER_SOURCE_DIR}/*.vert
   ${SHADER_SOURCE_DIR}/*.frag
   ${SHADER_SOURCE_DIR}/*.comp
@@ -135,6 +137,9 @@ include_directories(
     "${CMAKE_SOURCE_DIR}/vendor/ktx/include"
     "${CMAKE_SOURCE_DIR}/vendor/tinygltf"
     "${CMAKE_SOURCE_DIR}/vendor/ktx/other_include/"
+
+    # Platform specific vulkan headers
+    $ENV{VULKAN_SDK}/include
 )
 
 link_directories(
@@ -179,10 +184,10 @@ file(GLOB_RECURSE VENDOR_SOURCE_FILES
 )
 
 # remove unnecessary files
-list(REMOVE_ITEM SOURCE_FILES ${CMAKE_CURRENT_SOURCE_DIR}/src/application.cpp)
-list(REMOVE_ITEM SOURCE_FILES ${CMAKE_CURRENT_SOURCE_DIR}/src/application.h)
+list(REMOVE_ITEM SOURCE_FILES "${CMAKE_CURRENT_SOURCE_DIR}/src/application.cpp" "${CMAKE_CURRENT_SOURCE_DIR}/src/application.h")
+#list(REMOVE_ITEM SOURCE_FILES "${CMAKE_CURRENT_SOURCE_DIR}/src/application.h")
 #===============================================================================
-source_group("src" FILES ${SOURCE_FILES})
+#source_group("src" FILES ${SOURCE_FILES})
 # file(GLOB_RECURSE VENDOR_HEADER_FILES
 # 	${CMAKE_SOURCE_DIR}/vendor/imgui/*.h
 #     ${CMAKE_SOURCE_DIR}/vendor/imgui/*.hpp
@@ -190,6 +195,9 @@ source_group("src" FILES ${SOURCE_FILES})
 # source_group(TREE "${CMAKE_CURRENT_SOURCE_DIR}"
 #      PREFIX "Source"
 #      FILES ${SOURCE_FILES})
+source_group(TREE ${CMAKE_CURRENT_SOURCE_DIR} FILES ${SOURCE_FILES})
+source_group(TREE ${CMAKE_CURRENT_SOURCE_DIR} FILES ${HEADER_FILES})
+source_group(TREE ${CMAKE_CURRENT_SOURCE_DIR} FILES ${VENDOR_SOURCE_FILES})
 #===============================================================================
 # Compile the source files into a static library
 add_library(Vulf STATIC ${HEADER_FILES} ${SOURCE_FILES} ${VENDOR_SOURCE_FILES})
@@ -218,22 +226,25 @@ file(GLOB_RECURSE EXAMPLE_SOURCE_FILES
 )
 foreach(source IN LISTS EXAMPLE_SOURCE_FILES)
     get_filename_component(FILENAME ${source} NAME_WE)
-    message("Examples to build : ${FILENAME}")
+    message("Examples being built : ${FILENAME}")
 
+    source_group("examples" ${FILENAME})
     # Build the examples as executables (run them using make examplefilename.run command)
     add_executable(${FILENAME} ${source})
     target_link_libraries(${FILENAME} Vulf)
     add_dependencies(${FILENAME} Vulf)
 
-    # Run the binary built using 'make run' command
-    add_custom_target("${FILENAME}.run"
-        COMMAND ${FILENAME}
-        DEPENDS ${FILENAME} Vulf
-        WORKING_DIRECTORY ${CMAKE_SOURCE_DIR} # here we set the executable direcotry to the CMake home dir
-    )
-
+    if(APPLE) # Used only with makefiles cause VS can handle this
+        # Run the binary built using 'make run' command
+        add_custom_target("${FILENAME}.run"
+            COMMAND ${FILENAME}
+            DEPENDS ${FILENAME} Vulf
+            WORKING_DIRECTORY ${CMAKE_SOURCE_DIR} # here we set the executable direcotry to the CMake home dir
+        )
+    endif(APPLE)
     # Set the output directory for the examples build separately
     set_target_properties(${FILENAME} PROPERTIES RUNTIME_OUTPUT_DIRECTORY ${CMAKE_CURRENT_BINARY_DIR}/examples)
+    set_target_properties(${FILENAME} PROPERTIES FOLDER "examples")
 endforeach()
 
 #===============================================================================
