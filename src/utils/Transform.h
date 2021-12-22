@@ -70,6 +70,4 @@ struct Transform
     }
 };
 
-/*
 #define ATTACH_GUIZMO(x, operation) x = x.AttachGuizmo(operation, renderer.GetViewMatrix(), renderer.GetProjectionMatrix());
-*/

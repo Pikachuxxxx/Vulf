@@ -11,9 +11,9 @@
 #pragma once
 
 #include <vector>
-#include "vulkan/vulkan.h"
+#include <vulkan/vulkan.h>
 
-namespace vks
+namespace Vulf
 {
 	namespace initializers
 	{
@@ -33,8 +33,8 @@ namespace vks
 		}
 
 		inline VkCommandBufferAllocateInfo commandBufferAllocateInfo(
-			VkCommandPool commandPool, 
-			VkCommandBufferLevel level, 
+			VkCommandPool commandPool,
+			VkCommandBufferLevel level,
 			uint32_t bufferCount)
 		{
 			VkCommandBufferAllocateInfo commandBufferAllocateInfo {};
@@ -551,7 +551,7 @@ namespace vks
 		}
 
 		inline VkComputePipelineCreateInfo computePipelineCreateInfo(
-			VkPipelineLayout layout, 
+			VkPipelineLayout layout,
 			VkPipelineCreateFlags flags = 0)
 		{
 			VkComputePipelineCreateInfo computePipelineCreateInfo {};

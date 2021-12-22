@@ -7,10 +7,13 @@ project(Vulf)
 set(CMAKE_CXX_STANDARD 17)
 set(CMAKE_CXX_STANDARD_REQUIRED True)
 set(CMAKE_SUPPRESS_REGENERATION true)
-
+set_property(GLOBAL PROPERTY USE_FOLDERS ON)
+set_property(GLOBAL PROPERTY PREDEFINED_TARGETS_FOLDER "_CMakePredefinedTargets")
+set_property(DIRECTORY ${CMAKE_CURRENT_SOURCE_DIR} PROPERTY VS_STARTUP_PROJECT Vulf)
 #===============================================================================
 # COMPILE SHADERS
 
+# Set the path to glslc compiler based on the OS
 if(APPLE)
     set(glslc_executable $ENV{VULKAN_SDK}/macOS/bin/glslc)
 endif()
@@ -19,9 +22,11 @@ if(WIN32)
     set(glslc_executable $ENV{VULKAN_SDK}/Bin/glslc)
 endif()
 
+# Set the directory for loading the compiled spir-v shaders and source direcotry for glsl shaders
 set(SHADER_SOURCE_DIR ${CMAKE_CURRENT_SOURCE_DIR}/src/shaders/glsl)
 set(SHADER_BINARY_DIR ${CMAKE_CURRENT_SOURCE_DIR}/src/shaders/spir-v)
 
+# Add the glsl shader files
 file(GLOB SHADERS
   ${SHADER_SOURCE_DIR}/*.vert
   ${SHADER_SOURCE_DIR}/*.frag
@@ -45,6 +50,7 @@ file(GLOB SHADERS
 
 source_group(shaders "Shaders" FILES ${SHADERS})
 
+# Custom rule for compiling the shader files
 foreach(source IN LISTS SHADERS)
   get_filename_component(FILENAME ${source} NAME_WE)
   add_custom_command(
@@ -59,11 +65,8 @@ foreach(source IN LISTS SHADERS)
   )
   list(APPEND SPV_SHADERS ${SHADER_BINARY_DIR}/${FILENAME}.spv)
 endforeach()
-
+# add dependency for shader files
 add_custom_target(shaders ALL DEPENDS ${SPV_SHADERS} SOURCES ${SHADERS})
-#===============================================================================
-
-
 #===============================================================================
 # INCLUDE AND LINK DIRECTORIES
 
@@ -80,15 +83,23 @@ include_directories(
     "${CMAKE_SOURCE_DIR}/vendor/ImGui"
     # The entire vendor folder
     "${CMAKE_SOURCE_DIR}/vendor"
-    # Vulkan MacOS headers
-    $ENV{VULKAN_SDK}/macOS/include
+    "${CMAKE_SOURCE_DIR}/vendor/stb"
     # Tracy headers
     "${CMAKE_SOURCE_DIR}/vendor/TracyProfiler"
     #SPIRV-Reflect
     "${CMAKE_SOURCE_DIR}/vendor/SPIRVReflect"
+    # Optick
+    "${CMAKE_SOURCE_DIR}/vendor/optick/src"
     # Vulf
     "${CMAKE_SOURCE_DIR}/src"
     "${CMAKE_SOURCE_DIR}/src/Vulkan"
+    # KTX
+    "${CMAKE_SOURCE_DIR}/vendor/ktx/include"
+    "${CMAKE_SOURCE_DIR}/vendor/tinygltf"
+    "${CMAKE_SOURCE_DIR}/vendor/ktx/other_include/"
+
+    # Vulkan MacOS headers
+    $ENV{VULKAN_SDK}/macOS/include
 )
 
 link_directories(
@@ -102,22 +113,28 @@ endif()
 #   WINDOWS
 if(WIN32)
 include_directories(
-    "${CMAKE_SOURCE_DIR}/vendor"
     # GLFW headers
     "${CMAKE_SOURCE_DIR}/vendor/glfw/include"
     # GLM headers
     "${CMAKE_SOURCE_DIR}/vendor/glm"
-    # Vulkan MacOS headers
-    "$ENV{VULKAN_SDK}/include"
     # ImGui Headers
     "${CMAKE_SOURCE_DIR}/vendor/ImGui"
+    # The entire vendor folder
+    "${CMAKE_SOURCE_DIR}/vendor"
+    "${CMAKE_SOURCE_DIR}/vendor/stb"
     # Tracy headers
     "${CMAKE_SOURCE_DIR}/vendor/TracyProfiler"
     #SPIRV-Reflect
     "${CMAKE_SOURCE_DIR}/vendor/SPIRVReflect"
+    # Optick
+    "${CMAKE_SOURCE_DIR}/vendor/optick/src"
     # Vulf
     "${CMAKE_SOURCE_DIR}/src"
     "${CMAKE_SOURCE_DIR}/src/Vulkan"
+    # KTX
+    "${CMAKE_SOURCE_DIR}/vendor/ktx/include"
+    "${CMAKE_SOURCE_DIR}/vendor/tinygltf"
+    "${CMAKE_SOURCE_DIR}/vendor/ktx/other_include/"
 )
 
 link_directories(
@@ -132,11 +149,16 @@ endif()
 file(GLOB_RECURSE SOURCE_FILES
 	${CMAKE_SOURCE_DIR}/src/*.c
     ${CMAKE_SOURCE_DIR}/src/*.cpp
-    ${CMAKE_SOURCE_DIR}/examples/cpp/*.cpp
 )
 
-list(REMOVE_ITEM SOURCE_FILES ${CMAKE_CURRENT_SOURCE_DIR}/src/application.cpp)
 
+# Add source header files
+file(GLOB_RECURSE HEADER_FILES
+	${CMAKE_SOURCE_DIR}/src/*.h
+    ${CMAKE_SOURCE_DIR}/src/*.hpp
+)
+
+# vendor source files that need to compiled to build into Vulf
 file(GLOB_RECURSE VENDOR_SOURCE_FILES
 	${CMAKE_SOURCE_DIR}/vendor/imgui/*.c
     ${CMAKE_SOURCE_DIR}/vendor/imgui/*.cpp
@@ -147,18 +169,20 @@ file(GLOB_RECURSE VENDOR_SOURCE_FILES
     ${CMAKE_SOURCE_DIR}/vendor/ImGuizmo/ImGuizmo.cpp
     ${CMAKE_SOURCE_DIR}/vendor/ImGuizmo/ImSequencer.cpp
     ${CMAKE_SOURCE_DIR}/vendor/TracyProfiler/TracyClient.cpp
+    ${CMAKE_SOURCE_DIR}/vendor/optick/*.h
+    ${CMAKE_SOURCE_DIR}/vendor/optick/*.cpp
     ${CMAKE_SOURCE_DIR}/vendor/SPIRVReflect/spirv_reflect.c
     ${CMAKE_SOURCE_DIR}/vendor/SPIRVReflect/common/output_stream.cpp
+    ${CMAKE_SOURCE_DIR}/vendor/ktx/*.c
+    ${CMAKE_SOURCE_DIR}/vendor/ktx/other_include/KHR/*.h
+    ${CMAKE_SOURCE_DIR}/vendor/ktx/*.h
 )
 
-# Add source header files
-file(GLOB_RECURSE HEADER_FILES
-	${CMAKE_SOURCE_DIR}/src/*.h
-    ${CMAKE_SOURCE_DIR}/src/*.hpp
-    # ${CMAKE_SOURCE_DIR}/vendor/tracy/Tracy.hpp
-)
-list(REMOVE_ITEM HEADER_FILES ${CMAKE_CURRENT_SOURCE_DIR}/src/application.h)
+# remove unnecessary files
+list(REMOVE_ITEM SOURCE_FILES ${CMAKE_CURRENT_SOURCE_DIR}/src/application.cpp)
+list(REMOVE_ITEM SOURCE_FILES ${CMAKE_CURRENT_SOURCE_DIR}/src/application.h)
 #===============================================================================
+source_group("src" FILES ${SOURCE_FILES})
 # file(GLOB_RECURSE VENDOR_HEADER_FILES
 # 	${CMAKE_SOURCE_DIR}/vendor/imgui/*.h
 #     ${CMAKE_SOURCE_DIR}/vendor/imgui/*.hpp
@@ -167,34 +191,22 @@ list(REMOVE_ITEM HEADER_FILES ${CMAKE_CURRENT_SOURCE_DIR}/src/application.h)
 #      PREFIX "Source"
 #      FILES ${SOURCE_FILES})
 #===============================================================================
-# Compile the source files for the executable
-source_group("src" FILES ${SOURCE_FILES})
-add_executable(Vulf ${HEADER_FILES} ${SOURCE_FILES} ${VENDOR_SOURCE_FILES})
-set_property(GLOBAL PROPERTY USE_FOLDERS ON)
-set_property(GLOBAL PROPERTY PREDEFINED_TARGETS_FOLDER "_CMakePredefinedTargets")
-set_property(DIRECTORY ${CMAKE_CURRENT_SOURCE_DIR} PROPERTY VS_STARTUP_PROJECT Vulf)
+# Compile the source files into a static library
+add_library(Vulf STATIC ${HEADER_FILES} ${SOURCE_FILES} ${VENDOR_SOURCE_FILES})
+add_dependencies(Vulf shaders)
 #===============================================================================
-
+# Global pre-processor defines
+add_compile_definitions(TRACY_ENABLE)
+add_compile_definitions(_DEBUG)
+target_compile_definitions(Vulf PRIVATE "SHADER_BINARY_DIR=\"${SHADER_BINARY_DIR}\"")
+target_compile_definitions(Vulf PRIVATE "SRC_DIR=\"${CMAKE_SOURCE_DIR}\"")
+target_compile_definitions(Vulf PRIVATE "ASSETS_DIR=\"${CMAKE_SOURCE_DIR}/data\"")
 #===============================================================================
-# LINK EXECUTABLE WITH LIBRARIES
+# Link with necessary external libraries
 if (APPLE)
 target_link_libraries(Vulf glfw3 vulkan.1 "-framework CoreFoundation -framework CoreAudio -framework OpenAL -framework Cocoa -framework IOKit -framework CoreGraphics")
 endif (APPLE)
 if(WIN32)
 target_link_libraries(Vulf glfw3 vulkan-1)
 endif()
-#===============================================================================
-# Global pre-processor defines
-add_compile_definitions(TRACY_ENABLE)
-target_compile_definitions(Vulf PRIVATE "SHADER_BINARY_DIR=\"${SHADER_BINARY_DIR}\"")
-target_compile_definitions(Vulf PRIVATE "SRC_DIR=\"${CMAKE_SOURCE_DIR}\"")
-add_dependencies(Vulf shaders)
-
-#===============================================================================
-# Run the binary built using 'make run' command
-add_custom_target(run
-    COMMAND Vulf
-    DEPENDS Vulf
-    WORKING_DIRECTORY ${CMAKE_SOURCE_DIR} # here we set the executable direcotry to the CMake home dir
-)
 #===============================================================================

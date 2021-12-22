@@ -1,9 +1,8 @@
 #include <iostream>
 
 #include <VulfBase.h>
-#include "utils/VulkanCheckResult.h"
 
-/*
+
 // Load the Instance extensions/layers and device Extensions
 std::vector<const char*> validationLayers = {
     "VK_LAYER_KHRONOS_validation",
@@ -20,9 +19,6 @@ std::vector<const char*> deviceExtensions = {
    "VK_KHR_portability_subset"
 #endif
 };
-*/
-
-#include "VulfBase.h"
 
 class VulfHelloTriangle : public Vulf::VulfBase
 {
@@ -209,8 +205,8 @@ private:
     void OnRender() override
     {
         ZoneScopedC(0xffa500);
-        //OPTICK_EVENT();
+        OPTICK_EVENT();
     }
 };
 
-//VULF_MAIN(HelloTriangle)
+VULF_MAIN(HelloTriangle)

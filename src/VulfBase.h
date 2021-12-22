@@ -46,14 +46,13 @@
 
 // Profiling
 #include <Tracy.hpp>
-#ifdef _WIN32
 // Optick
 #define USE_OPTICK 1
 #define OPTICK_ENABLE_GPU
 #include <optick.h>
-#endif
 
 // Helper utilities
+#include "utils/VulkanCheckResult.h"
 #include "utils/vertex.h"
 #include "utils/Window.h"
 #include "utils/Camera3D.h"
@@ -61,7 +60,6 @@
 #include "utils/cube.h"
 #include "utils/sphere.h"
 #include "utils/CommandLineParser.h"
-#include "utils/VulkanglTFModel.h"
 
 // Vulkan Abstractions
 #include "Vulkan/Instance.h"
@@ -164,7 +162,7 @@ namespace Vulf {
         /* Default image acquire + submission and command buffer submission */
         virtual void SubmitFrame();
 
-        /* Called once before the app begins rendering and after the pipeline has been built */ 
+        /* Called once before the app begins rendering and after the pipeline has been built */
         virtual void OnStart();
         /**
          * Called on every update loop

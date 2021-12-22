@@ -4,8 +4,6 @@
 #include "../utils/VulkanCheckResult.h"
 #include "../utils/vertex.h"
 
-#include "VulkanglTFModel.h"
-
 void GraphicsPipeline::Create(std::vector<VkPipelineShaderStageCreateInfo> shaderStages, FixedPipelineFuncs& fixedfunctions, VkRenderPass& renderpass)
 {
     VkGraphicsPipelineCreateInfo graphicsCI{};
@@ -26,7 +24,7 @@ void GraphicsPipeline::Create(std::vector<VkPipelineShaderStageCreateInfo> shade
     m_VertexInputSCI.vertexAttributeDescriptionCount    = attributeDescriptions.size();
     m_VertexInputSCI.pVertexAttributeDescriptions       = attributeDescriptions.data();
 
-    graphicsCI.pVertexInputState    = vkglTF::Vertex::getPipelineVertexInputState({ vkglTF::VertexComponent::Position, vkglTF::VertexComponent::Normal, vkglTF::VertexComponent::UV, vkglTF::VertexComponent::Color });
+    graphicsCI.pVertexInputState    = &m_VertexInputSCI;
     graphicsCI.pInputAssemblyState  = &fixedfunctions.GetInputAssemblySCI();
     graphicsCI.pViewportState       = &fixedfunctions.GetViewportStateCI();
     graphicsCI.pRasterizationState  = &fixedfunctions.GetRazterizerSCI();
