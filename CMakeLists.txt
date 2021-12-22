@@ -198,9 +198,9 @@ add_dependencies(Vulf shaders)
 # Global pre-processor defines
 add_compile_definitions(TRACY_ENABLE)
 add_compile_definitions(_DEBUG)
-target_compile_definitions(Vulf PRIVATE "SHADER_BINARY_DIR=\"${SHADER_BINARY_DIR}\"")
-target_compile_definitions(Vulf PRIVATE "SRC_DIR=\"${CMAKE_SOURCE_DIR}\"")
-target_compile_definitions(Vulf PRIVATE "ASSETS_DIR=\"${CMAKE_SOURCE_DIR}/data\"")
+add_compile_definitions("SHADER_BINARY_DIR=\"${SHADER_BINARY_DIR}\"")
+add_compile_definitions("SRC_DIR=\"${CMAKE_SOURCE_DIR}\"")
+add_compile_definitions("ASSETS_DIR=\"${CMAKE_SOURCE_DIR}/data\"")
 #===============================================================================
 # Link with necessary external libraries
 if (APPLE)
@@ -209,4 +209,28 @@ endif (APPLE)
 if(WIN32)
 target_link_libraries(Vulf glfw3 vulkan-1)
 endif()
+#===============================================================================
+
+# now build the examples
+# HACK: Just try building hello triangle then make it dynamics to build all exaples with source dependency
+file(GLOB_RECURSE EXAMPLE_SOURCE_FILES
+    ${CMAKE_SOURCE_DIR}/examples/cpp/*.cpp
+)
+foreach(source IN LISTS EXAMPLE_SOURCE_FILES)
+    get_filename_component(FILENAME ${source} NAME_WE)
+    message("File name of exmaple is : ${FILENAME}")
+
+    # Build the examples as executables (run them using make examplefilename.run command)
+    add_executable(${FILENAME} ${source})
+    target_link_libraries(${FILENAME} Vulf)
+    add_dependencies(${FILENAME} Vulf)
+
+    # Run the binary built using 'make run' command
+    add_custom_target("${FILENAME}.run"
+        COMMAND ${FILENAME}
+        DEPENDS ${FILENAME} Vulf
+        WORKING_DIRECTORY ${CMAKE_SOURCE_DIR} # here we set the executable direcotry to the CMake home dir
+    )
+endforeach()
+
 #===============================================================================

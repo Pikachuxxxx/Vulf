@@ -1,4 +1,3 @@
-/*
 #include <iostream>
 
 #include <VulfBase.h>
@@ -25,9 +24,9 @@ std::vector<const char*> deviceExtensions = {
 class VulfPBR : public Vulf::VulfBase
 {
 public:
-    VulfHelloTriangle() : VulfBase("PBR demo") {}
+    VulfPBR() : VulfBase("PBR demo") {}
 
-    ~VulfHelloTriangle() {
+    ~VulfPBR() {
         _def_CommandPool.Destroy();
         CleanUpPipeline();
         VKLogicalDevice::GetDeviceManager()->Destroy();
@@ -102,4 +101,3 @@ private:
 };
 
 VULF_MAIN(PBR)
-*/

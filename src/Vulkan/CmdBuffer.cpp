@@ -16,7 +16,7 @@ void CmdBuffer::AllocateBuffers(const VkCommandPool& pool)
     if(VK_CALL(vkAllocateCommandBuffers(VKDEVICE, &allocInfo, m_CommandBuffers.data())))
         throw std::runtime_error("Cannot create command buffers!");
     else VK_LOG("Command Buffers (3) succesfully Allocated!");
-
+    
     for (size_t i = 0; i < m_CommandBuffers.size(); i++) {
 
         VkDebugUtilsObjectNameInfoEXT name_info = { VK_STRUCTURE_TYPE_DEBUG_UTILS_OBJECT_NAME_INFO_EXT };
@@ -29,7 +29,7 @@ void CmdBuffer::AllocateBuffers(const VkCommandPool& pool)
 }
 
 void CmdBuffer::Destroy(const VkCommandPool& pool)
-{   
+{
     vkFreeCommandBuffers(VKDEVICE, pool, m_CommandBuffers.size(), m_CommandBuffers.data());
 }
 

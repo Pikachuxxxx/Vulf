@@ -20,6 +20,7 @@ std::vector<const char*> deviceExtensions = {
 #endif
 };
 
+using namespace Vulf;
 class VulfHelloTriangle : public Vulf::VulfBase
 {
 public:
