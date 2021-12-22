@@ -218,7 +218,7 @@ file(GLOB_RECURSE EXAMPLE_SOURCE_FILES
 )
 foreach(source IN LISTS EXAMPLE_SOURCE_FILES)
     get_filename_component(FILENAME ${source} NAME_WE)
-    message("File name of exmaple is : ${FILENAME}")
+    message("Examples to build : ${FILENAME}")
 
     # Build the examples as executables (run them using make examplefilename.run command)
     add_executable(${FILENAME} ${source})
@@ -231,6 +231,9 @@ foreach(source IN LISTS EXAMPLE_SOURCE_FILES)
         DEPENDS ${FILENAME} Vulf
         WORKING_DIRECTORY ${CMAKE_SOURCE_DIR} # here we set the executable direcotry to the CMake home dir
     )
+
+    # Set the output directory for the examples build separately
+    set_target_properties(${FILENAME} PROPERTIES RUNTIME_OUTPUT_DIRECTORY ${CMAKE_CURRENT_BINARY_DIR}/examples)
 endforeach()
 
 #===============================================================================
