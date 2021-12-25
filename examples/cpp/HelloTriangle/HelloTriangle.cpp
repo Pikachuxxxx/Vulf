@@ -48,10 +48,8 @@ private:
     }vpUBOData;
 
 private:
-    // Basic Stuff
+    // default stuff required for initialization, these resources are all explicitly allocated and to not follow RAII, hence the defauly ones are provided by Vulf
     FixedPipelineFuncs      fixedFunctions;
-
-    RenderPass              simpleRenderPass;
 
     GraphicsPipeline        simpleGraphicsPipeline;
 
@@ -119,18 +117,13 @@ private:
         fixedFunctions.SetPipelineLayout(helloTriangleUBO.GetDescriptorSetLayout(), modelPushConstant);
     }
 
-    // default
-    void BuildRenderPass() override {
-        simpleRenderPass.Init(_def_Swapchain.GetSwapFormat());
-    }
-
     void BuildGraphicsPipeline() override {
-        simpleGraphicsPipeline.Create(defaultShaders, fixedFunctions, simpleRenderPass.GetRenderPass());
+        simpleGraphicsPipeline.Create(defaultShaders, fixedFunctions, _def_RenderPass.GetRenderPass());
     }
 
     // default
     void BuildFramebuffer() override {
-        simpleFrameBuffer.Create(simpleRenderPass.GetRenderPass(), _def_Swapchain.GetSwapImageViews(), depthImage.GetDepthImageView(), _def_Swapchain.GetSwapExtent());
+        simpleFrameBuffer.Create(_def_RenderPass.GetRenderPass(), _def_Swapchain.GetSwapImageViews(), depthImage.GetDepthImageView(), _def_Swapchain.GetSwapExtent());
     }
 
     // default
@@ -142,6 +135,9 @@ private:
     void UpdateBuffers(uint32_t imageIndex) override {
         vpUBOData.view = glm::mat4(1.0f);
         vpUBOData.proj = glm::mat4(1.0f);
+
+        //vpUBOData.view = getCamera().GetViewMatrix();
+        //vpUBOData.proj = glm::perspective(glm::radians(45.0f), (float) _def_Swapchain.GetSwapExtent().width / _def_Swapchain.GetSwapExtent().height, 0.01f, 100.0f);
 
         helloTriangleUBO.UpdateBuffer(&vpUBOData, sizeof(ViewProjectionUBOData), imageIndex);
     }
@@ -157,7 +153,7 @@ private:
         helloTriangleUBO.Destroy();
         helloTriangleVBO.Destroy();
         simpleGraphicsPipeline.Destroy();
-        simpleRenderPass.Destroy();
+        _def_RenderPass.Destroy();
         fixedFunctions.DestroyPipelineLayout();
         _def_Swapchain.Destroy();
     }
@@ -167,8 +163,8 @@ private:
 
     void OnStart() override
     {
-
-        simpleRenderPass.SetClearColor(0.0f, 0.0f, 0.0f);
+        /*
+        _def_RenderPass.SetClearColor(0.0f, 0.0f, 0.0f);
         auto& cmdBuffers = simpleCommandBuffer.GetBuffers();
         auto framebuffers = simpleFrameBuffer.GetFramebuffers();
         auto descriptorSets = helloTriangleUBO.GetSets();
@@ -180,7 +176,7 @@ private:
             OPTICK_GPU_EVENT("Recording cmd buffers");
 #endif
             simpleCommandBuffer.RecordBuffer(cmdBuffers[i]);
-            simpleRenderPass.BeginRenderPass(cmdBuffers[i], framebuffers[i], _def_Swapchain.GetSwapExtent());
+            _def_RenderPass.BeginRenderPass(cmdBuffers[i], framebuffers[i], _def_Swapchain.GetSwapExtent());
 
             simpleGraphicsPipeline.Bind(cmdBuffers[i]);
 
@@ -195,18 +191,99 @@ private:
 
             vkCmdDraw(cmdBuffers[i], rainbowTriangleVertices.size(), 1, 0, 0);
 
-            simpleRenderPass.EndRenderPass(cmdBuffers[i]);
+            ImGuiIO& io = ImGui::GetIO();
+
+            io.DisplaySize = ImVec2((float) width, (float) height);
+
+            ImGui::NewFrame();
+
+            ImGui::PushStyleVar(ImGuiStyleVar_WindowRounding, 0);
+            ImGui::SetNextWindowPos(ImVec2(10, 10));
+            ImGui::Begin("Vulkan Example", nullptr, ImGuiWindowFlags_AlwaysAutoResize | ImGuiWindowFlags_NoResize | ImGuiWindowFlags_NoMove);
+            ImGui::TextUnformatted(get_app_name().c_str());
+            ImGui::TextUnformatted(get_logical_device().Get()->GetGPUManager().get_device_name().c_str());
+
+            ImGui::End();
+            ImGui::PopStyleVar();
+            ImGui::Render();
+
+
+            if (get_ui_overlay().update_imgui_buffers())
+                get_ui_overlay().draw(cmdBuffers[i]);
+
+            _def_RenderPass.EndRenderPass(cmdBuffers[i]);
             simpleCommandBuffer.EndRecordingBuffer(cmdBuffers[i]);
         }
 
         submissionCommandBuffers.clear();
         submissionCommandBuffers.push_back(simpleCommandBuffer);
+        */
     }
 
     void OnRender() override
     {
         ZoneScopedC(0xffa500);
         OPTICK_EVENT();
+
+        _def_RenderPass.SetClearColor(0.0f, 0.0f, 0.0f);
+        auto& cmdBuffers = simpleCommandBuffer.GetBuffers();
+        auto framebuffers = simpleFrameBuffer.GetFramebuffers();
+        auto descriptorSets = helloTriangleUBO.GetSets();
+
+        int i = get_next_image_index();
+
+
+#ifdef _WIN32
+        OPTICK_GPU_CONTEXT(cmdBuffers[i]);
+        OPTICK_GPU_EVENT("Recording cmd buffers");
+#endif
+        simpleCommandBuffer.RecordBuffer(cmdBuffers[i]);
+        _def_RenderPass.BeginRenderPass(cmdBuffers[i], framebuffers[i], _def_Swapchain.GetSwapExtent());
+
+        simpleGraphicsPipeline.Bind(cmdBuffers[i]);
+
+        // Bind the appropriate descriptor sets
+        vkCmdBindDescriptorSets(cmdBuffers[i], VK_PIPELINE_BIND_POINT_GRAPHICS, fixedFunctions.GetPipelineLayout(), 0, 1, &descriptorSets[i], 0, nullptr);
+
+        // Bind the push constants
+        modelPCData.model = glm::rotate(glm::mat4(1.0f), (float) glm::radians(90.0f * 2.0f), glm::vec3(0.0f, 0.0f, 1.0f));
+        vkCmdPushConstants(cmdBuffers[i], fixedFunctions.GetPipelineLayout(), VK_SHADER_STAGE_VERTEX_BIT | VK_SHADER_STAGE_FRAGMENT_BIT, 0, sizeof(ModelPushConstant), &modelPCData);
+
+        helloTriangleVBO.Bind(cmdBuffers[i]);
+
+        vkCmdDraw(cmdBuffers[i], rainbowTriangleVertices.size(), 1, 0, 0);
+
+        
+        ImGuiIO& io = ImGui::GetIO();
+
+        io.DisplaySize = ImVec2((float) width, (float) height);
+
+        ImGui::NewFrame();
+
+        ImGui::PushStyleVar(ImGuiStyleVar_WindowRounding, 0);
+        ImGui::SetNextWindowPos(ImVec2(10, 10));
+        ImGui::Begin("Vulkan Example", nullptr, ImGuiWindowFlags_AlwaysAutoResize | ImGuiWindowFlags_NoResize | ImGuiWindowFlags_NoMove);
+        ImGui::TextUnformatted(get_app_name().c_str());
+        ImGui::TextUnformatted(get_logical_device().Get()->GetGPUManager().get_device_name().c_str());
+
+        ImGui::End();
+        ImGui::PopStyleVar();
+        ImGui::Render();
+
+        if (get_ui_overlay().update_imgui_buffers())
+            get_ui_overlay().draw(cmdBuffers[i]);
+
+        _def_RenderPass.EndRenderPass(cmdBuffers[i]);
+        simpleCommandBuffer.EndRecordingBuffer(cmdBuffers[i]);
+
+        submissionCommandBuffers.clear();
+        submissionCommandBuffers.push_back(simpleCommandBuffer);
+  
+    }
+
+    void OnImGui() override
+    {
+
     }
 };
 

@@ -24,7 +24,7 @@ void Buffer::CreateBuffer(VkDeviceSize size, VkBufferUsageFlags usage, VkMemoryP
     VkMemoryAllocateInfo allocInfo{};
     allocInfo.sType = VK_STRUCTURE_TYPE_MEMORY_ALLOCATE_INFO;
     allocInfo.allocationSize = memRequirements.size;
-    allocInfo.memoryTypeIndex = VKLogicalDevice::GetDeviceManager()->GetGPUManager().FindMemoryTypeIndex(memRequirements.memoryTypeBits, properties);
+    allocInfo.memoryTypeIndex = VKLogicalDevice::Get()->GetGPUManager().FindMemoryTypeIndex(memRequirements.memoryTypeBits, properties);
     if(VK_CALL(vkAllocateMemory(VKDEVICE, &allocInfo, nullptr, &m_BufferMemory)))
         throw std::runtime_error("Cannot alocate memory for vertex buffer");
 
@@ -70,8 +70,39 @@ void Buffer::CopyBufferToDevice(CmdPool pool, VkBuffer dstBuffer, VkDeviceSize s
     pool.EndSingleTimeBuffer(commandBuffer);
 }
 
+void Buffer::map_copy_unmap(void* data, VkDeviceSize size)
+{
+    vkMapMemory(VKDEVICE, m_BufferMemory, 0, size, 0, &m_Mapped);
+    memcpy(m_Mapped, data, size);
+    vkUnmapMemory(VKDEVICE, m_BufferMemory);
+}
+
+VkResult Buffer::map(VkDeviceSize size /*= VK_WHOLE_SIZE*/, VkDeviceSize offset /*= 0*/)
+{
+    return vkMapMemory(VKDEVICE, m_BufferMemory, offset, size, 0, &m_Mapped);
+}
+
+void Buffer::unmap()
+{
+    if (m_Mapped == nullptr) {
+        vkUnmapMemory(VKDEVICE, m_BufferMemory);
+        //m_Mapped = nullptr;
+    }
+}
+
+VkResult Buffer::flush(VkDeviceSize size /*= VK_WHOLE_SIZE*/, VkDeviceSize offset /*= 0*/)
+{
+    VkMappedMemoryRange mappedRange = {};
+    mappedRange.sType = VK_STRUCTURE_TYPE_MAPPED_MEMORY_RANGE;
+    mappedRange.memory = m_BufferMemory;
+    mappedRange.offset = offset;
+    mappedRange.size = size;
+    return vkFlushMappedMemoryRanges(VKDEVICE, 1, &mappedRange);
+
+}
+
 void Buffer::DestroyBuffer()
 {
-    vkDestroyBuffer(VKDEVICE, m_Buffer, nullptr);
     vkFreeMemory(VKDEVICE, m_BufferMemory, nullptr);
+    vkDestroyBuffer(VKDEVICE, m_Buffer, nullptr);
 }

@@ -18,7 +18,7 @@ void RenderPass::Init(const VkFormat& format)
     colorAttachment.finalLayout = VK_IMAGE_LAYOUT_PRESENT_SRC_KHR;// VK_IMAGE_LAYOUT_COLOR_ATTACHMENT_OPTIMAL;//VK_IMAGE_LAYOUT_PRESENT_SRC_KHR;
 
     VkAttachmentDescription depthAttachment{};
-    depthAttachment.format = VKLogicalDevice::GetDeviceManager()->GetGPUManager().FindDepthFormat();
+    depthAttachment.format = VKLogicalDevice::Get()->GetGPUManager().FindDepthFormat();
     depthAttachment.samples = VK_SAMPLE_COUNT_1_BIT;
     depthAttachment.loadOp = VK_ATTACHMENT_LOAD_OP_CLEAR;
     depthAttachment.storeOp = VK_ATTACHMENT_STORE_OP_DONT_CARE;
@@ -41,6 +41,7 @@ void RenderPass::Init(const VkFormat& format)
     subpassDesc.pColorAttachments = &colorAttachmentRef;
     subpassDesc.pDepthStencilAttachment = &depthAttachmentRef;
 ////////////////////////////////////////////////////////////////////////////////
+    // TODO: Add 2 Subpasses dependencies for layout transitions
     VkSubpassDependency dependency{};
     dependency.srcSubpass = VK_SUBPASS_EXTERNAL;
     dependency.dstSubpass = 0;

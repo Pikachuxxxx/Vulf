@@ -14,7 +14,7 @@ set_property(DIRECTORY ${CMAKE_CURRENT_SOURCE_DIR} PROPERTY VS_STARTUP_PROJECT H
 # TODO: Download the necesary assets here
 #===============================================================================
 # COMPILE SHADERS
-
+# TODO: Design decision on whether shaders are distributed with Vulf library or with examples, this will also influence how theya re grouped into folders and compiled
 # Set the path to glslc compiler based on the OS
 if(APPLE)
     set(glslc_executable $ENV{VULKAN_SDK}/macOS/bin/glslc)
@@ -228,7 +228,8 @@ foreach(source IN LISTS EXAMPLE_SOURCE_FILES)
     get_filename_component(FILENAME ${source} NAME_WE)
     message("Examples being built : ${FILENAME}")
 
-    source_group("examples" ${FILENAME})
+# TODO: Improve source group folder hierarchy for examples
+#    source_group(TREE ${CMAKE_CURRENT_SOURCE_DIR} FILES ${source})
     # Build the examples as executables (run them using make examplefilename.run command)
     add_executable(${FILENAME} ${source})
     target_link_libraries(${FILENAME} Vulf)

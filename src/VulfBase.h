@@ -78,6 +78,7 @@
 #include "Vulkan/Image.h"
 #include "Vulkan/Texture.h"
 #include "Vulkan/DepthImage.h"
+#include "Vulkan/ImGuiOverlay.h"
 
 // Application Helper Defines
 #define STRINGIZE(s) #s
@@ -119,6 +120,7 @@ namespace Vulf {
     protected:
         CmdPool           _def_CommandPool;           /* The default command pool used to allocate buffer     */
         Swapchain         _def_Swapchain;
+        RenderPass        _def_RenderPass;
     protected:
         /**
          * Creates the Shader resources to be used by the pipeline
@@ -175,8 +177,10 @@ namespace Vulf {
         /* ImGui Overlay */
         virtual void OnImGui();
 
-        uint32_t GetNextImageIndex() const { return m_ImageIndex;  }
-
+        uint32_t get_next_image_index() const { return m_ImageIndex;  }
+        ImGuiOverlay& get_ui_overlay() { return m_ImGuiOVerlay; }
+        const std::string& get_app_name() { return m_AppName; }
+        VKLogicalDevice get_logical_device() { return m_Device; }
     private:
     // Application flow
         std::string                 m_AppName;                      /* The name of the application                                                      */
@@ -186,8 +190,8 @@ namespace Vulf {
         uint32_t                    m_FrameCounter    = 0;          /* Number of frames rendered in a second                                            */
         Ms                          m_FrameTimer;                   /* Time taken for a single frame to render since the last frame was rendered        */
         HighResClock                m_LastTimestamp;                /* High resolution clock to measure the last time when a frame was rendered         */
-        uint32_t                    m_ImageIndex = 0;           /* The next image index from the swapchain images list                              */
-        uint32_t                    m_CurrentFrame = 0;        /* The index of the current in-flight frame being rendered                          */
+        uint32_t                    m_ImageIndex = 0;               /* The next image index from the swapchain images list                              */
+        uint32_t                    m_CurrentFrame = 0;             /* The index of the current in-flight frame being rendered                          */
 
     private:
         // Vulkan Stuff
@@ -197,6 +201,8 @@ namespace Vulf {
         std::vector<VkSemaphore>    m_RenderingFinishedSemaphores;  /* Semaphore to tell when the rendering to a particular swapchain image is done     */
         std::vector<VkFence>        m_InFlightFences;               /* Use to synchronize the GPU-CPU so that they draw onto the right image in flight  */
         std::vector<VkFence>        m_ImagesInFlight;
+
+        ImGuiOverlay                m_ImGuiOVerlay;
 
     private:
         /* The entire command pipeline that needs to be rebuilt for swapchain re-creation */

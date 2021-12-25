@@ -87,7 +87,7 @@ VkFormat VKPhysicalDevice::FindSupportedFormat(const std::vector<VkFormat>& cand
 
 VkFormat VKPhysicalDevice::FindDepthFormat()
 {
-    return VKLogicalDevice::GetDeviceManager()->GetGPUManager().FindSupportedFormat(
+    return VKLogicalDevice::Get()->GetGPUManager().FindSupportedFormat(
         {VK_FORMAT_D32_SFLOAT, VK_FORMAT_D32_SFLOAT_S8_UINT, VK_FORMAT_D24_UNORM_S8_UINT},
         VK_IMAGE_TILING_OPTIMAL,
         VK_FORMAT_FEATURE_DEPTH_STENCIL_ATTACHMENT_BIT
@@ -149,7 +149,7 @@ void VKLogicalDevice::Destroy()
     vkDestroyDevice(m_Device, nullptr);
 }
 
-VkCommandBuffer VKLogicalDevice::createCmdBuffer(VkCommandBufferLevel level, bool begin /*= false*/) {
+VkCommandBuffer VKLogicalDevice::begin_single_time_command_buffer(VkCommandBufferLevel level, bool begin /*= false*/) {
     VkCommandBufferAllocateInfo cmdBufAllocateInfo{};
     cmdBufAllocateInfo.sType = VK_STRUCTURE_TYPE_COMMAND_BUFFER_ALLOCATE_INFO;
     cmdBufAllocateInfo.commandPool = m_InstantaneousCmdPool;
@@ -237,6 +237,83 @@ VkResult VKLogicalDevice::createBuffer(VkBufferUsageFlags usageFlags, VkMemoryPr
     VK_CALL(vkBindBufferMemory(m_Device, *buffer, *memory, 0));
 
     return VK_SUCCESS;
+}
+
+VkResult VKLogicalDevice::createBuffer(VkBufferUsageFlags usageFlags, VkMemoryPropertyFlags memoryPropertyFlags, Buffer* buffer, VkDeviceSize size, void* data /*= nullptr*/)
+{
+    // Create the buffer handle
+    VkBufferCreateInfo bufferCreateInfo{};
+    bufferCreateInfo.sType = VK_STRUCTURE_TYPE_BUFFER_CREATE_INFO;
+    bufferCreateInfo.usage = usageFlags;
+    bufferCreateInfo.size = size;
+    bufferCreateInfo.sharingMode = VK_SHARING_MODE_EXCLUSIVE;
+    VK_CALL(vkCreateBuffer(m_Device, &bufferCreateInfo, nullptr, &buffer->get_buffer()));
+
+    // Create the memory backing up the buffer handle
+    VkMemoryRequirements memReqs;
+    VkMemoryAllocateInfo memAlloc{};
+    memAlloc.sType = VK_STRUCTURE_TYPE_MEMORY_ALLOCATE_INFO;
+    vkGetBufferMemoryRequirements(m_Device, buffer->get_buffer(), &memReqs);
+    memAlloc.allocationSize = memReqs.size;
+    // Find a memory type index that fits the properties of the buffer
+    memAlloc.memoryTypeIndex = GetGPUManager().FindMemoryTypeIndex(memReqs.memoryTypeBits, memoryPropertyFlags);
+    VK_CALL(vkAllocateMemory(m_Device, &memAlloc, nullptr, &buffer->get_memory()));
+
+    // If a pointer to the buffer data has been passed, map the buffer and copy over the data
+    if (data != nullptr) {
+        void* mapped;
+        VK_CALL(vkMapMemory(m_Device, buffer->get_memory(), 0, size, 0, &mapped));
+        memcpy(mapped, data, size);
+        // If host coherency hasn't been requested, do a manual flush to make writes visible
+        if ((memoryPropertyFlags & VK_MEMORY_PROPERTY_HOST_COHERENT_BIT) == 0) {
+            VkMappedMemoryRange mappedRange{};
+            mappedRange.sType = VK_STRUCTURE_TYPE_MAPPED_MEMORY_RANGE;
+            mappedRange.memory = buffer->get_memory();
+            mappedRange.offset = 0;
+            mappedRange.size = size;
+            vkFlushMappedMemoryRanges(m_Device, 1, &mappedRange);
+        }
+        vkUnmapMemory(m_Device, buffer->get_memory());
+    }
+
+    // Attach the memory to the buffer object
+    VK_CALL(vkBindBufferMemory(m_Device, buffer->get_buffer(), buffer->get_memory(), 0));
+
+    return VK_SUCCESS;
+}
+
+void VKLogicalDevice::copyBufferToImage(VkBuffer buffer, VkImage image, uint32_t width, uint32_t height)
+{
+    VkCommandBuffer commandBuffer = begin_single_time_command_buffer(VK_COMMAND_BUFFER_LEVEL_PRIMARY, true);
+
+    VkBufferImageCopy region{};
+    region.bufferOffset = 0;
+    region.bufferRowLength = 0;
+    region.bufferImageHeight = 0;
+
+    region.imageSubresource.aspectMask = VK_IMAGE_ASPECT_COLOR_BIT;
+    region.imageSubresource.mipLevel = 0;
+    region.imageSubresource.baseArrayLayer = 0;
+    region.imageSubresource.layerCount = 1;
+
+    region.imageOffset = { 0, 0, 0 };
+    region.imageExtent = {
+        width,
+        height,
+        1
+    };
+
+    // Actual copy command
+    vkCmdCopyBufferToImage(
+        commandBuffer,
+        buffer,
+        image,
+        VK_IMAGE_LAYOUT_TRANSFER_DST_OPTIMAL,
+        1,
+        &region
+    );
+
+    flushCommandBuffer(commandBuffer, graphicsQueue, true);
 }
 
 void VKLogicalDevice::CreateQueues()

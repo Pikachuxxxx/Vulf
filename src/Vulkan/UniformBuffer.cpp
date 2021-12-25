@@ -103,7 +103,7 @@ void UniformBuffer::UpdateDescriptorSetConfig( )
                 case DescriptorInfo::DescriptorType::BUFFER:
                 {
                     VkDescriptorBufferInfo bufferInfo{};
-                    bufferInfo.buffer   = m_UniformBuffers[i].GetBuffer();
+                    bufferInfo.buffer   = m_UniformBuffers[i].get_buffer();
                     bufferInfo.offset   = m_Descriptors[j].offset;
                     bufferInfo.range    = m_Descriptors[j].size;
                     m_VkDescriptorBufferInfos.push_back(bufferInfo);
@@ -113,8 +113,8 @@ void UniformBuffer::UpdateDescriptorSetConfig( )
                 {
                     VkDescriptorImageInfo bufferInfo{};
                     bufferInfo.imageLayout  = VK_IMAGE_LAYOUT_SHADER_READ_ONLY_OPTIMAL;
-                    bufferInfo.imageView    = m_Descriptors[j].image.GetTextureImageView();
-                    bufferInfo.sampler      = m_Descriptors[j].image.GetTextureImageSampler();
+                    bufferInfo.imageView    = m_Descriptors[j].image.get_image_view();
+                    bufferInfo.sampler      = m_Descriptors[j].image.get_sampler();
                     m_VkDescriptorImageInfos.push_back(bufferInfo);
                     break;
                 }
@@ -167,9 +167,9 @@ void UniformBuffer::UpdateDescriptorSetConfig( )
 
 void UniformBuffer::UpdateBuffer(void* buffer, uint32_t bufferSize, uint32_t index) {
     void* data;
-    vkMapMemory(VKDEVICE, m_UniformBuffers[index].GetBufferMemory(), 0, bufferSize, 0, &data);
+    vkMapMemory(VKDEVICE, m_UniformBuffers[index].get_memory(), 0, bufferSize, 0, &data);
     memcpy(data, buffer, bufferSize);
-    vkUnmapMemory(VKDEVICE, m_UniformBuffers[index].GetBufferMemory());
+    vkUnmapMemory(VKDEVICE, m_UniformBuffers[index].get_memory());
 }
 
 void UniformBuffer::Destroy()

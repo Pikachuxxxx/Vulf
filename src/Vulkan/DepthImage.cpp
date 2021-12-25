@@ -7,14 +7,14 @@
 void DepthImage::CreateDepthImage(uint32_t width, uint32_t height, CmdPool cmdPool)
 {
     // Get the proper format for the depth image
-    m_DepthFormat = VKLogicalDevice::GetDeviceManager()->GetGPUManager().FindDepthFormat();
+    m_DepthFormat = VKLogicalDevice::Get()->GetGPUManager().FindDepthFormat();
 
-    // Create the proper iamge views for the depth texture
+    // Create the proper image views for the depth texture
     m_DepthImage.CreateImage(width, height,
         m_DepthFormat,
         VK_IMAGE_TILING_OPTIMAL,
         VK_IMAGE_USAGE_DEPTH_STENCIL_ATTACHMENT_BIT,
-        VK_MEMORY_PROPERTY_DEVICE_LOCAL_BIT, cmdPool);
+        VK_MEMORY_PROPERTY_DEVICE_LOCAL_BIT);
 
     m_DepthImage.CreateImageView(m_DepthFormat, VK_IMAGE_ASPECT_DEPTH_BIT);
 }

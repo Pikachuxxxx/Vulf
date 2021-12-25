@@ -9,10 +9,10 @@ class Image
 {
 public:
     Image() = default;
-    void CreateImage(uint32_t width, uint32_t height, VkFormat format, VkImageTiling tiling, VkImageUsageFlags usage, VkMemoryPropertyFlags properties, CmdPool& cmdPool);
+    void CreateImage(uint32_t width, uint32_t height, VkFormat format, VkImageTiling tiling, VkImageUsageFlags usage, VkMemoryPropertyFlags properties);
     void Destroy();
     void CreateImageView(VkFormat format, VkImageAspectFlags aspectFlags);
-    void TransitionImageLayout(VkFormat format, VkImageLayout oldLayout, VkImageLayout newLayout, CmdPool& pool);
+    void TransitionImageLayout(VkFormat format, VkImageLayout oldLayout, VkImageLayout newLayout);
     // Getter and setter for the image resoruces
     VkImage GetImage() const { return m_Image; }
     VkImageView GetImageView() const { return m_ImageView; }

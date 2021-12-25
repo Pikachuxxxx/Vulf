@@ -17,6 +17,7 @@ layout(location = 0) out VS_OUT {
     vec3 FragPos;
     vec3 Normal;
     vec2 TexCoords;
+    vec3 Color;
 } vs_out;
 
 layout (push_constant) uniform ModelPushConstantData{
@@ -27,12 +28,8 @@ void main() {
     gl_PointSize    = 5.0;
     gl_Position     = ubo.proj * ubo.view * modelPushConstantData.model * vec4(inPosition, 1.0);
 
-    // Outout variables from the vertex shader
-    // fragPos         = inPosition;
-    // fragNormal      = inNormal;
-    // fragTexCoord    = inTexCoord;
-
-    vs_out.FragPos = inPosition;
-    vs_out.Normal = inNormal;
-    vs_out.TexCoords = inTexCoord;
+    vs_out.FragPos      = inPosition;
+    vs_out.Normal       = inNormal;
+    vs_out.TexCoords    = inTexCoord;
+    vs_out.Color        = inColor;
 }

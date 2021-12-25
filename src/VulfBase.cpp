@@ -51,13 +51,13 @@ namespace Vulf {
         Instance::GetInstanceManager()->Init(m_AppName.c_str(), m_Window->getGLFWwindow(), true);
 
         // Create the Device
-        VKLogicalDevice::GetDeviceManager()->Init();
+        VKLogicalDevice::Get()->Init();
         //void InitGpuVulkan(VkDevice * vkDevices, VkPhysicalDevice * vkPhysicalDevices, VkQueue * vkQueues, uint32_t * cmdQueuesFamily, uint32_t numQueues, const VulkanFunctions * functions)
 #ifdef _WIN32
-        auto device = VKLogicalDevice::GetDeviceManager()->GetLogicalDevice();
-        auto physicalDevice = VKLogicalDevice::GetDeviceManager()->GetGPUManager().GetGPU();
-        auto queuefam = VKLogicalDevice::GetDeviceManager()->GetGraphicsQueue();
-        uint32_t numQueues = VKLogicalDevice::GetDeviceManager()->GetGPUManager().GetGraphicsFamilyIndex();
+        auto device = VKLogicalDevice::Get()->GetLogicalDevice();
+        auto physicalDevice = VKLogicalDevice::Get()->GetGPUManager().GetGPU();
+        auto queuefam = VKLogicalDevice::Get()->GetGraphicsQueue();
+        uint32_t numQueues = VKLogicalDevice::Get()->GetGPUManager().GetGraphicsFamilyIndex();
         OPTICK_GPU_INIT_VULKAN(&device, &physicalDevice, &queuefam, &numQueues, 1, nullptr);
 #endif
         // Load the shaders
@@ -74,12 +74,17 @@ namespace Vulf {
 
         // Create the synchronization primitives
         CreateSynchronizationPrimitives();
-
-        OnStart();
     }
 
     void VulfBase::InitImGui() {
 
+        m_ImGuiOVerlay.init();
+        m_ImGuiOVerlay.upload_ui_font("FiraCode-Light.ttf");
+        m_ImGuiOVerlay.prepare_pipeline(_def_RenderPass.GetRenderPass());
+
+        // Optionally update any fonts if necessary
+        //if (useCustomUIFonts)
+            //m_ImGuiOVerlay.UploadUIFont("FontName.ttf");
     }
 
     void VulfBase::CreateSynchronizationPrimitives() {
@@ -167,7 +172,7 @@ namespace Vulf {
     }
 
     void VulfBase::BuildRenderPass() {
-
+        _def_RenderPass.Init(_def_Swapchain.GetSwapFormat());
     }
 
     void VulfBase::BuildGraphicsPipeline() {
@@ -189,6 +194,9 @@ namespace Vulf {
 //-----------------------------------------------------------------------------//
 // Render Loop
     void VulfBase::RenderLoop() {
+
+        OnStart();
+
         while (!m_Window->closed()) {
 #ifdef _WIN32
             OPTICK_FRAME("MainThread");
@@ -210,14 +218,16 @@ namespace Vulf {
 
             OnRender();
 
-            DrawFrame();
-
             float fpsTimer = std::chrono::duration<double, std::milli>(tEnd - m_LastTimestamp).count();
             if (fpsTimer > 1000.0f) {
                 VK_LOG("FPS : ", m_FrameCounter);
                 m_FrameCounter = 0;
                 m_LastTimestamp = tEnd;
             }
+
+            OnImGui();
+
+            DrawFrame();
         }
         vkDeviceWaitIdle(VKDEVICE);
 
@@ -301,7 +311,7 @@ namespace Vulf {
 #ifdef _WIN32
         OPTICK_GPU_EVENT("Queue Submit");
 #endif
-        if(VK_CALL(vkQueueSubmit(VKLogicalDevice::GetDeviceManager()->GetGraphicsQueue(), 1, &submitInfo, m_InFlightFences[m_CurrentFrame]))) {
+        if(VK_CALL(vkQueueSubmit(VKLogicalDevice::Get()->GetGraphicsQueue(), 1, &submitInfo, m_InFlightFences[m_CurrentFrame]))) {
             throw std::runtime_error("Cannot submit command buffer!");
         }
 
@@ -317,7 +327,7 @@ namespace Vulf {
 #ifdef _WIN32
         OPTICK_GPU_EVENT("Queue Present");
 #endif
-        result = vkQueuePresentKHR(VKLogicalDevice::GetDeviceManager()->GetPresentQueue(), &presentInfo);
+        result = vkQueuePresentKHR(VKLogicalDevice::Get()->GetPresentQueue(), &presentInfo);
 
         if(result == VK_ERROR_OUT_OF_DATE_KHR || result == VK_SUBOPTIMAL_KHR || m_Window->IsResized()) {
             m_Window->SetResizedFalse();

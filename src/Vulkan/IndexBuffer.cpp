@@ -8,7 +8,7 @@ void IndexBuffer::Create(std::vector<uint16_t> vertices, CmdPool pool)
 
     m_IndexBuffer.CreateBuffer(IndexDataSize, VK_BUFFER_USAGE_TRANSFER_DST_BIT | VK_BUFFER_USAGE_INDEX_BUFFER_BIT, VK_MEMORY_PROPERTY_DEVICE_LOCAL_BIT);
 
-    m_StagingBuffer.CopyBufferToDevice(pool, m_IndexBuffer.GetBuffer(), IndexDataSize);
+    m_StagingBuffer.CopyBufferToDevice(pool, m_IndexBuffer.get_buffer(), IndexDataSize);
     m_StagingBuffer.DestroyBuffer();
 }
 
@@ -19,5 +19,5 @@ void IndexBuffer::Destroy()
 
 void IndexBuffer::Bind(VkCommandBuffer cmdBuffer)
 {
-    vkCmdBindIndexBuffer(cmdBuffer, m_IndexBuffer.GetBuffer(), 0, VK_INDEX_TYPE_UINT16);
+    vkCmdBindIndexBuffer(cmdBuffer, m_IndexBuffer.get_buffer(), 0, VK_INDEX_TYPE_UINT16);
 }

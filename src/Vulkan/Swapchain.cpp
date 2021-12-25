@@ -36,7 +36,7 @@ void Swapchain::Init(GLFWwindow* window)
     swcCI.imageExtent = m_SwapchainExtent;
     swcCI.imageArrayLayers = 1;
     swcCI.imageUsage = VK_IMAGE_USAGE_COLOR_ATTACHMENT_BIT;
-    QueueFamilyIndices indices = VKLogicalDevice::GetDeviceManager()->GetGPUManager().GetQueueFamilyIndices();
+    QueueFamilyIndices indices = VKLogicalDevice::Get()->GetGPUManager().GetQueueFamilyIndices();
     uint32_t queueFamilyIndices[] = {indices.graphicsFamily.value(), indices.presentFamily.value()};
 
     if (indices.graphicsFamily != indices.presentFamily)
@@ -80,17 +80,17 @@ void Swapchain::Destroy()
 void Swapchain::querySwapchainProperties()
 {
     // Get the surface capabilities
-    vkGetPhysicalDeviceSurfaceCapabilitiesKHR(VKLogicalDevice::GetDeviceManager()->GetGPUManager().GetGPU(), Instance::GetInstanceManager()->GetSurface(), &m_SurfaceProperties.capabilities);
+    vkGetPhysicalDeviceSurfaceCapabilitiesKHR(VKLogicalDevice::Get()->GetGPUManager().GetGPU(), Instance::GetInstanceManager()->GetSurface(), &m_SurfaceProperties.capabilities);
     // Get the surface formats supported
     uint32_t formatsCount = 0;
-    vkGetPhysicalDeviceSurfaceFormatsKHR(VKLogicalDevice::GetDeviceManager()->GetGPUManager().GetGPU(), Instance::GetInstanceManager()->GetSurface(), &formatsCount, nullptr);
+    vkGetPhysicalDeviceSurfaceFormatsKHR(VKLogicalDevice::Get()->GetGPUManager().GetGPU(), Instance::GetInstanceManager()->GetSurface(), &formatsCount, nullptr);
     m_SurfaceProperties.formats.resize(formatsCount);
-    vkGetPhysicalDeviceSurfaceFormatsKHR(VKLogicalDevice::GetDeviceManager()->GetGPUManager().GetGPU(), Instance::GetInstanceManager()->GetSurface(), &formatsCount, m_SurfaceProperties.formats.data());
+    vkGetPhysicalDeviceSurfaceFormatsKHR(VKLogicalDevice::Get()->GetGPUManager().GetGPU(), Instance::GetInstanceManager()->GetSurface(), &formatsCount, m_SurfaceProperties.formats.data());
     // Get the surface available presentModes
     uint32_t presentModesCount = 0;
-    vkGetPhysicalDeviceSurfacePresentModesKHR(VKLogicalDevice::GetDeviceManager()->GetGPUManager().GetGPU(), Instance::GetInstanceManager()->GetSurface(), &presentModesCount, nullptr);
+    vkGetPhysicalDeviceSurfacePresentModesKHR(VKLogicalDevice::Get()->GetGPUManager().GetGPU(), Instance::GetInstanceManager()->GetSurface(), &presentModesCount, nullptr);
     m_SurfaceProperties.presentModes.resize(presentModesCount);
-    vkGetPhysicalDeviceSurfacePresentModesKHR(VKLogicalDevice::GetDeviceManager()->GetGPUManager().GetGPU(), Instance::GetInstanceManager()->GetSurface(), &presentModesCount, m_SurfaceProperties.presentModes.data());
+    vkGetPhysicalDeviceSurfacePresentModesKHR(VKLogicalDevice::Get()->GetGPUManager().GetGPU(), Instance::GetInstanceManager()->GetSurface(), &presentModesCount, m_SurfaceProperties.presentModes.data());
 }
 
 VkExtent2D Swapchain::getSwapchainExtent()

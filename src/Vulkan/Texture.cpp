@@ -25,8 +25,8 @@ void Texture::CreateTexture(const std::string& path, CmdPool& cmdPool)
         VK_FORMAT_R8G8B8A8_UNORM,   //Format
         VK_IMAGE_TILING_OPTIMAL,    // Tiling
         VK_IMAGE_USAGE_TRANSFER_DST_BIT | VK_IMAGE_USAGE_SAMPLED_BIT, // Image Usage Flags
-        VK_MEMORY_PROPERTY_DEVICE_LOCAL_BIT,    // Memory Property Flags
-        cmdPool);
+        VK_MEMORY_PROPERTY_DEVICE_LOCAL_BIT);    // Memory Property Flags
+        
 
     /*
      *    There are two transitions we need to handle:
@@ -34,15 +34,15 @@ void Texture::CreateTexture(const std::string& path, CmdPool& cmdPool)
      *      Transfer destination → shader reading: shader reads should wait on transfer writes, specifically the shader reads in the fragment shader, because that's where we're going to use the texture
      */
     // change the image layout
-    m_TextureImage.TransitionImageLayout(VK_FORMAT_R8G8B8A8_UNORM, VK_IMAGE_LAYOUT_UNDEFINED, VK_IMAGE_LAYOUT_TRANSFER_DST_OPTIMAL, cmdPool);
+    m_TextureImage.TransitionImageLayout(VK_FORMAT_R8G8B8A8_UNORM, VK_IMAGE_LAYOUT_UNDEFINED, VK_IMAGE_LAYOUT_TRANSFER_DST_OPTIMAL);
 
     // Copy the image to the buffer
-    cmdPool.CopyBufferToImage(m_ImageStagingBuffer.GetBuffer(), m_TextureImage.GetImage(), m_Width, m_Height);
+    cmdPool.CopyBufferToImage(m_ImageStagingBuffer.get_buffer(), m_TextureImage.GetImage(), m_Width, m_Height);
 
     // Change the formate such that we can sample it from the shader
-    m_TextureImage.TransitionImageLayout( VK_FORMAT_R8G8B8A8_UNORM, VK_IMAGE_LAYOUT_TRANSFER_DST_OPTIMAL, VK_IMAGE_LAYOUT_SHADER_READ_ONLY_OPTIMAL, cmdPool);
+    m_TextureImage.TransitionImageLayout( VK_FORMAT_R8G8B8A8_UNORM, VK_IMAGE_LAYOUT_TRANSFER_DST_OPTIMAL, VK_IMAGE_LAYOUT_SHADER_READ_ONLY_OPTIMAL);
 
-    // Create the image view for the texture (since a image can onl be accesed through a view)
+    // Create the image view for the texture (since a image can only be accessed through a view)
     m_TextureImage.CreateImageView(VK_FORMAT_R8G8B8A8_UNORM, VK_IMAGE_ASPECT_COLOR_BIT);
 
     // Create the sampler for image view
@@ -55,7 +55,7 @@ void Texture::CreateTexture(const std::string& path, CmdPool& cmdPool)
     samplerInfo.addressModeW = VK_SAMPLER_ADDRESS_MODE_REPEAT;
     samplerInfo.anisotropyEnable = VK_TRUE;
     VkPhysicalDeviceProperties properties{};
-    vkGetPhysicalDeviceProperties(VKLogicalDevice::GetDeviceManager()->GetGPUManager().GetGPU(), &properties);
+    vkGetPhysicalDeviceProperties(VKLogicalDevice::Get()->GetGPUManager().GetGPU(), &properties);
     samplerInfo.maxAnisotropy = properties.limits.maxSamplerAnisotropy;
     samplerInfo.borderColor = VK_BORDER_COLOR_INT_OPAQUE_BLACK;
     samplerInfo.unnormalizedCoordinates = VK_FALSE;
@@ -69,6 +69,66 @@ void Texture::CreateTexture(const std::string& path, CmdPool& cmdPool)
     if (VK_CALL(vkCreateSampler(VKDEVICE, &samplerInfo, nullptr, &m_TextureSampler)))
        throw std::runtime_error("failed to create texture sampler!");
 
+
+    // Delete the staging buffer
+    m_ImageStagingBuffer.DestroyBuffer();
+}
+
+void Texture::UploadTexture(const void* imageData, VkDeviceSize imageSize, uint32_t width, uint32_t height)
+{
+
+    m_ImageStagingBuffer.CreateBuffer(imageSize, VK_BUFFER_USAGE_TRANSFER_SRC_BIT, VK_MEMORY_PROPERTY_HOST_VISIBLE_BIT | VK_MEMORY_PROPERTY_HOST_COHERENT_BIT);
+
+    m_ImageStagingBuffer.MapImage((unsigned char*)imageData, imageSize);
+
+    // Create the image
+    m_TextureImage.CreateImage(width, height,
+        VK_FORMAT_R8G8B8A8_UNORM,   //Format
+        VK_IMAGE_TILING_OPTIMAL,    // Tiling
+        VK_IMAGE_USAGE_TRANSFER_DST_BIT | VK_IMAGE_USAGE_SAMPLED_BIT, // Image Usage Flags
+        VK_MEMORY_PROPERTY_DEVICE_LOCAL_BIT);    // Memory Property Flags
+
+    /*
+     *    There are two transitions we need to handle:
+     *      Undefined → transfer destination: transfer writes that don't need to wait on anything
+     *      Transfer destination → shader reading: shader reads should wait on transfer writes, specifically the shader reads in the fragment shader, because that's where we're going to use the texture
+     */
+    // change the image layout
+    m_TextureImage.TransitionImageLayout(VK_FORMAT_R8G8B8A8_UNORM, VK_IMAGE_LAYOUT_UNDEFINED, VK_IMAGE_LAYOUT_TRANSFER_DST_OPTIMAL);
+
+    // Copy the image to the buffer
+    //cmdPool.CopyBufferToImage(m_ImageStagingBuffer.GetBuffer(), m_TextureImage.GetImage(), m_Width, m_Height);
+    VKLogicalDevice::Get()->copyBufferToImage(m_ImageStagingBuffer.get_buffer(), m_TextureImage.GetImage(), width, height);
+
+    // Change the formate such that we can sample it from the shader
+    m_TextureImage.TransitionImageLayout( VK_FORMAT_R8G8B8A8_UNORM, VK_IMAGE_LAYOUT_TRANSFER_DST_OPTIMAL, VK_IMAGE_LAYOUT_SHADER_READ_ONLY_OPTIMAL);
+
+    // Create the image view for the texture (since a image can only be accessed through a view)
+    m_TextureImage.CreateImageView(VK_FORMAT_R8G8B8A8_UNORM, VK_IMAGE_ASPECT_COLOR_BIT);
+
+    // Create the sampler for image view
+    VkSamplerCreateInfo samplerInfo{};
+    samplerInfo.sType = VK_STRUCTURE_TYPE_SAMPLER_CREATE_INFO;
+    samplerInfo.magFilter = VK_FILTER_LINEAR;
+    samplerInfo.minFilter = VK_FILTER_LINEAR;
+    samplerInfo.addressModeU = VK_SAMPLER_ADDRESS_MODE_REPEAT;
+    samplerInfo.addressModeV = VK_SAMPLER_ADDRESS_MODE_REPEAT;
+    samplerInfo.addressModeW = VK_SAMPLER_ADDRESS_MODE_REPEAT;
+    samplerInfo.anisotropyEnable = VK_TRUE;
+    VkPhysicalDeviceProperties properties{};
+    vkGetPhysicalDeviceProperties(VKLogicalDevice::Get()->GetGPUManager().GetGPU(), &properties);
+    samplerInfo.maxAnisotropy = properties.limits.maxSamplerAnisotropy;
+    samplerInfo.borderColor = VK_BORDER_COLOR_INT_OPAQUE_BLACK;
+    samplerInfo.unnormalizedCoordinates = VK_FALSE;
+    samplerInfo.compareEnable = VK_FALSE;
+    samplerInfo.compareOp = VK_COMPARE_OP_ALWAYS;
+    samplerInfo.mipmapMode = VK_SAMPLER_MIPMAP_MODE_LINEAR;
+    samplerInfo.mipLodBias = 0.0f;
+    samplerInfo.minLod = 0.0f;
+    samplerInfo.maxLod = 0.0f;
+
+    if (VK_CALL(vkCreateSampler(VKDEVICE, &samplerInfo, nullptr, &m_TextureSampler)))
+       throw std::runtime_error("failed to create texture sampler!");
 
     // Delete the staging buffer
     m_ImageStagingBuffer.DestroyBuffer();

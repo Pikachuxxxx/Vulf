@@ -4,7 +4,7 @@
 #include "../utils/VulkanCheckResult.h"
 #include "CmdPool.h"
 
-void Image::CreateImage(uint32_t width, uint32_t height, VkFormat format, VkImageTiling tiling, VkImageUsageFlags usage, VkMemoryPropertyFlags properties, CmdPool& cmdPool)
+void Image::CreateImage(uint32_t width, uint32_t height, VkFormat format, VkImageTiling tiling, VkImageUsageFlags usage, VkMemoryPropertyFlags properties)
 {
     // Fill the image create info
     VkImageCreateInfo imageInfo{};
@@ -13,10 +13,10 @@ void Image::CreateImage(uint32_t width, uint32_t height, VkFormat format, VkImag
     imageInfo.extent.width = width;
     imageInfo.extent.height = height;
     imageInfo.extent.depth = 1;
-    imageInfo.mipLevels = 1; // Currently we do not support mipmaps yet!
+    imageInfo.mipLevels = 1; // Currently we do not support mip maps yet!
     imageInfo.arrayLayers = 1;
     imageInfo.format = format;
-    imageInfo.tiling = tiling; // Because of staging bufffer the linearity of it not necessay as we won't be interacting with it at all
+    imageInfo.tiling = tiling; // Because of staging buffer the linearity of it not necessary as we won't be interacting with it at all
     imageInfo.initialLayout = VK_IMAGE_LAYOUT_UNDEFINED;
     imageInfo.usage = usage;
     imageInfo.sharingMode = VK_SHARING_MODE_EXCLUSIVE;
@@ -34,7 +34,7 @@ void Image::CreateImage(uint32_t width, uint32_t height, VkFormat format, VkImag
     VkMemoryAllocateInfo allocInfo{};
     allocInfo.sType = VK_STRUCTURE_TYPE_MEMORY_ALLOCATE_INFO;
     allocInfo.allocationSize = memRequirements.size;
-    allocInfo.memoryTypeIndex = VKLogicalDevice::GetDeviceManager()->GetGPUManager().FindMemoryTypeIndex(memRequirements.memoryTypeBits, properties);
+    allocInfo.memoryTypeIndex = VKLogicalDevice::Get()->GetGPUManager().FindMemoryTypeIndex(memRequirements.memoryTypeBits, properties);
 
     if(VK_CALL(vkAllocateMemory(VKDEVICE, &allocInfo, nullptr, &m_ImageMemory)))
         throw std::runtime_error("Cannot allocate image memory!");
@@ -53,7 +53,7 @@ void Image::CreateImage(uint32_t width, uint32_t height, VkFormat format, VkImag
     samplerInfo.addressModeW = VK_SAMPLER_ADDRESS_MODE_CLAMP_TO_EDGE;
     samplerInfo.anisotropyEnable = VK_TRUE;
     VkPhysicalDeviceProperties physicalDeviceProperties{};
-    vkGetPhysicalDeviceProperties(VKLogicalDevice::GetDeviceManager()->GetGPUManager().GetGPU(), &physicalDeviceProperties);
+    vkGetPhysicalDeviceProperties(VKLogicalDevice::Get()->GetGPUManager().GetGPU(), &physicalDeviceProperties);
     samplerInfo.maxAnisotropy = physicalDeviceProperties.limits.maxSamplerAnisotropy;
     samplerInfo.borderColor = VK_BORDER_COLOR_FLOAT_OPAQUE_WHITE;
     samplerInfo.unnormalizedCoordinates = VK_FALSE;
@@ -90,9 +90,10 @@ void Image::CreateImageView(VkFormat format, VkImageAspectFlags aspectFlags)
         throw std::runtime_error("failed to create texture image view!");
 }
 
-void Image::TransitionImageLayout(VkFormat format, VkImageLayout oldLayout, VkImageLayout newLayout, CmdPool& pool)
+void Image::TransitionImageLayout(VkFormat format, VkImageLayout oldLayout, VkImageLayout newLayout)
 {
-    VkCommandBuffer commandBuffer = pool.BeginSingleTimeBuffer();
+    VkCommandBuffer copyCmdBuffer = VKLogicalDevice::Get()->begin_single_time_command_buffer(VK_COMMAND_BUFFER_LEVEL_PRIMARY, true);
+
 
     // Transition the image layout using a proper memory barrier to suncrhonise write cycle before we read from it
     VkImageMemoryBarrier barrier{};
@@ -134,7 +135,7 @@ void Image::TransitionImageLayout(VkFormat format, VkImageLayout oldLayout, VkIm
     }
 
     vkCmdPipelineBarrier(
-        commandBuffer,
+        copyCmdBuffer,
         m_ImageSourceStage, m_ImageDestinationStage,
         0,
         0, nullptr,
@@ -142,7 +143,7 @@ void Image::TransitionImageLayout(VkFormat format, VkImageLayout oldLayout, VkIm
         1, &barrier
     );
 
-    pool.EndSingleTimeBuffer(commandBuffer);
+    VKLogicalDevice::Get()->flushCommandBuffer(copyCmdBuffer, VKLogicalDevice::Get()->GetGraphicsQueue());
 }
 
 
