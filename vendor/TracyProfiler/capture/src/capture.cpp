@@ -14,10 +14,10 @@
 #include <sys/stat.h>
 
 #include "../../common/TracyProtocol.hpp"
-#include "../../common/TracyStackFrames.hpp"
 #include "../../server/TracyFileWrite.hpp"
 #include "../../server/TracyMemory.hpp"
 #include "../../server/TracyPrint.hpp"
+#include "../../server/TracyStackFrames.hpp"
 #include "../../server/TracyWorker.hpp"
 
 #ifdef _WIN32
@@ -34,7 +34,7 @@ void SigInt( int )
 
 [[noreturn]] void Usage()
 {
-    printf( "Usage: capture -o output.tracy [-a address] [-p port] [-f] [-s seconds]\n" );
+    printf( "Usage: capture -o output.tracy [-a address] [-p port] [-f]\n" );
     exit( 1 );
 }
 
@@ -52,10 +52,9 @@ int main( int argc, char** argv )
     const char* address = "127.0.0.1";
     const char* output = nullptr;
     int port = 8086;
-    int seconds = -1;
 
     int c;
-    while( ( c = getopt( argc, argv, "a:o:p:fs:" ) ) != -1 )
+    while( ( c = getopt( argc, argv, "a:o:p:f" ) ) != -1 )
     {
         switch( c )
         {
@@ -70,9 +69,6 @@ int main( int argc, char** argv )
             break;
         case 'f':
             overwrite = true;
-            break;
-        case 's':
-            seconds = atoi (optarg);
             break;
         default:
             Usage();
@@ -141,7 +137,6 @@ int main( int argc, char** argv )
         {
             worker.Disconnect();
             disconnect = false;
-            break;
         }
 
         lock.lock();
@@ -167,14 +162,6 @@ int main( int argc, char** argv )
         fflush( stdout );
 
         std::this_thread::sleep_for( std::chrono::milliseconds( 100 ) );
-        if( seconds != -1 )
-        {
-            const auto dur = std::chrono::high_resolution_clock::now() - t0;
-            if( std::chrono::duration_cast<std::chrono::seconds>(dur).count() >= seconds )
-            {
-                disconnect = true;
-            }
-        }
     }
     const auto t1 = std::chrono::high_resolution_clock::now();
 

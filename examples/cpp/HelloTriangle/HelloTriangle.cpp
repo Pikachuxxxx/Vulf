@@ -47,6 +47,7 @@ private:
         alignas(16) glm::mat4 _padding2 = glm::mat4(0.0f);
     }vpUBOData;
 
+    float someNum = 45.0f;
 private:
     // default stuff required for initialization, these resources are all explicitly allocated and to not follow RAII, hence the defauly ones are provided by Vulf
     FixedPipelineFuncs      fixedFunctions;
@@ -136,8 +137,9 @@ private:
         vpUBOData.view = glm::mat4(1.0f);
         vpUBOData.proj = glm::mat4(1.0f);
 
-        //vpUBOData.view = getCamera().GetViewMatrix();
-        //vpUBOData.proj = glm::perspective(glm::radians(45.0f), (float) _def_Swapchain.GetSwapExtent().width / _def_Swapchain.GetSwapExtent().height, 0.01f, 100.0f);
+        vpUBOData.view = getCamera().GetViewMatrix();
+        vpUBOData.proj = glm::perspective(glm::radians(someNum), (float) _def_Swapchain.GetSwapExtent().width / _def_Swapchain.GetSwapExtent().height, 0.01f, 100.0f);
+        //vpUBOData.proj[1][1] *= -1;
 
         helloTriangleUBO.UpdateBuffer(&vpUBOData, sizeof(ViewProjectionUBOData), imageIndex);
     }
@@ -240,13 +242,28 @@ private:
         simpleCommandBuffer.RecordBuffer(cmdBuffers[i]);
         _def_RenderPass.BeginRenderPass(cmdBuffers[i], framebuffers[i], _def_Swapchain.GetSwapExtent());
 
+        VkViewport viewport = {};
+        viewport.x = 0.0f;
+        viewport.y = 0.0f;
+        viewport.width = static_cast<float>(width);
+        viewport.height = static_cast<float>(height);
+        viewport.minDepth = 0.0f;
+        viewport.maxDepth = 1.0f;
+
+        VkRect2D scissor = {};
+        scissor.offset = { 0, 0 };
+        scissor.extent = { getWindow()->getWidth(), getWindow()->getHeight()};
+
+        vkCmdSetViewport(cmdBuffers[i], 0, 1, &viewport);
+        vkCmdSetScissor(cmdBuffers[i], 0, 1, &scissor);
+
         simpleGraphicsPipeline.Bind(cmdBuffers[i]);
 
         // Bind the appropriate descriptor sets
         vkCmdBindDescriptorSets(cmdBuffers[i], VK_PIPELINE_BIND_POINT_GRAPHICS, fixedFunctions.GetPipelineLayout(), 0, 1, &descriptorSets[i], 0, nullptr);
 
         // Bind the push constants
-        modelPCData.model = glm::rotate(glm::mat4(1.0f), (float) glm::radians(90.0f * 2.0f), glm::vec3(0.0f, 0.0f, 1.0f));
+        modelPCData.model = glm::rotate(glm::mat4(1.0f), (float) glm::radians(90.0f * 1.0f), glm::vec3(0.0f, 0.0f, 1.0f));
         vkCmdPushConstants(cmdBuffers[i], fixedFunctions.GetPipelineLayout(), VK_SHADER_STAGE_VERTEX_BIT | VK_SHADER_STAGE_FRAGMENT_BIT, 0, sizeof(ModelPushConstant), &modelPCData);
 
         helloTriangleVBO.Bind(cmdBuffers[i]);
@@ -258,19 +275,7 @@ private:
 
         io.DisplaySize = ImVec2((float) width, (float) height);
 
-        ImGui::NewFrame();
-
-        ImGui::PushStyleVar(ImGuiStyleVar_WindowRounding, 0);
-        ImGui::SetNextWindowPos(ImVec2(10, 10));
-        ImGui::Begin("Vulkan Example", nullptr, ImGuiWindowFlags_AlwaysAutoResize | ImGuiWindowFlags_NoResize | ImGuiWindowFlags_NoMove);
-        ImGui::TextUnformatted(get_app_name().c_str());
-        ImGui::TextUnformatted(get_logical_device().Get()->GetGPUManager().get_device_name().c_str());
-
-        ImGui::End();
-        ImGui::PopStyleVar();
-        ImGui::Render();
-
-        if (get_ui_overlay().update_imgui_buffers())
+        get_ui_overlay().update_imgui_buffers();
             get_ui_overlay().draw(cmdBuffers[i]);
 
         _def_RenderPass.EndRenderPass(cmdBuffers[i]);
@@ -283,7 +288,22 @@ private:
 
     void OnImGui() override
     {
+        ImGui::NewFrame();
 
+        //ImGui::PushStyleVar(ImGuiStyleVar_WindowRounding, 0);
+        //ImGui::SetNextWindowPos(ImVec2(10, 10));
+        if(ImGui::Begin("Vulkan Example"))
+        {
+            ImGui::Text("Hello ImGui");
+            ImGui::TextUnformatted(get_app_name().c_str());
+            ImGui::DragFloat("Position", &someNum, 0.1f, 0.0f, 100.0f);
+
+            get_ui_overlay().setImageSet(gridTexture.get_descriptor_set());
+            ImGui::Image((ImTextureID)gridTexture.get_descriptor_set(), ImVec2(ImGui::GetWindowSize()[0], 200), ImVec2(0, 0), ImVec2(1.0f, -1.0f));
+        }
+        ImGui::End();
+
+        ImGui::Render();
     }
 };
 

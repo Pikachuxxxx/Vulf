@@ -1,7 +1,7 @@
 // dear imgui: FreeType font builder (used as a replacement for the stb_truetype builder)
 // (code)
 
-// Get the latest version at https://github.com/ocornut/imgui/tree/master/misc/freetype
+// Get latest version at https://github.com/ocornut/imgui/tree/master/misc/freetype
 // Original code by @vuhdo (Aleksei Skriabin). Improvements by @mikesart. Maintained since 2019 by @ocornut.
 
 // CHANGELOG
@@ -41,8 +41,7 @@
 #include FT_SYNTHESIS_H         // <freetype/ftsynth.h>
 
 #ifdef _MSC_VER
-#pragma warning (disable: 4505)     // unreferenced local function has been removed (stb stuff)
-#pragma warning (disable: 26812)    // [Static Analyzer] The enum type 'xxx' is unscoped. Prefer 'enum class' over 'enum' (Enum.3).
+#pragma warning (disable: 4505) // unreferenced local function has been removed (stb stuff)
 #endif
 
 #if defined(__GNUC__)
@@ -601,15 +600,13 @@ bool ImFontAtlasBuildWithFreeTypeEx(FT_Library ft_library, ImFontAtlas* atlas, u
     atlas->TexUvScale = ImVec2(1.0f / atlas->TexWidth, 1.0f / atlas->TexHeight);
     if (src_load_color)
     {
-        size_t tex_size = (size_t)atlas->TexWidth * atlas->TexHeight * 4;
-        atlas->TexPixelsRGBA32 = (unsigned int*)IM_ALLOC(tex_size);
-        memset(atlas->TexPixelsRGBA32, 0, tex_size);
+        atlas->TexPixelsRGBA32 = (unsigned int*)IM_ALLOC(atlas->TexWidth * atlas->TexHeight * 4);
+        memset(atlas->TexPixelsRGBA32, 0, atlas->TexWidth * atlas->TexHeight * 4);
     }
     else
     {
-        size_t tex_size = (size_t)atlas->TexWidth * atlas->TexHeight * 1;
-        atlas->TexPixelsAlpha8 = (unsigned char*)IM_ALLOC(tex_size);
-        memset(atlas->TexPixelsAlpha8, 0, tex_size);
+        atlas->TexPixelsAlpha8 = (unsigned char*)IM_ALLOC(atlas->TexWidth * atlas->TexHeight);
+        memset(atlas->TexPixelsAlpha8, 0, atlas->TexWidth * atlas->TexHeight);
     }
 
     // 8. Copy rasterized font characters back into the main texture
@@ -648,22 +645,6 @@ bool ImFontAtlasBuildWithFreeTypeEx(FT_Library ft_library, ImFontAtlas* atlas, u
             const int tx = pack_rect.x + padding;
             const int ty = pack_rect.y + padding;
 
-            // Register glyph
-            float x0 = info.OffsetX + font_off_x;
-            float y0 = info.OffsetY + font_off_y;
-            float x1 = x0 + info.Width;
-            float y1 = y0 + info.Height;
-            float u0 = (tx) / (float)atlas->TexWidth;
-            float v0 = (ty) / (float)atlas->TexHeight;
-            float u1 = (tx + info.Width) / (float)atlas->TexWidth;
-            float v1 = (ty + info.Height) / (float)atlas->TexHeight;
-            dst_font->AddGlyph(&cfg, (ImWchar)src_glyph.Codepoint, x0, y0, x1, y1, u0, v0, u1, v1, info.AdvanceX);
-
-            ImFontGlyph* dst_glyph = &dst_font->Glyphs.back();
-            IM_ASSERT(dst_glyph->Codepoint == src_glyph.Codepoint);
-            if (src_glyph.Info.IsColored)
-                dst_glyph->Colored = tex_use_colors = true;
-
             // Blit from temporary buffer to final texture
             size_t blit_src_stride = (size_t)src_glyph.Info.Width;
             size_t blit_dst_stride = (size_t)atlas->TexWidth;
@@ -682,6 +663,22 @@ bool ImFontAtlasBuildWithFreeTypeEx(FT_Library ft_library, ImFontAtlas* atlas, u
                     for (int x = 0; x < info.Width; x++)
                         blit_dst[x] = blit_src[x];
             }
+
+            // Register glyph
+            float x0 = info.OffsetX + font_off_x;
+            float y0 = info.OffsetY + font_off_y;
+            float x1 = x0 + info.Width;
+            float y1 = y0 + info.Height;
+            float u0 = (tx) / (float)atlas->TexWidth;
+            float v0 = (ty) / (float)atlas->TexHeight;
+            float u1 = (tx + info.Width) / (float)atlas->TexWidth;
+            float v1 = (ty + info.Height) / (float)atlas->TexHeight;
+            dst_font->AddGlyph(&cfg, (ImWchar)src_glyph.Codepoint, x0, y0, x1, y1, u0, v0, u1, v1, info.AdvanceX);
+
+            ImFontGlyph* dst_glyph = &dst_font->Glyphs.back();
+            IM_ASSERT(dst_glyph->Codepoint == src_glyph.Codepoint);
+            if (src_glyph.Info.IsColored)
+                dst_glyph->Colored = tex_use_colors = true;
         }
 
         src_tmp.Rects = NULL;
@@ -691,7 +688,8 @@ bool ImFontAtlasBuildWithFreeTypeEx(FT_Library ft_library, ImFontAtlas* atlas, u
     // Cleanup
     for (int buf_i = 0; buf_i < buf_bitmap_buffers.Size; buf_i++)
         IM_FREE(buf_bitmap_buffers[buf_i]);
-    src_tmp_array.clear_destruct();
+    for (int src_i = 0; src_i < src_tmp_array.Size; src_i++)
+        src_tmp_array[src_i].~ImFontBuildSrcDataFT();
 
     ImFontAtlasBuildFinish(atlas);
 

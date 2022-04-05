@@ -24,6 +24,17 @@ void GraphicsPipeline::Create(std::vector<VkPipelineShaderStageCreateInfo> shade
     m_VertexInputSCI.vertexAttributeDescriptionCount    = attributeDescriptions.size();
     m_VertexInputSCI.pVertexAttributeDescriptions       = attributeDescriptions.data();
 
+    std::vector<VkDynamicState> dynamicStateDescriptors;
+
+    dynamicStateDescriptors.push_back(VK_DYNAMIC_STATE_VIEWPORT);
+    dynamicStateDescriptors.push_back(VK_DYNAMIC_STATE_SCISSOR);
+
+    VkPipelineDynamicStateCreateInfo dynamicStateCI{};
+    dynamicStateCI.sType = VK_STRUCTURE_TYPE_PIPELINE_DYNAMIC_STATE_CREATE_INFO;
+    dynamicStateCI.pNext = NULL;
+    dynamicStateCI.dynamicStateCount = uint32_t(dynamicStateDescriptors.size());
+    dynamicStateCI.pDynamicStates = dynamicStateDescriptors.data();
+
     graphicsCI.pVertexInputState    = &m_VertexInputSCI;
     graphicsCI.pInputAssemblyState  = &fixedfunctions.GetInputAssemblySCI();
     graphicsCI.pViewportState       = &fixedfunctions.GetViewportStateCI();
@@ -31,7 +42,7 @@ void GraphicsPipeline::Create(std::vector<VkPipelineShaderStageCreateInfo> shade
     graphicsCI.pMultisampleState    = &fixedfunctions.GetMultiSampleSCI();
     graphicsCI.pDepthStencilState   = &fixedfunctions.GetDepthStencilSCI();
     graphicsCI.pColorBlendState     = &fixedfunctions.GetColorBlendSCI();
-    graphicsCI.pDynamicState        = nullptr;
+    graphicsCI.pDynamicState        = &dynamicStateCI;
     graphicsCI.layout               = fixedfunctions.GetPipelineLayout();
     graphicsCI.renderPass           = renderpass;
     graphicsCI.subpass              = 0;

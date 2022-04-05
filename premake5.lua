@@ -15,9 +15,30 @@ VulkanSDK = os.getenv("VULKAN_SDK")
 print(VulkanSDK)
 root_dir = os.getcwd()
 
+local p = premake
+local vs = require("vstudio")
+
+p.api.addAllowed("system", "Prospero")
+p.api.addAllowed("system", "ORBIS")
+p.api.addAllowed("architecture", {"Prospero"})
+ p.api.addAllowed("architecture", {"ORBIS"})
+
+local function archFromConfig_cb(base, cfg, win32)
+    if cfg.system == "Prospero" or cfg.architecture  == "Prospero" then
+        return "Prospero"
+    elseif cfg.system == "ORBIS" or cfg.architecture  == "ORBIS" then
+        return "ORBIS"
+    else
+        return base( cfg, win32 )
+    end
+end
+
+p.override( vs, "archFromConfig", archFromConfig_cb )
+
+
 workspace ( "Vulf" )
     location "build"
-    architecture "x86_64"
+    platforms { "x64", "ORBIS", "Prospero" }
 
     -- Output directory path based on build config
     outputdir = "%{cfg.buildcfg}-%{cfg.system}-%{cfg.architecture}"
@@ -32,6 +53,12 @@ workspace ( "Vulf" )
         "Debug",
         "Release"
     }
+    
+    filter "platforms:Prospero"
+        system "Prospero"
+        architecture "Prospero"
+        cppdialect "C++17"
+    filter{}
 
     project "Vulf"
         kind "ConsoleApp"
@@ -132,7 +159,9 @@ workspace ( "Vulf" )
 
     includedirs { VulkanSDK .. "/include" }
 
-    filter "system:windows"
+	filter "platforms:x64"
+		system "Windows"
+		architecture "x64"
         cppdialect "C++17"
         systemversion "latest"
 
@@ -154,7 +183,8 @@ workspace ( "Vulf" )
         includedirs { VulkanSDK .. "/include" }
 
         libdirs { VulkanSDK .. "/Lib" }
-
+    filter{}
+        
     filter "configurations:Debug"
         libdirs { "vendor/glfw/libs/%{cfg.buildcfg}" }
         symbols "On"

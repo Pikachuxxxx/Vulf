@@ -24,7 +24,7 @@ namespace Vulf {
 
         // Configure ImGui flags
         io.ConfigFlags |= ImGuiConfigFlags_DockingEnable;
-        io.ConfigFlags |= ImGuiConfigFlags_ViewportsEnable;
+        //io.ConfigFlags |= ImGuiConfigFlags_ViewportsEnable;
 
         // Setup Dear ImGui style
         // Color scheme - Red like Sascha Willems samples (https://github.com/SaschaWillems/Vulkan/blob/91958acad2c15f52bda74c58f6c39bd980207d2a/base/VulkanUIOverlay.cpp#L31)
@@ -74,7 +74,7 @@ namespace Vulf {
         std::vector<VkDescriptorPoolSize> poolSizes = {
             Vulf::initializers::descriptorPoolSize(VK_DESCRIPTOR_TYPE_COMBINED_IMAGE_SAMPLER, 1)
         };
-        VkDescriptorPoolCreateInfo descriptorPoolInfo = Vulf::initializers::descriptorPoolCreateInfo(poolSizes, 2);
+        VkDescriptorPoolCreateInfo descriptorPoolInfo = Vulf::initializers::descriptorPoolCreateInfo(poolSizes, 1);
 
         VK_CHECK_CALL(vkCreateDescriptorPool(VKDEVICE, &descriptorPoolInfo, nullptr, &m_ImguiDescriptorPool));
 
@@ -97,6 +97,58 @@ namespace Vulf {
             Vulf::initializers::writeDescriptorSet(m_ImGuiDescriptorSet, VK_DESCRIPTOR_TYPE_COMBINED_IMAGE_SAMPLER, 0, &fontDescriptor)
         };
         vkUpdateDescriptorSets(VKDEVICE, static_cast<uint32_t>(writeDescriptorSets.size()), writeDescriptorSets.data(), 0, nullptr);
+
+        // Create the render pass
+
+// Create a render pass (last one in the application) for ImGUi
+// ImGui Attachment Description
+        //VkAttachmentDescription imguiAttachmentDesc = {};
+        //imguiAttachmentDesc.format = VK_FORMAT_R8G8B8A8_UNORM;;
+        //imguiAttachmentDesc.samples = VK_SAMPLE_COUNT_1_BIT;
+        //imguiAttachmentDesc.loadOp = VK_ATTACHMENT_LOAD_OP_LOAD;
+        //imguiAttachmentDesc.storeOp = VK_ATTACHMENT_STORE_OP_STORE;
+        //imguiAttachmentDesc.stencilLoadOp = VK_ATTACHMENT_LOAD_OP_DONT_CARE;
+        //imguiAttachmentDesc.stencilStoreOp = VK_ATTACHMENT_STORE_OP_DONT_CARE;
+        //imguiAttachmentDesc.initialLayout = VK_IMAGE_LAYOUT_COLOR_ATTACHMENT_OPTIMAL;
+        //imguiAttachmentDesc.finalLayout = VK_IMAGE_LAYOUT_PRESENT_SRC_KHR; // Since UI is the last render pass, now this will be used for presentation
+        //// ImGui color attachment reference to be used by the attachment and this is described by the attachment Description
+        //VkAttachmentReference imguiColorAttachmentRef = {};
+        //imguiColorAttachmentRef.attachment = 0;
+        //imguiColorAttachmentRef.layout = VK_IMAGE_LAYOUT_COLOR_ATTACHMENT_OPTIMAL;
+
+        //// Create a subpass using the attachment reference
+        //VkSubpassDescription imguiSubpassDesc{};
+        //imguiSubpassDesc.pipelineBindPoint = VK_PIPELINE_BIND_POINT_GRAPHICS;
+        //imguiSubpassDesc.colorAttachmentCount = 1;
+        //imguiSubpassDesc.pColorAttachments = &imguiColorAttachmentRef;
+
+        //// Create the sub pass dependency to communicate between different subpasses, we describe the dependencies between them
+        //VkSubpassDependency imguiDependency{};
+        //imguiDependency.srcSubpass = VK_SUBPASS_EXTERNAL;
+        //imguiDependency.dstSubpass = 0;
+        //imguiDependency.srcStageMask = VK_PIPELINE_STAGE_COLOR_ATTACHMENT_OUTPUT_BIT;
+        //imguiDependency.dstStageMask = VK_PIPELINE_STAGE_COLOR_ATTACHMENT_OUTPUT_BIT;
+        //imguiDependency.srcAccessMask = 0;
+        //imguiDependency.dstAccessMask = VK_ACCESS_COLOR_ATTACHMENT_WRITE_BIT;
+
+        //// Now create the imgui renderPass
+        //VkRenderPassCreateInfo imguiRPInfo{};
+        //imguiRPInfo.sType = VK_STRUCTURE_TYPE_RENDER_PASS_CREATE_INFO;
+        //imguiRPInfo.attachmentCount = 1;
+        //imguiRPInfo.pAttachments = &imguiAttachmentDesc;
+        //imguiRPInfo.subpassCount = 1;
+        //imguiRPInfo.pSubpasses = &imguiSubpassDesc;
+        //imguiRPInfo.dependencyCount = 1;
+        //imguiRPInfo.pDependencies = &imguiDependency;
+        //if (VK_CALL(vkCreateRenderPass(VKDEVICE, &imguiRPInfo, nullptr, &m_ImGuiRenderpass)))
+        //    throw std::runtime_error("Cannot create imgui render pass");
+        //else VK_LOG_SUCCESS("ImGUi Renderpass succesfully created !");
+
+
+        //prepare_pipeline(m_ImGuiRenderpass);
+        ImFontAtlas* atlas = io.Fonts;
+        ImTextureID set = &m_ImGuiDescriptorSet;
+        atlas->SetTexID(set);
     }
 
     void ImGuiOverlay::prepare_pipeline(const VkRenderPass renderPass)
@@ -250,9 +302,25 @@ namespace Vulf {
 
         ImGuiIO& io = ImGui::GetIO();
 
+        // VK_LOG("Starting render pass!");
+        //VkRenderPassBeginInfo beginInfo{};
+        //beginInfo.sType = VK_STRUCTURE_TYPE_RENDER_PASS_BEGIN_INFO;
+        //beginInfo.renderPass = m_ImGuiRenderpass;
+        //beginInfo.framebuffer = framebuffer;
+        //beginInfo.renderArea.offset = { 0, 0 };
+        //beginInfo.renderArea.extent = swapextent;
+        //std::array<VkClearValue, 2> clearValues{};
+        //clearValues[0].color = { {m_ClearColor[0], m_ClearColor[1], m_ClearColor[2], m_ClearColor[3]} };
+        //clearValues[1].depthStencil = { 1.0f, 0 };
+        //beginInfo.clearValueCount = static_cast<uint32_t>(clearValues.size());
+        //beginInfo.pClearValues = clearValues.data();
+
+        //vkCmdBeginRenderPass(cmdBuffer, &beginInfo, VK_SUBPASS_CONTENTS_INLINE);
+
         // Bind the pipeline and descriptor sets
+        VkDescriptorSet* setID = (VkDescriptorSet*)io.Fonts->TexID;
         vkCmdBindPipeline(commandBuffer, VK_PIPELINE_BIND_POINT_GRAPHICS, m_ImGuiPipeline);
-        vkCmdBindDescriptorSets(commandBuffer, VK_PIPELINE_BIND_POINT_GRAPHICS, m_ImGuiPipelineLayout, 0, 1, &m_ImGuiDescriptorSet, 0, NULL);
+        //vkCmdBindDescriptorSets(commandBuffer, VK_PIPELINE_BIND_POINT_GRAPHICS, m_ImGuiPipelineLayout, 0, 1, setID, 0, NULL);
 
         // Update the push constants
         pushConstBlock.scale = glm::vec2(2.0f / io.DisplaySize.x, 2.0f / io.DisplaySize.y);
@@ -268,6 +336,11 @@ namespace Vulf {
             const ImDrawList* cmd_list = imDrawData->CmdLists[i];
             for (int32_t j = 0; j < cmd_list->CmdBuffer.Size; j++) {
                 const ImDrawCmd* pcmd = &cmd_list->CmdBuffer[j];
+                ImTextureID curreTexID = pcmd->GetTexID(); // How to know it isn't Image or Font TexID?
+                if(curreTexID == &m_ImGuiDescriptorSet)
+                    vkCmdBindDescriptorSets(commandBuffer, VK_PIPELINE_BIND_POINT_GRAPHICS, m_ImGuiPipelineLayout, 0, 1, (VkDescriptorSet*)(&m_ImGuiDescriptorSet), 0, NULL);
+                else
+                    vkCmdBindDescriptorSets(commandBuffer, VK_PIPELINE_BIND_POINT_GRAPHICS, m_ImGuiPipelineLayout, 0, 1, (VkDescriptorSet*) (&m_ImguiImageSet), 0, NULL);
                 VkRect2D scissorRect;
                 scissorRect.offset.x = std::max((int32_t) (pcmd->ClipRect.x), 0);
                 scissorRect.offset.y = std::max((int32_t) (pcmd->ClipRect.y), 0);

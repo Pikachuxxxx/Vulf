@@ -184,10 +184,6 @@ private:
         int64_t selfMin = std::numeric_limits<int64_t>::max();
         int64_t selfMax = std::numeric_limits<int64_t>::min();
         int64_t selfTotal = 0;
-        size_t nonReentrantCount = 0;
-        int64_t nonReentrantMin = std::numeric_limits<int64_t>::max();
-        int64_t nonReentrantMax = std::numeric_limits<int64_t>::min();
-        int64_t nonReentrantTotal = 0;
     };
 
     struct CallstackFrameIdHash
@@ -289,7 +285,6 @@ private:
         Vector<uint64_t> symbolLocInline;
         int64_t newSymbolsIndex = -1;
         int64_t newInlineSymbolsIndex = -1;
-        unordered_flat_map<uint64_t, uint64_t> codeSymbolMap;
 
 #ifndef TRACY_NO_STATISTICS
         unordered_flat_map<VarArray<CallstackFrameId>*, uint32_t, VarArrayHasher<CallstackFrameId>, VarArrayComparator<CallstackFrameId>> parentCallstackMap;
@@ -361,8 +356,6 @@ private:
         unordered_flat_map<uint64_t, Vector<uint64_t>> locationCodeAddressList;
 
         unordered_flat_map<const char*, MemoryBlock, charutil::Hasher, charutil::Comparator> sourceFileCache;
-
-        unordered_flat_map<uint64_t, HwSampleData> hwSamples;
     };
 
     struct MbpsBlock
@@ -454,8 +447,6 @@ public:
     uint64_t GetGhostZonesCount() const { return m_data.ghostCnt; }
     uint32_t GetFrameImageCount() const { return (uint32_t)m_data.frameImage.size(); }
     uint64_t GetStringsCount() const { return m_data.strings.size() + m_data.stringData.size(); }
-    uint64_t GetHwSampleCountAddress() const { return m_data.hwSamples.size(); }
-    uint64_t GetHwSampleCount() const;
 #ifndef TRACY_NO_STATISTICS
     uint64_t GetChildSamplesCountSyms() const { return m_data.childSamples.size(); }
     uint64_t GetChildSamplesCountFull() const;
@@ -472,12 +463,11 @@ public:
     int GetCpuDataCpuCount() const { return m_data.cpuDataCount; }
     uint64_t GetPidFromTid( uint64_t tid ) const;
     const unordered_flat_map<uint64_t, CpuThreadData>& GetCpuThreadData() const { return m_data.cpuThreadData; }
-    void GetCpuUsage( int64_t t0, double tstep, size_t num, std::vector<std::pair<int, int>>& out );
+    void GetCpuUsageAtTime( int64_t time, int& own, int& other ) const;
     const unordered_flat_map<const char*, MemoryBlock, charutil::Hasher, charutil::Comparator>& GetSourceFileCache() const { return m_data.sourceFileCache; }
     uint64_t GetSourceFileCacheCount() const { return m_data.sourceFileCache.size(); }
     uint64_t GetSourceFileCacheSize() const;
     MemoryBlock GetSourceFileFromCache( const char* file ) const;
-    HwSampleData* GetHwSampleData( uint64_t addr );
 
     int64_t GetFrameTime( const FrameData& fd, size_t idx ) const;
     int64_t GetFrameBegin( const FrameData& fd, size_t idx ) const;
@@ -506,8 +496,6 @@ public:
     const char* GetSymbolCode( uint64_t sym, uint32_t& len ) const;
     uint64_t GetSymbolForAddress( uint64_t address ) const;
     uint64_t GetSymbolForAddress( uint64_t address, uint32_t& offset ) const;
-    uint64_t GetInlineSymbolForAddress( uint64_t address ) const;
-    bool HasInlineSymbolAddresses() const { return !m_data.codeSymbolMap.empty(); }
     StringIdx GetLocationForAddress( uint64_t address, uint32_t& line ) const;
     const Vector<uint64_t>* GetAddressesForLocation( uint32_t fileStringIdx, uint32_t line ) const;
     const uint64_t* GetInlineSymbolList( uint64_t sym, uint32_t len ) const;
@@ -691,12 +679,6 @@ private:
     tracy_force_inline void ProcessContextSwitch( const QueueContextSwitch& ev );
     tracy_force_inline void ProcessThreadWakeup( const QueueThreadWakeup& ev );
     tracy_force_inline void ProcessTidToPid( const QueueTidToPid& ev );
-    tracy_force_inline void ProcessHwSampleCpuCycle( const QueueHwSample& ev );
-    tracy_force_inline void ProcessHwSampleInstructionRetired( const QueueHwSample& ev );
-    tracy_force_inline void ProcessHwSampleCacheReference( const QueueHwSample& ev );
-    tracy_force_inline void ProcessHwSampleCacheMiss( const QueueHwSample& ev );
-    tracy_force_inline void ProcessHwSampleBranchRetired( const QueueHwSample& ev );
-    tracy_force_inline void ProcessHwSampleBranchMiss( const QueueHwSample& ev );
     tracy_force_inline void ProcessParamSetup( const QueueParamSetup& ev );
     tracy_force_inline void ProcessCpuTopology( const QueueCpuTopology& ev );
     tracy_force_inline void ProcessMemNamePayload( const QueueMemNamePayload& ev );
@@ -709,7 +691,6 @@ private:
     tracy_force_inline void ProcessGpuZoneBeginImplCommon( GpuEvent* zone, const QueueGpuZoneBeginLean& ev, bool serial );
     tracy_force_inline MemEvent* ProcessMemAllocImpl( uint64_t memname, MemData& memdata, const QueueMemAlloc& ev );
     tracy_force_inline MemEvent* ProcessMemFreeImpl( uint64_t memname, MemData& memdata, const QueueMemFree& ev );
-    tracy_force_inline void ProcessCallstackSampleImpl( const SampleData& sd, ThreadData& td, int64_t t, uint32_t callstack );
 
     void ZoneStackFailure( uint64_t thread, const ZoneEvent* ev );
     void ZoneDoubleEndFailure( uint64_t thread, const ZoneEvent* ev );
@@ -835,7 +816,7 @@ private:
     tracy_force_inline void ReadTimelineHaveSize( FileRead& f, GpuEvent* zone, int64_t& refTime, int64_t& refGpuTime, int32_t& childIdx, uint64_t sz );
 
 #ifndef TRACY_NO_STATISTICS
-    tracy_force_inline void ReconstructZoneStatistics( SrcLocCountMap& countMap, ZoneEvent& zone, uint16_t thread );
+    tracy_force_inline void ReconstructZoneStatistics( ZoneEvent& zone, uint16_t thread );
 #else
     tracy_force_inline void CountZoneStatistics( ZoneEvent* zone );
 #endif
@@ -892,7 +873,6 @@ private:
     bool m_onDemand;
     bool m_ignoreMemFreeFaults;
     bool m_codeTransfer;
-    bool m_combineSamples;
 
     short_ptr<GpuCtxData> m_gpuCtxMap[256];
     uint32_t m_pendingCallstackId = 0;

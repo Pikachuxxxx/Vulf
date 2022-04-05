@@ -81,10 +81,8 @@ namespace Vulf {
         m_ImGuiOVerlay.init();
         m_ImGuiOVerlay.upload_ui_font("FiraCode-Light.ttf");
         m_ImGuiOVerlay.prepare_pipeline(_def_RenderPass.GetRenderPass());
+        ImGui_ImplGlfw_InitForVulkan(m_Window->getGLFWwindow(), true);
 
-        // Optionally update any fonts if necessary
-        //if (useCustomUIFonts)
-            //m_ImGuiOVerlay.UploadUIFont("FontName.ttf");
     }
 
     void VulfBase::CreateSynchronizationPrimitives() {
@@ -216,6 +214,9 @@ namespace Vulf {
 
             OnUpdate(m_FrameTimer.count());
 
+            ImGui_ImplGlfw_NewFrame();
+            OnImGui();
+
             OnRender();
 
             float fpsTimer = std::chrono::duration<double, std::milli>(tEnd - m_LastTimestamp).count();
@@ -224,8 +225,6 @@ namespace Vulf {
                 m_FrameCounter = 0;
                 m_LastTimestamp = tEnd;
             }
-
-            OnImGui();
 
             DrawFrame();
         }

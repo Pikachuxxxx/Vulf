@@ -3,52 +3,6 @@ be able to talk with each other. Network protocol breakages won't be listed
 here.
 
 
-v0.x.x (xxxx-xx-xx)
--------------------
-
-- Cygwin and Mingw are deprecated due to lack of interest.
-- Added TRACY_NO_CALLSTACK_INLINES macro to disable inline functions
-  resolution in call stacks on Windows.
-- Limited client query response rate.
-- Improved function matching algorithm in compare traces view.
-- Added CMake integration.
-- Reworked rpmalloc initialization.
-- Fixed display of messages with newlines on messages list.
-- Excluded some uninteresting wrapper functions from call stacks (for
-  example SIMD pass-through intrinsics to the compiler built-ins).
-- Adjusted coloring of instruction hotness in symbol view.
-- Properly handle rare cases when sampling on Linux is momentary not able to
-  resolve time stamps.
-- Added Rocket Lake microarchitectural data.
-- Updated CPU identifier lists.
-- Implemented GPU timer overflow handling heuristics.
-- Assembly instructions are now assigned to inline symbols.
-  - You can not only see the assembly source file and line, but also the
-    originating function.
-  - If symbol view is restricted to a single inline function, all assembly
-    instructions not in this context will be dimmed out.
-- Kernel call stacks will be now properly captured and displayed in the
-  profiler. Kernel functions are marked with the red color.
-- The CPU hardware performance counters can be now sampled on Linux.
-  - Three inferred statistics are displayed for lines in both source and
-    assembly code in the symbol view window:
-    - Instructions executed per cycle.
-    - Branch miss rate.
-    - Cache miss rate.
-  - Instruction cost estimation method is no longer tied to software call
-    stack sampling.
-- The image name filter entry field is now providing a list of available
-  images.
-- Reentrant function calls may be not excluded from calculations in the
-  statistics view.
-- Crash handler is now properly removed during profiler destruction.
-- Repeatedly right-clicking on the same source line in the symbol view
-  window will now cycle through assembly blocks associated with this source
-  line.
-- Vulkan headers must be now explicitly included before including
-  TracyVulkan.hpp.
-
-
 v0.7.8 (2021-05-19)
 -------------------
 

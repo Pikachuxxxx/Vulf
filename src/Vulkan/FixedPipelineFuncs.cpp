@@ -152,7 +152,20 @@ void FixedPipelineFuncs::SetColorBlendSCI()
     m_ColorBlendSCI.blendConstants[3] = 0.0f;
 }
 
-void FixedPipelineFuncs::SetDynamicSCI() { }
+void FixedPipelineFuncs::SetDynamicSCI() {
+
+    std::vector<VkDynamicState> dynamicStateDescriptors;
+    dynamicStateDescriptors.push_back(VK_DYNAMIC_STATE_VIEWPORT);
+    dynamicStateDescriptors.push_back(VK_DYNAMIC_STATE_SCISSOR);
+
+    //if (pipelineInfo.depthBiasEnabled)
+      //  dynamicStateDescriptors.push_back(VK_DYNAMIC_STATE_DEPTH_BIAS);
+
+    m_DynamicSCI.sType = VK_STRUCTURE_TYPE_PIPELINE_DYNAMIC_STATE_CREATE_INFO;
+    m_DynamicSCI.pNext = NULL;
+    m_DynamicSCI.dynamicStateCount = uint32_t(dynamicStateDescriptors.size());
+    m_DynamicSCI.pDynamicStates = dynamicStateDescriptors.data();
+}
 
 // TODO: Make this dynamic to support usage of multiple uniform buffers
 void FixedPipelineFuncs::SetPipelineLayout(VkDescriptorSetLayout layout, VkPushConstantRange& pushConstants)

@@ -72,6 +72,48 @@ void Texture::CreateTexture(const std::string& path, CmdPool& cmdPool)
 
     // Delete the staging buffer
     m_ImageStagingBuffer.DestroyBuffer();
+
+
+    VkDescriptorPoolSize poolSize;
+    poolSize.type = (VkDescriptorType) VK_DESCRIPTOR_TYPE_COMBINED_IMAGE_SAMPLER;
+    poolSize.descriptorCount = 1;
+
+
+    VkDescriptorPoolCreateInfo poolInfo{};
+    poolInfo.sType = VK_STRUCTURE_TYPE_DESCRIPTOR_POOL_CREATE_INFO;
+    poolInfo.poolSizeCount = static_cast<uint32_t>(1);
+    poolInfo.pPoolSizes = &poolSize;
+    poolInfo.maxSets = static_cast<uint32_t>(1);
+
+    if (VK_CALL(vkCreateDescriptorPool(VKDEVICE, &poolInfo, nullptr, &m_DescriptorPool)))
+        throw std::runtime_error("Cannot create the descriptor pool!");
+    else VK_LOG_SUCCESS("successuflly create descriptor pool!");
+
+
+    VkDescriptorSetLayoutBinding binding[1] = {};
+    binding[0].descriptorType = VK_DESCRIPTOR_TYPE_COMBINED_IMAGE_SAMPLER;
+    binding[0].descriptorCount = 1;
+    binding[0].stageFlags = VK_SHADER_STAGE_FRAGMENT_BIT;
+    VkDescriptorSetLayoutCreateInfo info = {};
+    info.sType = VK_STRUCTURE_TYPE_DESCRIPTOR_SET_LAYOUT_CREATE_INFO;
+    info.bindingCount = 1;
+    info.pBindings = binding;
+    vkCreateDescriptorSetLayout(VKDEVICE, &info, nullptr, &g_DescriptorSetLayout);
+
+    // if(allocated < 2)
+    // Create Descriptor Set:
+    {
+        VkDescriptorSetAllocateInfo alloc_info = {};
+        alloc_info.sType = VK_STRUCTURE_TYPE_DESCRIPTOR_SET_ALLOCATE_INFO;
+        alloc_info.descriptorPool = m_DescriptorPool;
+        alloc_info.descriptorSetCount = 1;
+        alloc_info.pSetLayouts = &g_DescriptorSetLayout;
+
+        if (VK_CALL(vkAllocateDescriptorSets(VKDEVICE, &alloc_info, &descriptor_set)))
+            throw std::runtime_error("failed to create texture descriptor set for texture!");
+    }
+
+    update_set();
 }
 
 void Texture::UploadTexture(const void* imageData, VkDeviceSize imageSize, uint32_t width, uint32_t height)
@@ -144,6 +186,26 @@ unsigned char* Texture::LoadImage(const std::string& path)
     }
     else VK_LOG("Image loaded succesfully! Dim : [", m_Width, ", ", m_Height, "]");
     return pixels;
+}
+
+void Texture::update_set()
+{
+
+    // Update the Descriptor Set:
+    {
+        VkDescriptorImageInfo desc_image[1] = {};
+        desc_image[0].sampler = get_sampler();
+        desc_image[0].imageView = get_image_view();
+        desc_image[0].imageLayout = get_layout();
+        VkWriteDescriptorSet write_desc[1] = {};
+        write_desc[0].sType = VK_STRUCTURE_TYPE_WRITE_DESCRIPTOR_SET;
+        write_desc[0].dstSet = descriptor_set;
+        write_desc[0].dstBinding = 0;
+        write_desc[0].descriptorCount = 1;
+        write_desc[0].descriptorType = VK_DESCRIPTOR_TYPE_COMBINED_IMAGE_SAMPLER;
+        write_desc[0].pImageInfo = desc_image;
+        vkUpdateDescriptorSets(VKDEVICE, 1, write_desc, 0, NULL);
+    }
 }
 
 void Texture::Destroy()

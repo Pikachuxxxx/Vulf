@@ -1,3 +1,4 @@
+#if 0
 #include "application.h"
 
 // STL
@@ -911,3 +912,4 @@ void Application::LoadModel(std::string path, std::vector<Vertex>& vertices, std
         // std::cout << "Indices count : " << indices.size() << std::endl;
     }
 }
+#endif

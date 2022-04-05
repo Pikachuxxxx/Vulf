@@ -22,7 +22,7 @@
 
 #include "TracyFileHeader.hpp"
 #include "TracyMmap.hpp"
-#include "../common/TracyYield.hpp"
+#include "TracyYield.hpp"
 #include "../common/tracy_lz4.hpp"
 #include "../common/TracyForceInline.hpp"
 #include "../zstd/zstd.h"
@@ -90,6 +90,7 @@ public:
             ReadBig( &tmp, sizeof( T ) );
             memcpy( &v, &tmp, sizeof( T ) );
         }
+
     }
 
     template<class T, class U>

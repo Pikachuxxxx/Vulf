@@ -1,3 +1,4 @@
+#if 0
 #include <iostream>
 
 #include <VulfBase.h>
@@ -215,3 +216,4 @@ private:
 };
 
 VULF_MAIN(glTFLoadingDemo)
+#endif

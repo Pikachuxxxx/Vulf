@@ -286,6 +286,7 @@ namespace tracy {
 
     static inline OpenCLCtx* CreateCLContext(cl_context context, cl_device_id device)
     {
+        InitRPMallocThread();
         auto ctx = (OpenCLCtx*)tracy_malloc(sizeof(OpenCLCtx));
         new (ctx) OpenCLCtx(context, device);
         return ctx;

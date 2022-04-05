@@ -45,6 +45,7 @@
 #include <spirv_reflect.h>
 
 // Profiling
+#define TRACY_ENABLE
 #include <Tracy.hpp>
 // Optick
 #define USE_OPTICK 1
@@ -117,6 +118,7 @@ namespace Vulf {
         void Run();
 
         Camera3D& getCamera() { return m_Camera; }
+        const Window* getWindow() { return m_Window; }
     protected:
         CmdPool           _def_CommandPool;           /* The default command pool used to allocate buffer     */
         Swapchain         _def_Swapchain;

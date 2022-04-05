@@ -26,14 +26,13 @@
 
 #include "../common/TracyProtocol.hpp"
 #include "../common/TracySystem.hpp"
-#include "../common/TracyYield.hpp"
-#include "../common/TracyStackFrames.hpp"
 #include "TracyFileRead.hpp"
 #include "TracyFileWrite.hpp"
 #include "TracySort.hpp"
 #include "TracyTaskDispatch.hpp"
 #include "TracyVersion.hpp"
 #include "TracyWorker.hpp"
+#include "TracyYield.hpp"
 
 namespace tracy
 {
@@ -237,23 +236,6 @@ static tracy_force_inline void UpdateLockRange( LockMap& lockmap, const LockEven
     if( range.end < lt ) range.end = lt;
 }
 
-template<size_t U>
-static void ReadHwSampleVec( FileRead& f, SortedVector<Int48, Int48Sort>& vec, Slab<U>& slab )
-{
-    uint64_t sz;
-    f.Read( sz );
-    if( sz != 0 )
-    {
-        int64_t refTime = 0;
-        vec.reserve_exact( sz, slab );
-        for( uint64_t i=0; i<sz; i++ )
-        {
-            vec[i] = ReadTimeOffset( f, refTime );
-        }
-    }
-}
-
-
 LoadProgress Worker::s_loadProgress;
 
 Worker::Worker( const char* addr, uint16_t port )
@@ -389,11 +371,9 @@ Worker::Worker( const char* name, const char* program, const std::vector<ImportE
         else
         {
             auto td = NoticeThread( v.tid );
-            if( td->zoneIdStack.empty() ) continue;
             td->zoneIdStack.pop_back();
             auto& stack = td->stack;
             auto zone = stack.back_and_pop();
-            td->DecStackCount( zone->SrcLoc() );
             zone->SetEnd( v.timestamp );
 
 #ifndef TRACY_NO_STATISTICS
@@ -564,7 +544,8 @@ Worker::Worker( FileRead& f, EventType::Type eventMask, bool bgTasks )
         char tmp[1024];
         f.Read( tmp, sz );
         m_captureName = std::string( tmp, tmp+sz );
-        if( m_captureName.empty() ) m_captureName = f.GetFilename();
+        if (m_captureName.empty())
+            m_captureName = f.GetFilename();
     }
     {
         f.Read( sz );
@@ -921,15 +902,7 @@ Worker::Worker( FileRead& f, EventType::Type eventMask, bool bgTasks )
     {
         auto td = m_slab.AllocInit<ThreadData>();
         uint64_t tid;
-        if( fileVer >= FileVersion( 0, 7, 9 ) )
-        {
-            f.Read3( tid, td->count, td->kernelSampleCnt );
-        }
-        else
-        {
-            f.Read2( tid, td->count );
-            td->kernelSampleCnt = 0;
-        }
+        f.Read2( tid, td->count );
         td->id = tid;
         m_data.zonesCnt += td->count;
         if( fileVer < FileVersion( 0, 6, 3 ) )
@@ -1012,25 +985,17 @@ Worker::Worker( FileRead& f, EventType::Type eventMask, bool bgTasks )
     for( uint64_t i=0; i<sz; i++ )
     {
         auto ctx = m_slab.AllocInit<GpuCtxData>();
-        if( fileVer >= FileVersion( 0, 7, 9 ) )
-        {
-            uint8_t calibration;
-            f.Read7( ctx->thread, calibration, ctx->count, ctx->period, ctx->type, ctx->name, ctx->overflow );
-            ctx->hasCalibration = calibration;
-        }
-        else if( fileVer >= FileVersion( 0, 7, 6 ) )
+        if( fileVer >= FileVersion( 0, 7, 6 ) )
         {
             uint8_t calibration;
             f.Read6( ctx->thread, calibration, ctx->count, ctx->period, ctx->type, ctx->name );
             ctx->hasCalibration = calibration;
-            ctx->overflow = 0;
         }
         else if( fileVer >= FileVersion( 0, 7, 1 ) )
         {
             uint8_t calibration;
             f.Read5( ctx->thread, calibration, ctx->count, ctx->period, ctx->type );
             ctx->hasCalibration = calibration;
-            ctx->overflow = 0;
         }
         else
         {
@@ -1045,7 +1010,6 @@ Worker::Worker( FileRead& f, EventType::Type eventMask, bool bgTasks )
                 ctx->type = ctx->thread == 0 ? GpuContextType::Vulkan : GpuContextType::OpenGl;
             }
             ctx->hasCalibration = false;
-            ctx->overflow = 0;
         }
         ctx->hasPeriod = ctx->period != 1.f;
         m_data.gpuCnt += ctx->count;
@@ -1735,33 +1699,6 @@ Worker::Worker( FileRead& f, EventType::Type eventMask, bool bgTasks )
         }
     }
 
-    if( fileVer >= FileVersion( 0, 7, 9 ) )
-    {
-        f.Read( sz );
-        m_data.codeSymbolMap.reserve( sz );
-        for( uint64_t i=0; i<sz; i++ )
-        {
-            uint64_t v1, v2;
-            f.Read2( v1, v2 );
-            m_data.codeSymbolMap.emplace( v1, v2 );
-        }
-
-        f.Read( sz );
-        m_data.hwSamples.reserve( sz );
-        for( uint64_t i=0; i<sz; i++ )
-        {
-            uint64_t addr;
-            f.Read( addr );
-            auto& data = m_data.hwSamples.emplace( addr, HwSampleData {} ).first->second;
-            ReadHwSampleVec( f, data.cycles, m_slab );
-            ReadHwSampleVec( f, data.retired, m_slab );
-            ReadHwSampleVec( f, data.cacheRef, m_slab );
-            ReadHwSampleVec( f, data.cacheMiss, m_slab );
-            ReadHwSampleVec( f, data.branchRetired, m_slab );
-            ReadHwSampleVec( f, data.branchMiss, m_slab );
-        }
-    }
-
     if( fileVer >= FileVersion( 0, 6, 13 ) )
     {
         f.Read( sz );
@@ -1818,21 +1755,16 @@ Worker::Worker( FileRead& f, EventType::Type eventMask, bool bgTasks )
                 if( mem.second->reconstruct ) jobs.emplace_back( std::thread( [this, mem = mem.second] { ReconstructMemAllocPlot( *mem ); } ) );
             }
 
-            std::function<void(SrcLocCountMap&, Vector<short_ptr<ZoneEvent>>&, uint16_t)> ProcessTimeline;
-            ProcessTimeline = [this, &ProcessTimeline] ( SrcLocCountMap& countMap, Vector<short_ptr<ZoneEvent>>& _vec, uint16_t thread )
+            std::function<void(Vector<short_ptr<ZoneEvent>>&, uint16_t)> ProcessTimeline;
+            ProcessTimeline = [this, &ProcessTimeline] ( Vector<short_ptr<ZoneEvent>>& _vec, uint16_t thread )
             {
                 if( m_shutdown.load( std::memory_order_relaxed ) ) return;
                 assert( _vec.is_magic() );
                 auto& vec = *(Vector<ZoneEvent>*)( &_vec );
                 for( auto& zone : vec )
                 {
-                    if( zone.IsEndValid() ) ReconstructZoneStatistics( countMap, zone, thread );
-                    if( zone.HasChildren() )
-                    {
-                        IncSrcLocCount( countMap, zone.SrcLoc() );
-                        ProcessTimeline( countMap, GetZoneChildrenMutable( zone.Child() ), thread );
-                        DecSrcLocCount( countMap, zone.SrcLoc() );
-                    }
+                    if( zone.IsEndValid() ) ReconstructZoneStatistics( zone, thread );
+                    if( zone.HasChildren() ) ProcessTimeline( GetZoneChildrenMutable( zone.Child() ), thread );
                 }
             };
 
@@ -1842,9 +1774,8 @@ Worker::Worker( FileRead& f, EventType::Type eventMask, bool bgTasks )
                     if( m_shutdown.load( std::memory_order_relaxed ) ) return;
                     if( !t->timeline.empty() )
                     {
-                        SrcLocCountMap countMap;
                         // Don't touch thread compression cache in a thread.
-                        ProcessTimeline( countMap, t->timeline, m_data.localThreadCompress.DecompressMustRaw( t->id ) );
+                        ProcessTimeline( t->timeline, m_data.localThreadCompress.DecompressMustRaw( t->id ) );
                     }
                 }
             } ) );
@@ -2011,7 +1942,6 @@ Worker::~Worker()
     {
         v->timeline.~Vector();
         v->stack.~Vector();
-        v->stackCount.~Table();
         v->messages.~Vector();
         v->zoneIdStack.~Vector();
         v->samples.~Vector();
@@ -2135,86 +2065,48 @@ uint64_t Worker::GetPidFromTid( uint64_t tid ) const
     return it->second;
 }
 
-void Worker::GetCpuUsage( int64_t t0, double tstep, size_t num, std::vector<std::pair<int, int>>& out )
+void Worker::GetCpuUsageAtTime( int64_t time, int& own, int& other ) const
 {
-    if( out.size() < num ) out.resize( num );
-
-    if( t0 > m_data.lastTime || int64_t( t0 + tstep * num ) < 0 )
-    {
-        memset( out.data(), 0, sizeof( int ) * 2 * num );
-        return;
-    }
+    own = other = 0;
+    if( time < 0 || time > m_data.lastTime ) return;
 
 #ifndef TRACY_NO_STATISTICS
+    // Remove this check when real-time ctxUsage contruction is implemented.
     if( !m_data.ctxUsage.empty() )
     {
-        auto ptr = out.data();
-        auto itBegin = m_data.ctxUsage.begin();
-        for( size_t i=0; i<num; i++ )
+        const auto test = ( time << 16 ) | 0xFFFF;
+        auto it = std::upper_bound( m_data.ctxUsage.begin(), m_data.ctxUsage.end(), test, [] ( const auto& l, const auto& r ) { return l < r._time_other_own; } );
+        if( it == m_data.ctxUsage.begin() || it == m_data.ctxUsage.end() ) return;
+        --it;
+        own = it->Own();
+        other = it->Other();
+        return;
+    }
+#endif
+
+    int cntOwn = 0;
+    int cntOther = 0;
+    for( int i=0; i<m_data.cpuDataCount; i++ )
+    {
+        auto& cs = m_data.cpuData[i].cs;
+        if( !cs.empty() )
         {
-            const auto time = int64_t( t0 + tstep * i );
-            if( time < 0 || time > m_data.lastTime )
+            auto it = std::lower_bound( cs.begin(), cs.end(), time, [] ( const auto& l, const auto& r ) { return (uint64_t)l.End() < (uint64_t)r; } );
+            if( it != cs.end() && it->IsEndValid() && it->Start() <= time  )
             {
-                ptr->first = 0;
-                ptr->second = 0;
-            }
-            else
-            {
-                const auto test = ( time << 16 ) | 0xFFFF;
-                auto it = std::upper_bound( itBegin, m_data.ctxUsage.end(), test, [] ( const auto& l, const auto& r ) { return l < r._time_other_own; } );
-                if( it == m_data.ctxUsage.begin() || it == m_data.ctxUsage.end() )
+                if( GetPidFromTid( DecompressThreadExternal( it->Thread() ) ) == m_pid )
                 {
-                    ptr->first = 0;
-                    ptr->second = 0;
+                    cntOwn++;
                 }
                 else
                 {
-                    --it;
-                    ptr->first = it->Own();
-                    ptr->second = it->Other();
-                }
-                itBegin = it;
-            }
-            ptr++;
-        }
-    }
-    else
-#endif
-    {
-        memset( out.data(), 0, sizeof( int ) * 2 * num );
-        for( int i=0; i<m_data.cpuDataCount; i++ )
-        {
-            auto& cs = m_data.cpuData[i].cs;
-            if( !cs.empty() )
-            {
-                auto itBegin = cs.begin();
-                auto ptr = out.data();
-                for( size_t i=0; i<num; i++ )
-                {
-                    const auto time = int64_t( t0 + tstep * i );
-                    if( time > m_data.lastTime ) break;
-                    if( time >= 0 )
-                    {
-                        auto it = std::lower_bound( itBegin, cs.end(), time, [] ( const auto& l, const auto& r ) { return (uint64_t)l.End() < (uint64_t)r; } );
-                        if( it == cs.end() ) break;
-                        if( it->IsEndValid() && it->Start() <= time  )
-                        {
-                            if( GetPidFromTid( DecompressThreadExternal( it->Thread() ) ) == m_pid )
-                            {
-                                ptr->first++;
-                            }
-                            else
-                            {
-                                ptr->second++;
-                            }
-                        }
-                        itBegin = it;
-                    }
-                    ptr++;
+                    cntOther++;
                 }
             }
         }
     }
+    own = cntOwn;
+    other = cntOther;
 }
 
 const ContextSwitch* const Worker::GetContextSwitchDataImpl( uint64_t thread )
@@ -2429,13 +2321,6 @@ uint64_t Worker::GetSymbolForAddress( uint64_t address, uint32_t& offset ) const
     if( it == m_data.symbolLoc.end() || address < it->addr ) return 0;
     offset = address - it->addr;
     return it->addr;
-}
-
-uint64_t Worker::GetInlineSymbolForAddress( uint64_t address ) const
-{
-    auto it = m_data.codeSymbolMap.find( address );
-    if( it == m_data.codeSymbolMap.end() ) return 0;
-    return it->second;
 }
 
 StringIdx Worker::GetLocationForAddress( uint64_t address, uint32_t& line ) const
@@ -2906,14 +2791,13 @@ void Worker::Exec()
         m_resolution = TscTime( welcome.resolution );
         m_pid = welcome.pid;
         m_samplingPeriod = welcome.samplingPeriod;
-        m_onDemand = welcome.flags & WelcomeFlag::OnDemand;
+        m_onDemand = welcome.onDemand;
         m_captureProgram = welcome.programName;
         m_captureTime = welcome.epoch;
         m_executableTime = welcome.exectime;
-        m_ignoreMemFreeFaults = ( welcome.flags & WelcomeFlag::OnDemand ) || ( welcome.flags & WelcomeFlag::IsApple );
+        m_ignoreMemFreeFaults = welcome.onDemand || welcome.isApple;
         m_data.cpuArch = (CpuArchitecture)welcome.cpuArch;
-        m_codeTransfer = welcome.flags & WelcomeFlag::CodeTransfer;
-        m_combineSamples = welcome.flags & WelcomeFlag::CombineSamples;
+        m_codeTransfer = welcome.codeTransfer;
         m_data.cpuId = welcome.cpuId;
         memcpy( m_data.cpuManufacturer, welcome.cpuManufacturer, 12 );
         m_data.cpuManufacturer[12] = '\0';
@@ -2928,7 +2812,7 @@ void Worker::Exec()
 
         m_hostInfo = welcome.hostInfo;
 
-        if( m_onDemand )
+        if( welcome.onDemand != 0 )
         {
             OnDemandPayloadMessage onDemand;
             if( !m_sock.Read( &onDemand, sizeof( onDemand ), 10, ShouldExit ) )
@@ -3571,8 +3455,6 @@ ThreadData* Worker::NewThread( uint64_t thread )
 #ifndef TRACY_NO_STATISTICS
     td->ghostIdx = 0;
 #endif
-    td->kernelSampleCnt = 0;
-    td->pendingSample.time.Clear();
     m_data.threads.push_back( td );
     m_threadMap.emplace( thread, td );
     m_data.threadDataLast.first = thread;
@@ -3587,7 +3469,6 @@ void Worker::NewZone( ZoneEvent* zone, uint64_t thread )
     auto td = m_threadCtxData;
     if( !td ) td = m_threadCtxData = NoticeThread( thread );
     td->count++;
-    td->IncStackCount( zone->SrcLoc() );
     const auto ssz = td->stack.size();
     if( ssz == 0 )
     {
@@ -4580,24 +4461,6 @@ bool Worker::Process( const QueueItem& ev )
     case QueueType::TidToPid:
         ProcessTidToPid( ev.tidToPid );
         break;
-    case QueueType::HwSampleCpuCycle:
-        ProcessHwSampleCpuCycle( ev.hwSample );
-        break;
-    case QueueType::HwSampleInstructionRetired:
-        ProcessHwSampleInstructionRetired( ev.hwSample );
-        break;
-    case QueueType::HwSampleCacheReference:
-        ProcessHwSampleCacheReference( ev.hwSample );
-        break;
-    case QueueType::HwSampleCacheMiss:
-        ProcessHwSampleCacheMiss( ev.hwSample );
-        break;
-    case QueueType::HwSampleBranchRetired:
-        ProcessHwSampleBranchRetired( ev.hwSample );
-        break;
-    case QueueType::HwSampleBranchMiss:
-        ProcessHwSampleBranchMiss( ev.hwSample );
-        break;
     case QueueType::ParamSetup:
         ProcessParamSetup( ev.paramSetup );
         break;
@@ -4742,7 +4605,6 @@ void Worker::ProcessZoneEnd( const QueueZoneEnd& ev )
     assert( !stack.empty() );
     auto zone = stack.back_and_pop();
     assert( zone->End() == -1 );
-    const auto isReentry = td->DecStackCount( zone->SrcLoc() );
     const auto refTime = m_refTimeThread + ev.time;
     m_refTimeThread = refTime;
     const auto timeEnd = TscTime( refTime - m_data.baseTime );
@@ -4796,13 +4658,6 @@ void Worker::ProcessZoneEnd( const QueueZoneEnd& ev )
         if( slz->selfMin > selfSpan ) slz->selfMin = selfSpan;
         if( slz->selfMax < selfSpan ) slz->selfMax = selfSpan;
         slz->selfTotal += selfSpan;
-        if( !isReentry )
-        {
-            slz->nonReentrantCount++;
-            if( slz->nonReentrantMin > timeSpan ) slz->nonReentrantMin = timeSpan;
-            if( slz->nonReentrantMax < timeSpan ) slz->nonReentrantMax = timeSpan;
-            slz->nonReentrantTotal += timeSpan;
-        }
         if( !td->childTimeStack.empty() )
         {
             td->childTimeStack.back() += timeSpan;
@@ -5490,9 +5345,6 @@ void Worker::ProcessGpuNewContext( const QueueGpuNewContext& ev )
     gpu->calibratedGpuTime = gpuTime;
     gpu->calibratedCpuTime = cpuTime;
     gpu->calibrationMod = 1.;
-    gpu->lastGpuTime = 0;
-    gpu->overflow = 0;
-    gpu->overflowMul = 0;
     m_data.gpuData.push_back( gpu );
     m_gpuCtxMap[ev.context] = gpu;
 }
@@ -5665,44 +5517,31 @@ void Worker::ProcessGpuTime( const QueueGpuTime& ev )
     auto ctx = m_gpuCtxMap[ev.context];
     assert( ctx );
 
-    int64_t tgpu = m_refTimeGpu + ev.gpuTime;
-    m_refTimeGpu = tgpu;
-
-    if( tgpu < ctx->lastGpuTime )
-    {
-        if( ctx->overflow == 0 )
-        {
-            ctx->overflow = uint64_t( 1 ) << ( 64 - TracyLzcnt( ctx->lastGpuTime ) );
-        }
-        ctx->overflowMul++;
-    }
-    ctx->lastGpuTime = tgpu;
-    if( ctx->overflow != 0 )
-    {
-        tgpu += ctx->overflow * ctx->overflowMul;
-    }
+    const int64_t tref = m_refTimeGpu + ev.gpuTime;
+    m_refTimeGpu = tref;
+    const int64_t t = std::max<int64_t>( 0, tref );
 
     int64_t gpuTime;
     if( !ctx->hasPeriod )
     {
         if( !ctx->hasCalibration )
         {
-            gpuTime = tgpu + ctx->timeDiff;
+            gpuTime = t + ctx->timeDiff;
         }
         else
         {
-            gpuTime = int64_t( ( tgpu - ctx->calibratedGpuTime ) * ctx->calibrationMod + ctx->calibratedCpuTime );
+            gpuTime = int64_t( ( t - ctx->calibratedGpuTime ) * ctx->calibrationMod + ctx->calibratedCpuTime );
         }
     }
     else
     {
         if( !ctx->hasCalibration )
         {
-            gpuTime = int64_t( double( ctx->period ) * tgpu ) + ctx->timeDiff;      // precision loss
+            gpuTime = int64_t( double( ctx->period ) * t ) + ctx->timeDiff;      // precision loss
         }
         else
         {
-            gpuTime = int64_t( ( double( ctx->period ) * tgpu - ctx->calibratedGpuTime ) * ctx->calibrationMod + ctx->calibratedCpuTime );
+            gpuTime = int64_t( ( double( ctx->period ) * t - ctx->calibratedGpuTime ) * ctx->calibrationMod + ctx->calibratedCpuTime );
         }
     }
 
@@ -5713,13 +5552,20 @@ void Worker::ProcessGpuTime( const QueueGpuTime& ev )
     if( zone->GpuStart() < 0 )
     {
         zone->SetGpuStart( gpuTime );
+        if( m_data.lastTime < gpuTime ) m_data.lastTime = gpuTime;
         ctx->count++;
     }
     else
     {
+        if( gpuTime < zone->GpuStart() )
+        {
+            auto tmp = zone->GpuStart();
+            std::swap( gpuTime, tmp );
+            zone->SetGpuStart( tmp );
+        }
         zone->SetGpuEnd( gpuTime );
+        if( m_data.lastTime < gpuTime ) m_data.lastTime = gpuTime;
     }
-    if( m_data.lastTime < gpuTime ) m_data.lastTime = gpuTime;
 }
 
 void Worker::ProcessGpuCalibration( const QueueGpuCalibration& ev )
@@ -5942,28 +5788,34 @@ void Worker::ProcessCallstack()
     m_pendingCallstackId = 0;
 }
 
-void Worker::ProcessCallstackSampleImpl( const SampleData& sd, ThreadData& td, int64_t t, uint32_t callstack )
+void Worker::ProcessCallstackSample( const QueueCallstackSample& ev )
 {
-    assert( sd.time.Val() == t );
-    assert( sd.callstack.Val() == callstack );
+    assert( m_pendingCallstackId != 0 );
     m_data.samplesCnt++;
 
-    const auto& cs = GetCallstack( callstack );
-    const auto& ip = cs[0];
-    if( GetCanonicalPointer( ip ) >> 63 != 0 ) td.kernelSampleCnt++;
+    const auto refTime = m_refTimeCtx + ev.time;
+    m_refTimeCtx = refTime;
+    const auto t = TscTime( refTime - m_data.baseTime );
 
-    if( td.samples.empty() )
+    SampleData sd;
+    sd.time.SetVal( t );
+    sd.callstack.SetVal( m_pendingCallstackId );
+
+    auto td = NoticeThread( ev.thread );
+    if( td->samples.empty() )
     {
-        td.samples.push_back( sd );
+        td->samples.push_back( sd );
     }
     else
     {
-        assert( td.samples.back().time.Val() < t );
-        td.samples.push_back_non_empty( sd );
+        assert( td->samples.back().time.Val() < t );
+        td->samples.push_back_non_empty( sd );
     }
 
 #ifndef TRACY_NO_STATISTICS
+    const auto& cs = GetCallstack( m_pendingCallstackId );
     {
+        const auto& ip = cs[0];
         auto frame = GetCallstackFrame( ip );
         if( frame )
         {
@@ -6039,91 +5891,19 @@ void Worker::ProcessCallstackSampleImpl( const SampleData& sd, ThreadData& td, i
         }
     }
 
-    const auto framesKnown = UpdateSampleStatistics( callstack, 1, true );
-    assert( td.samples.size() > td.ghostIdx );
-    if( framesKnown && td.ghostIdx + 1 == td.samples.size() )
+    const auto framesKnown = UpdateSampleStatistics( m_pendingCallstackId, 1, true );
+    assert( td->samples.size() > td->ghostIdx );
+    if( framesKnown && td->ghostIdx + 1 == td->samples.size() )
     {
-        td.ghostIdx++;
-        m_data.ghostCnt += AddGhostZone( cs, &td.ghostZones, t );
+        td->ghostIdx++;
+        m_data.ghostCnt += AddGhostZone( cs, &td->ghostZones, t );
     }
     else
     {
         m_data.ghostZonesPostponed = true;
     }
 #endif
-}
-
-void Worker::ProcessCallstackSample( const QueueCallstackSample& ev )
-{
-    assert( m_pendingCallstackId != 0 );
-    const auto callstack = m_pendingCallstackId;
     m_pendingCallstackId = 0;
-
-    const auto refTime = m_refTimeCtx + ev.time;
-    m_refTimeCtx = refTime;
-    const auto t = TscTime( refTime - m_data.baseTime );
-
-    auto& td = *NoticeThread( ev.thread );
-
-    SampleData sd;
-    sd.time.SetVal( t );
-    sd.callstack.SetVal( callstack );
-
-    if( m_combineSamples )
-    {
-        const auto pendingTime = td.pendingSample.time.Val();
-        if( pendingTime == 0 )
-        {
-            td.pendingSample = sd;
-        }
-        else
-        {
-            if( pendingTime == t )
-            {
-                const auto& cs1 = GetCallstack( td.pendingSample.callstack.Val() );
-                const auto& cs2 = GetCallstack( callstack );
-
-                const auto sz1 = cs1.size();
-                const auto sz2 = cs2.size();
-                const auto tsz = sz1 + sz2;
-
-                size_t memsize = sizeof( VarArray<CallstackFrameId> ) + tsz * sizeof( CallstackFrameId );
-                auto mem = (char*)m_slab.AllocRaw( memsize );
-                memcpy( mem, cs1.data(), sizeof( CallstackFrameId ) * sz1 );
-                memcpy( mem + sizeof( CallstackFrameId ) * sz1, cs2.data(), sizeof( CallstackFrameId ) * sz2 );
-
-                VarArray<CallstackFrameId>* arr = (VarArray<CallstackFrameId>*)( mem + tsz * sizeof( CallstackFrameId ) );
-                new(arr) VarArray<CallstackFrameId>( tsz, (CallstackFrameId*)mem );
-
-                uint32_t idx;
-                auto it = m_data.callstackMap.find( arr );
-                if( it == m_data.callstackMap.end() )
-                {
-                    idx = m_data.callstackPayload.size();
-                    m_data.callstackMap.emplace( arr, idx );
-                    m_data.callstackPayload.push_back( arr );
-                }
-                else
-                {
-                    idx = it->second;
-                    m_slab.Unalloc( memsize );
-                }
-
-                sd.callstack.SetVal( idx );
-                ProcessCallstackSampleImpl( sd, td, pendingTime, idx );
-                td.pendingSample.time.Clear();
-            }
-            else
-            {
-                ProcessCallstackSampleImpl( td.pendingSample, td, pendingTime, td.pendingSample.callstack.Val() );
-                td.pendingSample = sd;
-            }
-        }
-    }
-    else
-    {
-        ProcessCallstackSampleImpl( sd, td, t, callstack );
-    }
 }
 
 void Worker::ProcessCallstackFrameSize( const QueueCallstackFrameSize& ev )
@@ -6162,30 +5942,9 @@ void Worker::ProcessCallstackFrame( const QueueCallstackFrame& ev, bool querySym
     if( m_callstackFrameStaging )
     {
         const auto idx = m_callstackFrameStaging->size - m_pendingCallstackSubframes;
-        const auto file = StringIdx( fitidx );
-
-        if( m_pendingCallstackSubframes > 1 && idx == 0 )
-        {
-            auto fstr = GetString( file );
-            auto flen = strlen( fstr );
-            if( flen >= s_tracySkipSubframesMinLen )
-            {
-                auto ptr = s_tracySkipSubframes;
-                do
-                {
-                    if( flen >= ptr->len && memcmp( fstr + flen - ptr->len, ptr->str, ptr->len ) == 0 )
-                    {
-                        m_pendingCallstackSubframes--;
-                        m_callstackFrameStaging->size--;
-                        return;
-                    }
-                    ptr++;
-                }
-                while( ptr->str );
-            }
-        }
 
         const auto name = StringIdx( nitidx );
+        const auto file = StringIdx( fitidx );
         m_callstackFrameStaging->data[idx].name = name;
         m_callstackFrameStaging->data[idx].file = file;
         m_callstackFrameStaging->data[idx].line = ev.line;
@@ -6283,7 +6042,7 @@ void Worker::ProcessSymbolInformation( const QueueSymbolInformation& ev )
     sd.size.SetVal( it->second.size );
     m_data.symbolMap.emplace( ev.symAddr, std::move( sd ) );
 
-    if( m_codeTransfer && it->second.size > 0 && it->second.size <= 128*1024 && ( ev.symAddr >> 63 ) == 0 )
+    if( m_codeTransfer && it->second.size > 0 && it->second.size <= 64*1024 )
     {
         assert( m_pendingSymbolCode.find( ev.symAddr ) == m_pendingSymbolCode.end() );
         m_pendingSymbolCode.emplace( ev.symAddr );
@@ -6336,11 +6095,6 @@ void Worker::ProcessCodeInformation( const QueueCodeInformation& ev )
         StringRef ref( StringRef::Idx, idx );
         auto cit = m_checkedFileStrings.find( ref );
         if( cit == m_checkedFileStrings.end() ) CacheSource( ref );
-    }
-    if( ev.symAddr != 0 )
-    {
-        assert( m_data.codeSymbolMap.find( ev.ptr ) == m_data.codeSymbolMap.end() );
-        m_data.codeSymbolMap.emplace( ev.ptr, ev.symAddr );
     }
 }
 
@@ -6512,54 +6266,6 @@ void Worker::ProcessThreadWakeup( const QueueThreadWakeup& ev )
 void Worker::ProcessTidToPid( const QueueTidToPid& ev )
 {
     if( m_data.tidToPid.find( ev.tid ) == m_data.tidToPid.end() ) m_data.tidToPid.emplace( ev.tid, ev.pid );
-}
-
-void Worker::ProcessHwSampleCpuCycle( const QueueHwSample& ev )
-{
-    const auto time = TscTime( ev.time - m_data.baseTime );
-    auto it = m_data.hwSamples.find( ev.ip );
-    if( it == m_data.hwSamples.end() ) it = m_data.hwSamples.emplace( ev.ip, HwSampleData {} ).first;
-    it->second.cycles.push_back( time );
-}
-
-void Worker::ProcessHwSampleInstructionRetired( const QueueHwSample& ev )
-{
-    const auto time = TscTime( ev.time - m_data.baseTime );
-    auto it = m_data.hwSamples.find( ev.ip );
-    if( it == m_data.hwSamples.end() ) it = m_data.hwSamples.emplace( ev.ip, HwSampleData {} ).first;
-    it->second.retired.push_back( time );
-}
-
-void Worker::ProcessHwSampleCacheReference( const QueueHwSample& ev )
-{
-    const auto time = TscTime( ev.time - m_data.baseTime );
-    auto it = m_data.hwSamples.find( ev.ip );
-    if( it == m_data.hwSamples.end() ) it = m_data.hwSamples.emplace( ev.ip, HwSampleData {} ).first;
-    it->second.cacheRef.push_back( time );
-}
-
-void Worker::ProcessHwSampleCacheMiss( const QueueHwSample& ev )
-{
-    const auto time = TscTime( ev.time - m_data.baseTime );
-    auto it = m_data.hwSamples.find( ev.ip );
-    if( it == m_data.hwSamples.end() ) it = m_data.hwSamples.emplace( ev.ip, HwSampleData {} ).first;
-    it->second.cacheMiss.push_back( time );
-}
-
-void Worker::ProcessHwSampleBranchRetired( const QueueHwSample& ev )
-{
-    const auto time = TscTime( ev.time - m_data.baseTime );
-    auto it = m_data.hwSamples.find( ev.ip );
-    if( it == m_data.hwSamples.end() ) it = m_data.hwSamples.emplace( ev.ip, HwSampleData {} ).first;
-    it->second.branchRetired.push_back( time );
-}
-
-void Worker::ProcessHwSampleBranchMiss( const QueueHwSample& ev )
-{
-    const auto time = TscTime( ev.time - m_data.baseTime );
-    auto it = m_data.hwSamples.find( ev.ip );
-    if( it == m_data.hwSamples.end() ) it = m_data.hwSamples.emplace( ev.ip, HwSampleData {} ).first;
-    it->second.branchMiss.push_back( time );
 }
 
 void Worker::ProcessParamSetup( const QueueParamSetup& ev )
@@ -7056,7 +6762,7 @@ void Worker::ReadTimelineHaveSize( FileRead& f, GpuEvent* zone, int64_t& refTime
 }
 
 #ifndef TRACY_NO_STATISTICS
-void Worker::ReconstructZoneStatistics( SrcLocCountMap& countMap, ZoneEvent& zone, uint16_t thread )
+void Worker::ReconstructZoneStatistics( ZoneEvent& zone, uint16_t thread )
 {
     assert( zone.IsEndValid() );
     auto timeSpan = zone.End() - zone.Start();
@@ -7073,14 +6779,6 @@ void Worker::ReconstructZoneStatistics( SrcLocCountMap& countMap, ZoneEvent& zon
         if( slz.max < timeSpan ) slz.max = timeSpan;
         slz.total += timeSpan;
         slz.sumSq += double( timeSpan ) * timeSpan;
-        const auto isReentry = HasSrcLocCount( countMap, zone.SrcLoc() );
-        if( !isReentry )
-        {
-            slz.nonReentrantCount++;
-            if( slz.nonReentrantMin > timeSpan ) slz.nonReentrantMin = timeSpan;
-            if( slz.nonReentrantMax < timeSpan ) slz.nonReentrantMax = timeSpan;
-            slz.nonReentrantTotal += timeSpan;
-        }
         if( zone.HasChildren() )
         {
             auto& children = GetZoneChildren( zone.Child() );
@@ -7228,21 +6926,6 @@ void Worker::Disconnect()
 {
     Query( ServerQueryDisconnect, 0 );
     m_disconnect = true;
-}
-
-static void WriteHwSampleVec( FileWrite& f, SortedVector<Int48, Int48Sort>& vec )
-{
-    uint64_t sz = vec.size();
-    f.Write( &sz, sizeof( sz ) );
-    if( sz != 0 )
-    {
-        if( !vec.is_sorted() ) vec.sort();
-        int64_t refTime = 0;
-        for( auto& v : vec )
-        {
-            WriteTimeOffset( f, refTime, v.Val() );
-        }
-    }
 }
 
 void Worker::Write( FileWrite& f, bool fiDict )
@@ -7474,7 +7157,6 @@ void Worker::Write( FileWrite& f, bool fiDict )
         int64_t refTime = 0;
         f.Write( &thread->id, sizeof( thread->id ) );
         f.Write( &thread->count, sizeof( thread->count ) );
-        f.Write( &thread->kernelSampleCnt, sizeof( thread->kernelSampleCnt ) );
         WriteTimeline( f, thread->timeline, refTime );
         sz = thread->messages.size();
         f.Write( &sz, sizeof( sz ) );
@@ -7509,7 +7191,6 @@ void Worker::Write( FileWrite& f, bool fiDict )
         f.Write( &ctx->period, sizeof( ctx->period ) );
         f.Write( &ctx->type, sizeof( ctx->type ) );
         f.Write( &ctx->name, sizeof( ctx->name ) );
-        f.Write( &ctx->overflow, sizeof( ctx->overflow ) );
         sz = ctx->threadData.size();
         f.Write( &sz, sizeof( sz ) );
         for( auto& td : ctx->threadData )
@@ -7782,27 +7463,6 @@ void Worker::Write( FileWrite& f, bool fiDict )
         }
     }
 
-    sz = m_data.codeSymbolMap.size();
-    f.Write( &sz, sizeof( sz ) );
-    for( auto& v : m_data.codeSymbolMap )
-    {
-        f.Write( &v.first, sizeof( v.first ) );
-        f.Write( &v.second, sizeof( v.second ) );
-    }
-
-    sz = m_data.hwSamples.size();
-    f.Write( &sz, sizeof( sz ) );
-    for( auto& v : m_data.hwSamples )
-    {
-        f.Write( &v.first, sizeof( v.first ) );
-        WriteHwSampleVec( f, v.second.cycles );
-        WriteHwSampleVec( f, v.second.retired );
-        WriteHwSampleVec( f, v.second.cacheRef );
-        WriteHwSampleVec( f, v.second.cacheMiss );
-        WriteHwSampleVec( f, v.second.branchRetired );
-        WriteHwSampleVec( f, v.second.branchMiss );
-    }
-
     sz = m_data.sourceFileCache.size();
     f.Write( &sz, sizeof( sz ) );
     for( auto& v : m_data.sourceFileCache )
@@ -7998,28 +7658,6 @@ Worker::MemoryBlock Worker::GetSourceFileFromCache( const char* file ) const
     auto it = m_data.sourceFileCache.find( file );
     if( it == m_data.sourceFileCache.end() ) return MemoryBlock {};
     return it->second;
-}
-
-HwSampleData* Worker::GetHwSampleData( uint64_t addr )
-{
-    auto it = m_data.hwSamples.find( addr );
-    if( it == m_data.hwSamples.end() ) return nullptr;
-    return &it->second;
-}
-
-uint64_t Worker::GetHwSampleCount() const
-{
-    uint64_t cnt = 0;
-    for( auto& v : m_data.hwSamples )
-    {
-        cnt += v.second.cycles.size();
-        cnt += v.second.retired.size();
-        cnt += v.second.cacheRef.size();
-        cnt += v.second.cacheMiss.size();
-        cnt += v.second.branchRetired.size();
-        cnt += v.second.branchMiss.size();
-    }
-    return cnt;
 }
 
 }
