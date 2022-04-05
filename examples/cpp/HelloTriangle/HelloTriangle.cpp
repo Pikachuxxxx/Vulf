@@ -290,6 +290,8 @@ private:
     {
         ImGui::NewFrame();
 
+        //ImGui::ShowDemoWindow();
+
         //ImGui::PushStyleVar(ImGuiStyleVar_WindowRounding, 0);
         //ImGui::SetNextWindowPos(ImVec2(10, 10));
         if(ImGui::Begin("Vulkan Example"))
@@ -298,8 +300,10 @@ private:
             ImGui::TextUnformatted(get_app_name().c_str());
             ImGui::DragFloat("Position", &someNum, 0.1f, 0.0f, 100.0f);
 
-            get_ui_overlay().setImageSet(gridTexture.get_descriptor_set());
-            ImGui::Image((ImTextureID)gridTexture.get_descriptor_set(), ImVec2(ImGui::GetWindowSize()[0], 200), ImVec2(0, 0), ImVec2(1.0f, -1.0f));
+            //get_ui_overlay().setImageSet(gridTexture.get_descriptor_set());
+            ImGui::Image((void*)gridTexture.get_descriptor_set(), ImVec2(ImGui::GetWindowSize()[0], 200), ImVec2(0, 0), ImVec2(1.0f, -1.0f));
+            //get_ui_overlay().setImageSet(checkerTexture.get_descriptor_set());
+            ImGui::Image((void*)checkerTexture.get_descriptor_set(), ImVec2(ImGui::GetWindowSize()[0], 200), ImVec2(0, 0), ImVec2(1.0f, -1.0f));
         }
         ImGui::End();
 

@@ -47,7 +47,7 @@ namespace Vulf{
         void resize(uint32_t width, uint32_t height);
         void free_resources();
 
-        void setImageSet(VkDescriptorSet set) { m_ImguiImageSet = set; }
+        void setImageSet(VkDescriptorSet* set) { m_ImguiImageSet = set; }
     private:
         VkDeviceMemory          m_FontMemory = VK_NULL_HANDLE;
         Texture                 m_ImGuiFontTexture;
@@ -55,7 +55,7 @@ namespace Vulf{
         VkDescriptorPool        m_ImguiDescriptorPool;
         VkDescriptorSetLayout   m_ImGuiDescriptorSetLayout;
         VkDescriptorSet         m_ImGuiDescriptorSet;
-        VkDescriptorSet         m_ImguiImageSet;
+        VkDescriptorSet*         m_ImguiImageSet;
 
         VkPipelineLayout        m_ImGuiPipelineLayout;
         VkPipeline              m_ImGuiPipeline;

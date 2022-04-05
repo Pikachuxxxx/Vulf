@@ -336,12 +336,10 @@ namespace Vulf {
             const ImDrawList* cmd_list = imDrawData->CmdLists[i];
             for (int32_t j = 0; j < cmd_list->CmdBuffer.Size; j++) {
                 const ImDrawCmd* pcmd = &cmd_list->CmdBuffer[j];
-                ImTextureID curreTexID = pcmd->GetTexID(); // How to know it isn't Image or Font TexID?
-                if(curreTexID == &m_ImGuiDescriptorSet)
-                    vkCmdBindDescriptorSets(commandBuffer, VK_PIPELINE_BIND_POINT_GRAPHICS, m_ImGuiPipelineLayout, 0, 1, (VkDescriptorSet*)(&m_ImGuiDescriptorSet), 0, NULL);
-                else
-                    vkCmdBindDescriptorSets(commandBuffer, VK_PIPELINE_BIND_POINT_GRAPHICS, m_ImGuiPipelineLayout, 0, 1, (VkDescriptorSet*) (&m_ImguiImageSet), 0, NULL);
-                VkRect2D scissorRect;
+                VkDescriptorSet* curreTexID = (VkDescriptorSet*)pcmd->GetTexID(); // How to know it isn't Image or Font TexID?
+                if(curreTexID)
+                  vkCmdBindDescriptorSets(commandBuffer, VK_PIPELINE_BIND_POINT_GRAPHICS, m_ImGuiPipelineLayout, 0, 1, curreTexID, 0, NULL);
+                VkRect2D scissorRect{};
                 scissorRect.offset.x = std::max((int32_t) (pcmd->ClipRect.x), 0);
                 scissorRect.offset.y = std::max((int32_t) (pcmd->ClipRect.y), 0);
                 scissorRect.extent.width = (uint32_t) (pcmd->ClipRect.z - pcmd->ClipRect.x);

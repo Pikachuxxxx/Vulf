@@ -26,7 +26,7 @@ public:
     VkSampler get_sampler() { return m_TextureSampler; }
     VkImageLayout get_layout() { return m_TextureImage.GetDescriptorInfo().imageLayout; }
     VkDescriptorImageInfo getDescriptorInfo() { return m_TextureImage.GetDescriptorInfo(); }
-    VkDescriptorSet get_descriptor_set() { update_set();  return descriptor_set; }
+    VkDescriptorSet* get_descriptor_set() { return &descriptor_set; }
 private:
     int m_Height;
     int m_Width;
