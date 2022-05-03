@@ -5,18 +5,18 @@
 
 #include <string>
 
-void CmdBuffer::AllocateBuffers(const VkCommandPool& pool)
+void CmdBuffer::AllocateBuffers(const VkCommandPool& pool, uint32_t count)
 {
     VkCommandBufferAllocateInfo allocInfo{};
     allocInfo.sType = VK_STRUCTURE_TYPE_COMMAND_BUFFER_ALLOCATE_INFO;
     allocInfo.commandPool = pool;
     allocInfo.level = VK_COMMAND_BUFFER_LEVEL_PRIMARY;
-    allocInfo.commandBufferCount = 3;
-    m_CommandBuffers.resize(3);
+    allocInfo.commandBufferCount = count;
+    m_CommandBuffers.resize(count);
     if(VK_CALL(vkAllocateCommandBuffers(VKDEVICE, &allocInfo, m_CommandBuffers.data())))
         throw std::runtime_error("Cannot create command buffers!");
-    else VK_LOG("Command Buffers (3) succesfully Allocated!");
-    
+    else VK_LOG("Command Buffers succesfully Allocated!");
+
     for (size_t i = 0; i < m_CommandBuffers.size(); i++) {
 
         VkDebugUtilsObjectNameInfoEXT name_info = { VK_STRUCTURE_TYPE_DEBUG_UTILS_OBJECT_NAME_INFO_EXT };

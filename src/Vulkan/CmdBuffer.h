@@ -7,7 +7,7 @@ class CmdBuffer
 {
 public:
     CmdBuffer() = default;
-    void AllocateBuffers(const VkCommandPool& pool);
+    void AllocateBuffers(const VkCommandPool& pool, uint32_t count);
     void RecordBuffer(VkCommandBuffer& buffer);
     void EndRecordingBuffer(VkCommandBuffer& buffer);
     void Destroy(const VkCommandPool& pool);

@@ -229,7 +229,7 @@ namespace Vulf {
         vertexInputState.pVertexAttributeDescriptions = vertexInputAttributes.data();
 
         pipelineCreateInfo.pVertexInputState = &vertexInputState;
-        
+
         // TODO: Use pipeline cache for better optimization
         VK_CHECK_CALL(vkCreateGraphicsPipelines(VKDEVICE, VK_NULL_HANDLE, 1, &pipelineCreateInfo, nullptr, &m_ImGuiPipeline));
     }
@@ -373,4 +373,3 @@ namespace Vulf {
         vkDestroyPipeline(VKDEVICE, m_ImGuiPipeline, nullptr);
     }
 }
-

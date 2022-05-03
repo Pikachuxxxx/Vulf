@@ -31,7 +31,7 @@ public:
     VkFormat FindSupportedFormat(const std::vector<VkFormat>& candidates, VkImageTiling tiling, VkFormatFeatureFlags features);
     VkFormat FindDepthFormat();
     uint32_t GetGraphicsFamilyIndex() { return m_QueueFamilyIndices.graphicsFamily.value(); }
-    const std::string& get_device_name() { return deviceProperties.deviceName; }
+    const char* get_device_name() { return deviceProperties.deviceName; }
 private:
     VkPhysicalDevice m_GPU;
     VkPhysicalDeviceProperties deviceProperties;
