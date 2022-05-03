@@ -251,6 +251,7 @@ namespace Vulf {
         // Vertex buffer
         if ((m_ImGuiVBO.get_buffer() == VK_NULL_HANDLE) || (vertexCount != imDrawData->TotalVtxCount)) {
             m_ImGuiVBO.unmap();
+            // Destroy the buffer here before creating a new one
             VKLogicalDevice::Get()->createBuffer(VK_BUFFER_USAGE_VERTEX_BUFFER_BIT, VK_MEMORY_PROPERTY_HOST_VISIBLE_BIT, &m_ImGuiVBO, vertexBufferSize);
 
             vertexCount = imDrawData->TotalVtxCount;
@@ -263,7 +264,7 @@ namespace Vulf {
         // Index  buffer
         if ((m_ImGuiIBO.get_buffer() == VK_NULL_HANDLE) || (indexCount != imDrawData->TotalIdxCount)) {
             m_ImGuiIBO.unmap();
-
+            // Destroy the buffer here before creating a new one
             VKLogicalDevice::Get()->createBuffer(VK_BUFFER_USAGE_INDEX_BUFFER_BIT, VK_MEMORY_PROPERTY_HOST_VISIBLE_BIT, &m_ImGuiIBO, indexBufferSize);
 
             indexCount = imDrawData->TotalIdxCount;

@@ -91,7 +91,7 @@ private:
         depthImage.CreateDepthImage(_def_Swapchain.GetSwapExtent().width, _def_Swapchain.GetSwapExtent().height, _def_CommandPool);
 
         // Grid Texture
-        gridTexture.CreateTexture((SRC_DIR) + std::string("/data/textures/TestGrid_256.png"), _def_CommandPool);
+        gridTexture.CreateTexture((SRC_DIR) + std::string("/data/textures/TestGrid_1024.png"), _def_CommandPool);
 
         // Checker Texture;
         checkerTexture.CreateTexture((SRC_DIR) + std::string("/data/textures/TestCheckerMap.png"), _def_CommandPool);
@@ -165,7 +165,7 @@ private:
 
     void OnStart() override
     {
-        /*
+        
         _def_RenderPass.SetClearColor(0.0f, 0.0f, 0.0f);
         auto& cmdBuffers = simpleCommandBuffer.GetBuffers();
         auto framebuffers = simpleFrameBuffer.GetFramebuffers();
@@ -197,29 +197,13 @@ private:
 
             io.DisplaySize = ImVec2((float) width, (float) height);
 
-            ImGui::NewFrame();
-
-            ImGui::PushStyleVar(ImGuiStyleVar_WindowRounding, 0);
-            ImGui::SetNextWindowPos(ImVec2(10, 10));
-            ImGui::Begin("Vulkan Example", nullptr, ImGuiWindowFlags_AlwaysAutoResize | ImGuiWindowFlags_NoResize | ImGuiWindowFlags_NoMove);
-            ImGui::TextUnformatted(get_app_name().c_str());
-            ImGui::TextUnformatted(get_logical_device().Get()->GetGPUManager().get_device_name().c_str());
-
-            ImGui::End();
-            ImGui::PopStyleVar();
-            ImGui::Render();
-
-
-            if (get_ui_overlay().update_imgui_buffers())
-                get_ui_overlay().draw(cmdBuffers[i]);
-
             _def_RenderPass.EndRenderPass(cmdBuffers[i]);
             simpleCommandBuffer.EndRecordingBuffer(cmdBuffers[i]);
         }
 
         submissionCommandBuffers.clear();
         submissionCommandBuffers.push_back(simpleCommandBuffer);
-        */
+        
     }
 
     void OnRender() override
@@ -290,20 +274,36 @@ private:
     {
         ImGui::NewFrame();
 
-        //ImGui::ShowDemoWindow();
+#if 0
+        ImGui::ShowDemoWindow();
 
         //ImGui::PushStyleVar(ImGuiStyleVar_WindowRounding, 0);
         //ImGui::SetNextWindowPos(ImVec2(10, 10));
+        int i = get_next_image_index();
+
         if(ImGui::Begin("Vulkan Example"))
         {
             ImGui::Text("Hello ImGui");
             ImGui::TextUnformatted(get_app_name().c_str());
             ImGui::DragFloat("Position", &someNum, 0.1f, 0.0f, 100.0f);
-
+            ImGui::Text("Camera Position : (%f, %f, %f)", getCamera().Position.x, getCamera().Position.y, getCamera().Position.z);
             //get_ui_overlay().setImageSet(gridTexture.get_descriptor_set());
-            ImGui::Image((void*)gridTexture.get_descriptor_set(), ImVec2(ImGui::GetWindowSize()[0], 200), ImVec2(0, 0), ImVec2(1.0f, -1.0f));
+            //auto RTDescSet = _def_Swapchain.getDescSetAtIndex(i);
+            ImGui::Image((void*)gridTexture.get_descriptor_set(), ImVec2(ImGui::GetWindowSize()[0], 400), ImVec2(0, 0), ImVec2(1.0f, 1.0f));
             //get_ui_overlay().setImageSet(checkerTexture.get_descriptor_set());
-            ImGui::Image((void*)checkerTexture.get_descriptor_set(), ImVec2(ImGui::GetWindowSize()[0], 200), ImVec2(0, 0), ImVec2(1.0f, -1.0f));
+            ImGui::Image((void*)checkerTexture.get_descriptor_set(), ImVec2(ImGui::GetWindowSize()[0], 400), ImVec2(0, 0), ImVec2(1.0f, 1.0f));
+
+            ImGui::Separator();
+
+            static float color[4];
+            ImGui::ColorPicker4("Color Picker", color);
+        }
+        ImGui::End();
+#endif
+
+        //ImGui::ShowDemoWindow();
+        if (ImGui::Begin("Razix Engine")) {
+            ImGui::Text("Indeed it is!");
         }
         ImGui::End();
 

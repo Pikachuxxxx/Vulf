@@ -27,6 +27,8 @@ public:
     std::vector<VkImage> GetSwapImages() {return m_SwapchainImages; }
     VkImage& GetSwapImageAt(int index) {return m_SwapchainImages[index]; }
     uint32_t GetSwapImageCount() { return m_SwapchainImageCount; }
+
+    VkDescriptorSet* getDescSetAtIndex(uint32_t index) { return &m_DescriptorSets[index]; }
 private:
     VkSwapchainKHR m_SwapchainKHR;
     SwapchainProperties m_SurfaceProperties;
@@ -37,6 +39,11 @@ private:
     uint32_t m_SwapchainImageCount = 0;
     std::vector<VkImage> m_SwapchainImages;
     std::vector<VkImageView> m_SwapchainImageViews;
+
+    VkDescriptorSetLayout g_DescriptorSetLayout;
+    VkDescriptorPool m_DescriptorPool;
+    std::vector<VkDescriptorSet>                m_DescriptorSets;
+    VkSampler m_ImageSampler;
 private:
     void querySwapchainProperties();
     VkExtent2D getSwapchainExtent();
@@ -44,4 +51,7 @@ private:
     VkPresentModeKHR choosePresentMode();
     void RetrieveSwapchainImages();
     void CreateSwapchainImageViews();
+
+    void create_sets();
+    void update_sets();
 };
