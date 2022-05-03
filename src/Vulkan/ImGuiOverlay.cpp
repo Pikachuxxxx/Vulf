@@ -229,7 +229,7 @@ namespace Vulf {
         vertexInputState.pVertexAttributeDescriptions = vertexInputAttributes.data();
 
         pipelineCreateInfo.pVertexInputState = &vertexInputState;
-        
+
         // TODO: Use pipeline cache for better optimization
         VK_CHECK_CALL(vkCreateGraphicsPipelines(VKDEVICE, VK_NULL_HANDLE, 1, &pipelineCreateInfo, nullptr, &m_ImGuiPipeline));
     }
@@ -250,25 +250,25 @@ namespace Vulf {
 
         // Vertex buffer
         if ((m_ImGuiVBO.get_buffer() == VK_NULL_HANDLE) || (vertexCount != imDrawData->TotalVtxCount)) {
-            m_ImGuiVBO.unmap();
+            // m_ImGuiVBO.unmap();
+            // m_ImGuiVBO.DestroyBuffer();
             VKLogicalDevice::Get()->createBuffer(VK_BUFFER_USAGE_VERTEX_BUFFER_BIT, VK_MEMORY_PROPERTY_HOST_VISIBLE_BIT, &m_ImGuiVBO, vertexBufferSize);
-
             vertexCount = imDrawData->TotalVtxCount;
-            m_ImGuiVBO.unmap();
-            m_ImGuiVBO.map();
+            m_ImGuiVBO.map(vertexBufferSize);
             updateCmdBuffers = true;
+            // m_ImGuiVBO.unmap();
         }
 
 
         // Index  buffer
         if ((m_ImGuiIBO.get_buffer() == VK_NULL_HANDLE) || (indexCount != imDrawData->TotalIdxCount)) {
-            m_ImGuiIBO.unmap();
+            // m_ImGuiIBO.unmap();
 
             VKLogicalDevice::Get()->createBuffer(VK_BUFFER_USAGE_INDEX_BUFFER_BIT, VK_MEMORY_PROPERTY_HOST_VISIBLE_BIT, &m_ImGuiIBO, indexBufferSize);
 
             indexCount = imDrawData->TotalIdxCount;
-            m_ImGuiIBO.unmap();
-            m_ImGuiIBO.map();
+            // m_ImGuiIBO.unmap();
+            m_ImGuiIBO.map(indexBufferSize);
             updateCmdBuffers = true;
         }
 
@@ -284,8 +284,10 @@ namespace Vulf {
             idxDst += cmd_list->IdxBuffer.Size;
         }
 
-        m_ImGuiVBO.flush();
-        m_ImGuiIBO.flush();
+        m_ImGuiIBO.unmap();
+        m_ImGuiIBO.unmap();
+        // m_ImGuiVBO.flush();
+        // m_ImGuiIBO.flush();
 
         return updateCmdBuffers;
     }
@@ -372,4 +374,3 @@ namespace Vulf {
         vkDestroyPipeline(VKDEVICE, m_ImGuiPipeline, nullptr);
     }
 }
-

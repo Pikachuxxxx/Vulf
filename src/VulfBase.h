@@ -107,7 +107,6 @@ namespace Vulf {
         bool                enableValidationLayers = 1; /* Enables Vulkan validation layers in debug build      */
         int                 width   = 1280;             /* The Width of the window                              */
         int                 height  = 720;              /* The Height of the window                             */
-        std::vector<CmdBuffer> submissionCommandBuffers;
 
     public:
         /* Initializes the application */
@@ -120,9 +119,10 @@ namespace Vulf {
         Camera3D& getCamera() { return m_Camera; }
         const Window* getWindow() { return m_Window; }
     protected:
-        CmdPool           _def_CommandPool;           /* The default command pool used to allocate buffer     */
-        Swapchain         _def_Swapchain;
-        RenderPass        _def_RenderPass;
+        CmdPool     _def_CommandPool;       /* The default command pool used to allocate buffer     */
+        Swapchain   _def_Swapchain;
+        RenderPass  _def_RenderPass;
+        CmdBuffer   _def_SubmissionCommandBuffers;
     protected:
         /**
          * Creates the Shader resources to be used by the pipeline
@@ -175,7 +175,7 @@ namespace Vulf {
          */
         virtual void OnUpdate(double dt);
         /* Client defines how the scene is rendered and it's resources are used */
-        virtual void OnRender();
+        virtual void OnRender(VkCommandBuffer commandBuffer, uint32_t imageIndex);
         /* ImGui Overlay */
         virtual void OnImGui();
 
@@ -202,9 +202,8 @@ namespace Vulf {
         std::vector<VkSemaphore>    m_ImageAvailableSemaphores;     /* Semaphore to tell when an image is free to use to draw onto (GPU-GPU)            */
         std::vector<VkSemaphore>    m_RenderingFinishedSemaphores;  /* Semaphore to tell when the rendering to a particular swapchain image is done     */
         std::vector<VkFence>        m_InFlightFences;               /* Use to synchronize the GPU-CPU so that they draw onto the right image in flight  */
-        std::vector<VkFence>        m_ImagesInFlight;
 
-        ImGuiOverlay                m_ImGuiOVerlay;
+        ImGuiOverlay                m_ImGuiOVerlay;                 /* ImGui overlay for the application                                                */
 
     private:
         /* The entire command pipeline that needs to be rebuilt for swapchain re-creation */

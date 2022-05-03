@@ -29,7 +29,7 @@ public:
     ~VulfPBR() {
         _def_CommandPool.Destroy();
         CleanUpPipeline();
-        VKLogicalDevice::GetDeviceManager()->Destroy();
+        VKLogicalDevice::Get()->Destroy();
         Instance::GetInstanceManager()->Destroy();
     }
 

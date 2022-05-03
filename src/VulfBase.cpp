@@ -97,7 +97,7 @@ namespace Vulf {
         fenceInfo.sType = VK_STRUCTURE_TYPE_FENCE_CREATE_INFO;
         fenceInfo.flags = VK_FENCE_CREATE_SIGNALED_BIT;
         m_InFlightFences.resize(MAX_FRAMES_IN_FLIGHT);
-        m_ImagesInFlight.resize(SWAP_IMAGES_COUNT, VK_NULL_HANDLE); // 3 swapchain images are used
+        // m_ImagesInFlight.resize(SWAP_IMAGES_COUNT, VK_NULL_HANDLE); // 3 swapchain images are used
 
         for (size_t i = 0; i < MAX_FRAMES_IN_FLIGHT; i++) {
             if (VK_CALL(vkCreateSemaphore(VKDEVICE, &semaphoreInfo, nullptr, &m_ImageAvailableSemaphores[i])) ||
@@ -182,7 +182,11 @@ namespace Vulf {
     }
 
     void VulfBase::BuildCommandBuffers() {
+        // Build the default (aka submissible) command buffers onto which we can record draw commands
+        // _def_SubmissionCommandBuffers.resize(MAX_FRAMES_IN_FLIGHT);
 
+        // One for each frame in flight
+        _def_SubmissionCommandBuffers.AllocateBuffers(_def_CommandPool.GetPool(), MAX_FRAMES_IN_FLIGHT);
     }
 
     void VulfBase::BuildDescriptorSets() {
@@ -214,11 +218,6 @@ namespace Vulf {
 
             OnUpdate(m_FrameTimer.count());
 
-            ImGui_ImplGlfw_NewFrame();
-            OnImGui();
-
-            OnRender();
-
             float fpsTimer = std::chrono::duration<double, std::milli>(tEnd - m_LastTimestamp).count();
             if (fpsTimer > 1000.0f) {
                 VK_LOG("FPS : ", m_FrameCounter);
@@ -246,7 +245,7 @@ namespace Vulf {
         OPTICK_GPU_EVENT("Draw Frame");
 #endif
         vkWaitForFences(VKDEVICE, 1, &m_InFlightFences[m_CurrentFrame], VK_TRUE, UINT64_MAX);
-
+        vkResetFences(VKDEVICE, 1, &m_InFlightFences[m_CurrentFrame]);
 
         // Acquire the image to render onto
         VkResult result = vkAcquireNextImageKHR(VKDEVICE, _def_Swapchain.GetSwapchainKHR(), UINT64_MAX, m_ImageAvailableSemaphores[m_CurrentFrame], VK_NULL_HANDLE, &m_ImageIndex);
@@ -258,11 +257,22 @@ namespace Vulf {
         else if(result != VK_SUCCESS && result != VK_SUBOPTIMAL_KHR) {
             throw std::runtime_error("Cannot acquire next image!");
         }
+        //
+        // if(m_ImagesInFlight[m_ImageIndex] != VK_NULL_HANDLE)
+        //     vkWaitForFences(VKDEVICE, 1, &m_ImagesInFlight[m_ImageIndex], VK_TRUE, UINT64_MAX);
+        //
+        // m_ImagesInFlight[m_ImageIndex] = m_InFlightFences[m_CurrentFrame];
+        // Reset and record the command buffer
+        if(VK_CALL(vkResetCommandBuffer(_def_SubmissionCommandBuffers.GetBufferAt(m_CurrentFrame), /*VkCommandBufferResetFlagBits*/ 0)))
+            throw std::runtime_error("Cannot reset the command buffer");
+        // else
+        //     VK_LOG_SUCCESS("Command buffer reset successful");
 
-        if(m_ImagesInFlight[m_ImageIndex] != VK_NULL_HANDLE)
-            vkWaitForFences(VKDEVICE, 1, &m_ImagesInFlight[m_ImageIndex], VK_TRUE, UINT64_MAX);
 
-        m_ImagesInFlight[m_ImageIndex] = m_InFlightFences[m_CurrentFrame];
+        ImGui_ImplGlfw_NewFrame();
+        OnImGui();
+        auto buf = _def_SubmissionCommandBuffers.GetBufferAt(m_CurrentFrame);
+        OnRender(buf, m_ImageIndex);
 
         UpdateBuffers(m_ImageIndex);
 
@@ -290,20 +300,20 @@ namespace Vulf {
         submitInfo.waitSemaphoreCount = 1;
         submitInfo.pWaitSemaphores = waitSemaphore;
         submitInfo.pWaitDstStageMask = waitStages;
-        submitInfo.commandBufferCount = submissionCommandBuffers.size();
+        submitInfo.commandBufferCount = 1;
 
-        std::vector<VkCommandBuffer> buffers(submissionCommandBuffers.size());
-        buffers.clear();
-        for (int i = 0; i < submissionCommandBuffers.size(); i++) {
-            buffers.push_back(submissionCommandBuffers[i].GetBufferAt(m_ImageIndex));
-        }
+        // std::vector<VkCommandBuffer> buffers(submissionCommandBuffers.size());
+        // buffers.clear();
+        // for (int i = 0; i < submissionCommandBuffers.size(); i++) {
+        //     buffers.push_back(submissionCommandBuffers[i].GetBufferAt(m_ImageIndex));
+        // }
 
-        submitInfo.pCommandBuffers = buffers.data();
+        submitInfo.pCommandBuffers = &(_def_SubmissionCommandBuffers.GetBufferAt(m_CurrentFrame));
         VkSemaphore signalSemaphores[] = {m_RenderingFinishedSemaphores[m_CurrentFrame]};
         submitInfo.signalSemaphoreCount = 1;
         submitInfo.pSignalSemaphores = signalSemaphores;
 #ifdef _WIN32
-        OPTICK_GPU_EVENT("Reset In Flight Fences");
+        // OPTICK_GPU_EVENT("Reset In Flight Fences");
 #endif
         vkResetFences(VKDEVICE, 1, &m_InFlightFences[m_CurrentFrame]);
 
@@ -350,8 +360,8 @@ namespace Vulf {
 
     }
 
-    void VulfBase::OnRender() {
-
+    void VulfBase::OnRender(VkCommandBuffer commandBuffer, uint32_t imageIndex) {
+        std::cout << "I'm not here";
     }
 
     void VulfBase::OnImGui() {
@@ -369,8 +379,8 @@ namespace Vulf {
 
         BuildCommandPipeline();
 
-        OnRender();
-        OnStart();
+        // OnRender();
+        // OnStart();
     }
 
     void VulfBase::CleanUpPipeline() {
