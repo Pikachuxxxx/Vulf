@@ -48,16 +48,16 @@ namespace Vulf {
     void VulfBase::InitVulkan() {
         // Create the Vulkan Instance
         // TODO: [ICEBOX] Use a proper signature for the application name (same is given for the window as well)
-        Instance::GetInstanceManager()->Init(m_AppName.c_str(), m_Window->getGLFWwindow(), true);
+        Instance::Get()->Init(m_AppName.c_str(), m_Window->getGLFWwindow(), true);
 
         // Create the Device
-        VKLogicalDevice::Get()->Init();
+        Device::Get()->Init();
         //void InitGpuVulkan(VkDevice * vkDevices, VkPhysicalDevice * vkPhysicalDevices, VkQueue * vkQueues, uint32_t * cmdQueuesFamily, uint32_t numQueues, const VulkanFunctions * functions)
 #ifdef _WIN32
-        auto device = VKLogicalDevice::Get()->GetLogicalDevice();
-        auto physicalDevice = VKLogicalDevice::Get()->GetGPUManager().GetGPU();
-        auto queuefam = VKLogicalDevice::Get()->GetGraphicsQueue();
-        uint32_t numQueues = VKLogicalDevice::Get()->GetGPUManager().GetGraphicsFamilyIndex();
+        auto device = Device::Get()->GetLogicalDevice();
+        auto physicalDevice = Device::Get()->GetGPUManager().GetGPU();
+        auto queuefam = Device::Get()->GetGraphicsQueue();
+        uint32_t numQueues = Device::Get()->GetGPUManager().GetGraphicsFamilyIndex();
         OPTICK_GPU_INIT_VULKAN(&device, &physicalDevice, &queuefam, &numQueues, 1, nullptr);
 #endif
         // Load the shaders
@@ -220,7 +220,9 @@ namespace Vulf {
 
             float fpsTimer = std::chrono::duration<double, std::milli>(tEnd - m_LastTimestamp).count();
             if (fpsTimer > 1000.0f) {
-                VK_LOG("FPS : ", m_FrameCounter);
+                // VK_LOG("FPS : ", m_FrameCounter);
+                auto title = m_AppName + " [FPS : " + std::to_string(m_FrameCounter) + "]";
+                m_Window->setTitle(title);
                 m_FrameCounter = 0;
                 m_LastTimestamp = tEnd;
             }
@@ -320,7 +322,7 @@ namespace Vulf {
 #ifdef _WIN32
         OPTICK_GPU_EVENT("Queue Submit");
 #endif
-        if(VK_CALL(vkQueueSubmit(VKLogicalDevice::Get()->GetGraphicsQueue(), 1, &submitInfo, m_InFlightFences[m_CurrentFrame]))) {
+        if(VK_CALL(vkQueueSubmit(Device::Get()->get_graphics_queue(), 1, &submitInfo, m_InFlightFences[m_CurrentFrame]))) {
             throw std::runtime_error("Cannot submit command buffer!");
         }
 
@@ -336,7 +338,7 @@ namespace Vulf {
 #ifdef _WIN32
         OPTICK_GPU_EVENT("Queue Present");
 #endif
-        result = vkQueuePresentKHR(VKLogicalDevice::Get()->GetPresentQueue(), &presentInfo);
+        result = vkQueuePresentKHR(Device::Get()->get_present_queue(), &presentInfo);
 
         if(result == VK_ERROR_OUT_OF_DATE_KHR || result == VK_SUBOPTIMAL_KHR || m_Window->IsResized()) {
             m_Window->SetResizedFalse();

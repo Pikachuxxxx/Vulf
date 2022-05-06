@@ -1,6 +1,6 @@
 #include "Image.h"
 
-#include "VKDevice.h"
+#include "Device.h"
 #include "../utils/VulkanCheckResult.h"
 #include "CmdPool.h"
 
@@ -34,7 +34,7 @@ void Image::CreateImage(uint32_t width, uint32_t height, VkFormat format, VkImag
     VkMemoryAllocateInfo allocInfo{};
     allocInfo.sType = VK_STRUCTURE_TYPE_MEMORY_ALLOCATE_INFO;
     allocInfo.allocationSize = memRequirements.size;
-    allocInfo.memoryTypeIndex = VKLogicalDevice::Get()->GetGPUManager().FindMemoryTypeIndex(memRequirements.memoryTypeBits, properties);
+    allocInfo.memoryTypeIndex = Device::Get()->get_physical_device().find_memory_type_index(memRequirements.memoryTypeBits, properties);
 
     if(VK_CALL(vkAllocateMemory(VKDEVICE, &allocInfo, nullptr, &m_ImageMemory)))
         throw std::runtime_error("Cannot allocate image memory!");
@@ -53,7 +53,7 @@ void Image::CreateImage(uint32_t width, uint32_t height, VkFormat format, VkImag
     samplerInfo.addressModeW = VK_SAMPLER_ADDRESS_MODE_CLAMP_TO_EDGE;
     samplerInfo.anisotropyEnable = VK_TRUE;
     VkPhysicalDeviceProperties physicalDeviceProperties{};
-    vkGetPhysicalDeviceProperties(VKLogicalDevice::Get()->GetGPUManager().GetGPU(), &physicalDeviceProperties);
+    vkGetPhysicalDeviceProperties(Device::Get()->get_gpu(), &physicalDeviceProperties);
     samplerInfo.maxAnisotropy = physicalDeviceProperties.limits.maxSamplerAnisotropy;
     samplerInfo.borderColor = VK_BORDER_COLOR_FLOAT_OPAQUE_WHITE;
     samplerInfo.unnormalizedCoordinates = VK_FALSE;
@@ -92,7 +92,7 @@ void Image::CreateImageView(VkFormat format, VkImageAspectFlags aspectFlags)
 
 void Image::TransitionImageLayout(VkFormat format, VkImageLayout oldLayout, VkImageLayout newLayout)
 {
-    VkCommandBuffer copyCmdBuffer = VKLogicalDevice::Get()->begin_single_time_command_buffer(VK_COMMAND_BUFFER_LEVEL_PRIMARY, true);
+    VkCommandBuffer copyCmdBuffer = Device::Get()->begin_single_time_cmd_buffer(VK_COMMAND_BUFFER_LEVEL_PRIMARY, true);
 
 
     // Transition the image layout using a proper memory barrier to suncrhonise write cycle before we read from it
@@ -143,7 +143,7 @@ void Image::TransitionImageLayout(VkFormat format, VkImageLayout oldLayout, VkIm
         1, &barrier
     );
 
-    VKLogicalDevice::Get()->flushCommandBuffer(copyCmdBuffer, VKLogicalDevice::Get()->GetGraphicsQueue());
+    Device::Get()->flush_cmd_buffer(copyCmdBuffer, Device::Get()->get_graphics_queue());
 }
 
 

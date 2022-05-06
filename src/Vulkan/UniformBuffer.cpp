@@ -1,6 +1,6 @@
 #include "UniformBuffer.h"
 
-#include "VKDevice.h"
+#include "Device.h"
 #include "../utils/VulkanCheckResult.h"
 
 void UniformBuffer::CreateUniformBuffer(uint32_t swapImagesCount, uint32_t bufferSize)

@@ -1,6 +1,6 @@
 #include "CmdBuffer.h"
 
-#include "VKDevice.h"
+#include "Device.h"
 #include "../utils/VulkanCheckResult.h"
 
 #include <string>

@@ -1,13 +1,13 @@
 #include "DepthImage.h"
 
-#include "VKDevice.h"
+#include "Device.h"
 #include "../utils/VulkanCheckResult.h"
 #include "CmdPool.h"
 
 void DepthImage::CreateDepthImage(uint32_t width, uint32_t height, CmdPool cmdPool)
 {
     // Get the proper format for the depth image
-    m_DepthFormat = VKLogicalDevice::Get()->GetGPUManager().FindDepthFormat();
+    m_DepthFormat = Device::Get()->get_physical_device().find_depth_format();
 
     // Create the proper image views for the depth texture
     m_DepthImage.CreateImage(width, height,

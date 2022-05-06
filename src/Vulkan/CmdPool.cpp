@@ -1,6 +1,6 @@
 #include "CmdPool.h"
 
-#include "VKDevice.h"
+#include "Device.h"
 #include "../utils/VulkanCheckResult.h"
 
 void CmdPool::Init()
@@ -8,7 +8,7 @@ void CmdPool::Init()
     VkCommandPoolCreateInfo poolCI{};
     poolCI.sType = VK_STRUCTURE_TYPE_COMMAND_POOL_CREATE_INFO;
     poolCI.flags = VK_COMMAND_POOL_CREATE_RESET_COMMAND_BUFFER_BIT;
-    poolCI.queueFamilyIndex = VKLogicalDevice::Get()->GetGPUManager().GetQueueFamilyIndices().graphicsFamily.value();
+    poolCI.queueFamilyIndex = Device::Get()->get_graphics_queue_index();
 
     if(VK_CALL(vkCreateCommandPool(VKDEVICE, &poolCI, nullptr, &m_CommandPool)))
         throw std::runtime_error("Cannot create command pool");
@@ -70,8 +70,8 @@ void CmdPool::EndSingleTimeBuffer(const VkCommandBuffer& buffer)
     submitInfo.commandBufferCount = 1;
     submitInfo.pCommandBuffers = &buffer;
 
-    vkQueueSubmit(VKLogicalDevice::Get()->GetGraphicsQueue(), 1, &submitInfo, VK_NULL_HANDLE);
-    vkQueueWaitIdle(VKLogicalDevice::Get()->GetGraphicsQueue());
+    vkQueueSubmit(Device::Get()->get_graphics_queue(), 1, &submitInfo, VK_NULL_HANDLE);
+    vkQueueWaitIdle(Device::Get()->get_graphics_queue());
 
     vkFreeCommandBuffers(VKDEVICE, m_CommandPool, 1, &buffer);
 }

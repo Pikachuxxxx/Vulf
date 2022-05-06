@@ -123,7 +123,7 @@ if(VK_CALL(vkCreateRenderPass(VKDEVICE, &imguiRPInfo, nullptr, &imguiRenderPass)
 ImGui_ImplGlfw_InitForVulkan(window, true);
 
 ImGui_ImplVulkan_InitInfo init_info = {};
-init_info.Instance = context->getInstance().getVkInstance();
+init_info.Instance = context->get_handle().getVkInstance();
 init_info.PhysicalDevice = context->getDevice().getVkPhysicalDevice();
 init_info.Device = context->getDevice().getVkDevice();
 init_info.QueueFamily = context->getDevice().getGraphicsQueueFamily();

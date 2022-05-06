@@ -1,6 +1,6 @@
 #include "ImGuiOverlay.h"
 
-#include "Vulkan/VKDevice.h"
+#include "Vulkan/Device.h"
 #include "VulkanInitializers.hpp"
 #include "utils/VulkanCheckResult.h"
 
@@ -252,7 +252,7 @@ namespace Vulf {
         if ((m_ImGuiVBO.get_buffer() == VK_NULL_HANDLE) || (vertexCount != imDrawData->TotalVtxCount)) {
             // m_ImGuiVBO.unmap();
             // m_ImGuiVBO.DestroyBuffer();
-            VKLogicalDevice::Get()->createBuffer(VK_BUFFER_USAGE_VERTEX_BUFFER_BIT, VK_MEMORY_PROPERTY_HOST_VISIBLE_BIT, &m_ImGuiVBO, vertexBufferSize);
+            Device::Get()->createBuffer(VK_BUFFER_USAGE_VERTEX_BUFFER_BIT, VK_MEMORY_PROPERTY_HOST_VISIBLE_BIT, &m_ImGuiVBO, vertexBufferSize);
             vertexCount = imDrawData->TotalVtxCount;
             m_ImGuiVBO.map(vertexBufferSize);
             updateCmdBuffers = true;
@@ -264,7 +264,7 @@ namespace Vulf {
         if ((m_ImGuiIBO.get_buffer() == VK_NULL_HANDLE) || (indexCount != imDrawData->TotalIdxCount)) {
             // m_ImGuiIBO.unmap();
 
-            VKLogicalDevice::Get()->createBuffer(VK_BUFFER_USAGE_INDEX_BUFFER_BIT, VK_MEMORY_PROPERTY_HOST_VISIBLE_BIT, &m_ImGuiIBO, indexBufferSize);
+            Device::Get()->createBuffer(VK_BUFFER_USAGE_INDEX_BUFFER_BIT, VK_MEMORY_PROPERTY_HOST_VISIBLE_BIT, &m_ImGuiIBO, indexBufferSize);
 
             indexCount = imDrawData->TotalIdxCount;
             // m_ImGuiIBO.unmap();

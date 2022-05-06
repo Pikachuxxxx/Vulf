@@ -189,3 +189,8 @@ void mouse_position_callback(GLFWwindow* window, double xpos, double ypos)
     wind->lastMouseX = xpos;
     wind->lastMouseY = ypos;
 }
+
+void Window::setTitle(std::string& title)
+{
+    glfwSetWindowTitle(m_Window, title.c_str());
+}

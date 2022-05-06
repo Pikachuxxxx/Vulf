@@ -4,11 +4,11 @@
 
 
 // Load the Instance extensions/layers and device Extensions
-std::vector<const char*> validationLayers = {
+std::vector<const char*> g_ValidationLayers = {
     "VK_LAYER_KHRONOS_validation",
 };
 
-std::vector<const char*> instanceExtensions = {
+std::vector<const char*> g_InstanceExtensions = {
     "VK_KHR_get_physical_device_properties2",
     VK_EXT_DEBUG_UTILS_EXTENSION_NAME
 };
@@ -21,6 +21,7 @@ std::vector<const char*> deviceExtensions = {
 };
 
 using namespace Vulf;
+
 class VulfHelloTriangle : public Vulf::VulfBase
 {
 public:
@@ -174,7 +175,6 @@ private:
 
         int i = imageIndex;
 
-
 #ifdef _WIN32
         OPTICK_GPU_CONTEXT(cmdBuffers[i]);
         OPTICK_GPU_EVENT("Recording cmd buffers");
@@ -185,8 +185,8 @@ private:
         VkViewport viewport = {};
         viewport.x = 0.0f;
         viewport.y = 0.0f;
-        viewport.width = static_cast<float>(width);
-        viewport.height = static_cast<float>(height);
+        viewport.width = static_cast<float>(getWindow()->getWidth());
+        viewport.height = static_cast<float>(getWindow()->getHeight());
         viewport.minDepth = 0.0f;
         viewport.maxDepth = 1.0f;
 
@@ -210,10 +210,9 @@ private:
 
         vkCmdDraw(commandBuffer, rainbowTriangleVertices.size(), 1, 0, 0);
 
-
         ImGuiIO& io = ImGui::GetIO();
 
-        io.DisplaySize = ImVec2((float) width, (float) height);
+        io.DisplaySize = ImVec2((float) getWindow()->getWidth(), (float) getWindow()->getHeight());
 
         get_ui_overlay().update_imgui_buffers();
             get_ui_overlay().draw(commandBuffer);
@@ -228,17 +227,13 @@ private:
 
         //ImGui::ShowDemoWindow();
 
-        //ImGui::PushStyleVar(ImGuiStyleVar_WindowRounding, 0);
-        //ImGui::SetNextWindowPos(ImVec2(10, 10));
         if(ImGui::Begin("Vulkan Example"))
         {
             ImGui::Text("Hello ImGui");
             ImGui::TextUnformatted(get_app_name().c_str());
             ImGui::DragFloat("Position", &someNum, 0.1f, 0.0f, 100.0f);
 
-            //get_ui_overlay().setImageSet(gridTexture.get_descriptor_set());
             ImGui::Image((void*)gridTexture.get_descriptor_set(), ImVec2(ImGui::GetWindowSize()[0], 200), ImVec2(0, 0), ImVec2(1.0f, -1.0f));
-            //get_ui_overlay().setImageSet(checkerTexture.get_descriptor_set());
             ImGui::Image((void*)checkerTexture.get_descriptor_set(), ImVec2(ImGui::GetWindowSize()[0], 200), ImVec2(0, 0), ImVec2(1.0f, -1.0f));
         }
         ImGui::End();

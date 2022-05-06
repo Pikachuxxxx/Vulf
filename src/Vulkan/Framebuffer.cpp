@@ -1,6 +1,6 @@
 #include "Framebuffer.h"
 
-#include "VKDevice.h"
+#include "Device.h"
 #include "../utils/VulkanCheckResult.h"
 #include <array>
 
