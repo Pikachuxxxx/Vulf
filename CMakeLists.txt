@@ -227,10 +227,10 @@ file(GLOB_RECURSE EXAMPLE_SOURCE_FILES
 foreach(source IN LISTS EXAMPLE_SOURCE_FILES)
     get_filename_component(FILENAME ${source} NAME_WE)
     message("Examples being built : ${FILENAME}")
-
-# TODO: Improve source group folder hierarchy for examples
-#    source_group(TREE ${CMAKE_CURRENT_SOURCE_DIR} FILES ${source})
+    # TODO: Improve source group folder hierarchy for examples
+    #    source_group(TREE ${CMAKE_CURRENT_SOURCE_DIR} FILES ${source})
     # Build the examples as executables (run them using make examplefilename.run command)
+    ## add the source files in each directory of the example instead of by *.cpp + add a text file or something to load shaders from common pool or the folder itseld
     add_executable(${FILENAME} ${source})
     target_link_libraries(${FILENAME} Vulf)
     add_dependencies(${FILENAME} Vulf)

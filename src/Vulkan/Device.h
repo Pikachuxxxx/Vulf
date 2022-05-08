@@ -25,7 +25,7 @@ struct QueueFamilyIndices
 #endif
 
 #ifdef _WIN32
-        return graphicsFamily.has_value() && presentFamily.has_value() && computeFamily.has_value();
+        return graphicsFamily.has_value() && presentFamily.has_value();//&& computeFamily.has_value();
 #endif
     }
 };
@@ -43,8 +43,8 @@ public:
     VkFormat find_supported_format(const std::vector<VkFormat>& candidates, VkImageTiling tiling, VkFormatFeatureFlags features);
     VkFormat find_depth_format();
 
-    inline VkPhysicalDevice& get_gpu() { return m_GPU; }
-    inline QueueFamilyIndices& get_queue_family_indices() { return m_QueueFamilyIndices; }
+    inline VkPhysicalDevice get_gpu() { return m_GPU; }
+    inline QueueFamilyIndices get_queue_family_indices() { return m_QueueFamilyIndices; }
     inline const uint32_t& get_graphics_family_index() const { return m_QueueFamilyIndices.graphicsFamily.value(); }
     inline const uint32_t& get_present_family_index() const { return m_QueueFamilyIndices.presentFamily.value(); }
     inline const uint32_t& get_compute_family_index() const { return m_QueueFamilyIndices.computeFamily.value(); }
@@ -65,7 +65,9 @@ private:
 
 #define VKDEVICE Device::Get()->get_handle()
 
-extern std::vector<const char*> deviceExtensions; // User specifie device extensions
+//------------------------------------------------------------------------------
+
+extern std::vector<const char*> g_DeviceExtensions; // User specified device extensions
 
 class Device
 {
@@ -85,16 +87,16 @@ public:
     VkResult createBuffer(VkBufferUsageFlags usageFlags, VkMemoryPropertyFlags memoryPropertyFlags, Buffer* buffer, VkDeviceSize size, void* data = nullptr);
     void copy_buffer_to_image(VkBuffer buffer, VkImage image, uint32_t width, uint32_t height);
 
-    inline VkDevice& get_handle() { return m_Device; }
-    inline PhysicalDevice& get_physical_device() { return m_GPUManager; }
-    inline VkPhysicalDevice& get_gpu() { return m_GPUManager.get_gpu(); }
+    inline VkDevice get_handle() { return m_Device; }
+    inline PhysicalDevice get_physical_device() { return m_GPUManager; }
+    inline VkPhysicalDevice get_gpu() { return m_GPUManager.get_gpu(); }
     inline const uint32_t& get_graphics_queue_index() { return m_GPUManager.get_graphics_family_index(); }
     inline const uint32_t& get_present_queue_index() { return m_GPUManager.get_present_family_index(); }
     inline const uint32_t& get_compute_queue_index() { return m_GPUManager.get_compute_family_index(); }
     inline const VkQueue& get_graphics_queue() const { return m_GraphicsQueue; }
     inline const VkQueue& get_present_queue() const { return m_PresentQueue; }
     inline const VkQueue& get_compute_queue() const { return m_ComputeQueue; }
-    inline VkCommandPool& get_instaneous_cmd_pool() { return m_InstantaneousCmdPool; }
+    inline VkCommandPool get_instaneous_cmd_pool() { return m_InstantaneousCmdPool; }
 
 private:
     static Device*          s_Instance;
