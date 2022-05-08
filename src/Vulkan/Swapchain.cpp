@@ -1,7 +1,7 @@
 #include "Swapchain.h"
 
 #include "Instance.h"
-#include "VKDevice.h"
+#include "Device.h"
 
 #include "../utils/VulkanCheckResult.h"
 
@@ -24,7 +24,7 @@ void Swapchain::Init(GLFWwindow* window)
     // Now craete the Swapchain
     VkSwapchainCreateInfoKHR swcCI{};
     swcCI.sType = VK_STRUCTURE_TYPE_SWAPCHAIN_CREATE_INFO_KHR;
-    swcCI.surface = Instance::GetInstanceManager()->GetSurface();
+    swcCI.surface = Instance::Get()->get_surface();
     m_SwapchainImageCount = m_SurfaceProperties.capabilities.minImageCount + 1; // For triple buffering
     // Bound checking the swapchain imagec count only for triple buffer aka 2 frames in flight
     if (m_SurfaceProperties.capabilities.maxImageCount > 0 && m_SwapchainImageCount > m_SurfaceProperties.capabilities.maxImageCount)
@@ -36,7 +36,7 @@ void Swapchain::Init(GLFWwindow* window)
     swcCI.imageExtent = m_SwapchainExtent;
     swcCI.imageArrayLayers = 1;
     swcCI.imageUsage = VK_IMAGE_USAGE_COLOR_ATTACHMENT_BIT;
-    QueueFamilyIndices indices = VKLogicalDevice::Get()->GetGPUManager().GetQueueFamilyIndices();
+    QueueFamilyIndices indices = Device::Get()->get_physical_device().get_queue_family_indices();
     uint32_t queueFamilyIndices[] = {indices.graphicsFamily.value(), indices.presentFamily.value()};
 
     if (indices.graphicsFamily != indices.presentFamily)
@@ -107,17 +107,17 @@ void Swapchain::Destroy()
 void Swapchain::querySwapchainProperties()
 {
     // Get the surface capabilities
-    vkGetPhysicalDeviceSurfaceCapabilitiesKHR(VKLogicalDevice::Get()->GetGPUManager().GetGPU(), Instance::GetInstanceManager()->GetSurface(), &m_SurfaceProperties.capabilities);
+    vkGetPhysicalDeviceSurfaceCapabilitiesKHR(Device::Get()->get_gpu(), Instance::Get()->get_surface(), &m_SurfaceProperties.capabilities);
     // Get the surface formats supported
     uint32_t formatsCount = 0;
-    vkGetPhysicalDeviceSurfaceFormatsKHR(VKLogicalDevice::Get()->GetGPUManager().GetGPU(), Instance::GetInstanceManager()->GetSurface(), &formatsCount, nullptr);
+    vkGetPhysicalDeviceSurfaceFormatsKHR(Device::Get()->get_gpu(), Instance::Get()->get_surface(), &formatsCount, nullptr);
     m_SurfaceProperties.formats.resize(formatsCount);
-    vkGetPhysicalDeviceSurfaceFormatsKHR(VKLogicalDevice::Get()->GetGPUManager().GetGPU(), Instance::GetInstanceManager()->GetSurface(), &formatsCount, m_SurfaceProperties.formats.data());
+    vkGetPhysicalDeviceSurfaceFormatsKHR(Device::Get()->get_gpu(), Instance::Get()->get_surface(), &formatsCount, m_SurfaceProperties.formats.data());
     // Get the surface available presentModes
     uint32_t presentModesCount = 0;
-    vkGetPhysicalDeviceSurfacePresentModesKHR(VKLogicalDevice::Get()->GetGPUManager().GetGPU(), Instance::GetInstanceManager()->GetSurface(), &presentModesCount, nullptr);
+    vkGetPhysicalDeviceSurfacePresentModesKHR(Device::Get()->get_gpu(), Instance::Get()->get_surface(), &presentModesCount, nullptr);
     m_SurfaceProperties.presentModes.resize(presentModesCount);
-    vkGetPhysicalDeviceSurfacePresentModesKHR(VKLogicalDevice::Get()->GetGPUManager().GetGPU(), Instance::GetInstanceManager()->GetSurface(), &presentModesCount, m_SurfaceProperties.presentModes.data());
+    vkGetPhysicalDeviceSurfacePresentModesKHR(Device::Get()->get_gpu(), Instance::Get()->get_surface(), &presentModesCount, m_SurfaceProperties.presentModes.data());
 }
 
 VkExtent2D Swapchain::getSwapchainExtent()

@@ -1,7 +1,7 @@
 #include "RenderPass.h"
 
 #include "../utils/VulkanCheckResult.h"
-#include "VKDevice.h"
+#include "Device.h"
 #include <array>
 
 void RenderPass::Init(const VkFormat& format)
@@ -18,7 +18,7 @@ void RenderPass::Init(const VkFormat& format)
     colorAttachment.finalLayout = VK_IMAGE_LAYOUT_PRESENT_SRC_KHR;// VK_IMAGE_LAYOUT_COLOR_ATTACHMENT_OPTIMAL;//VK_IMAGE_LAYOUT_PRESENT_SRC_KHR;
 
     VkAttachmentDescription depthAttachment{};
-    depthAttachment.format = VKLogicalDevice::Get()->GetGPUManager().FindDepthFormat();
+    depthAttachment.format = Device::Get()->get_physical_device().find_depth_format();
     depthAttachment.samples = VK_SAMPLE_COUNT_1_BIT;
     depthAttachment.loadOp = VK_ATTACHMENT_LOAD_OP_CLEAR;
     depthAttachment.storeOp = VK_ATTACHMENT_STORE_OP_DONT_CARE;

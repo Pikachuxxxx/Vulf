@@ -1,6 +1,6 @@
 #include "Buffer.h"
 
-#include "VKDevice.h"
+#include "Device.h"
 #include "../utils/VulkanCheckResult.h"
 
 void Buffer::CreateBuffer(VkDeviceSize size, VkBufferUsageFlags usage, VkMemoryPropertyFlags properties)
@@ -24,7 +24,7 @@ void Buffer::CreateBuffer(VkDeviceSize size, VkBufferUsageFlags usage, VkMemoryP
     VkMemoryAllocateInfo allocInfo{};
     allocInfo.sType = VK_STRUCTURE_TYPE_MEMORY_ALLOCATE_INFO;
     allocInfo.allocationSize = memRequirements.size;
-    allocInfo.memoryTypeIndex = VKLogicalDevice::Get()->GetGPUManager().FindMemoryTypeIndex(memRequirements.memoryTypeBits, properties);
+    allocInfo.memoryTypeIndex = Device::Get()->get_physical_device().find_memory_type_index(memRequirements.memoryTypeBits, properties);
     if(VK_CALL(vkAllocateMemory(VKDEVICE, &allocInfo, nullptr, &m_BufferMemory)))
         throw std::runtime_error("Cannot alocate memory for vertex buffer");
 

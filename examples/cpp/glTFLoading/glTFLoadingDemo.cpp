@@ -93,7 +93,7 @@ private:
 
     void LoadAssets() override {
         // const uint32_t glTFLoadingFlags = vkglTF::FileLoadingFlags::PreTransformVertices | vkglTF::FileLoadingFlags::PreMultiplyVertexColors | vkglTF::FileLoadingFlags::FlipY;
-        // testModel.loadFromFile((ASSETS_DIR) + std::string("/models/sponza/sponza.gltf"), VKLogicalDevice::GetDeviceManager()->GetGraphicsQueue(), glTFLoadingFlags);
+        // testModel.loadFromFile((ASSETS_DIR) + std::string("/models/sponza/sponza.gltf"), Device::GetDeviceManager()->GetGraphicsQueue(), glTFLoadingFlags);
     }
 
 

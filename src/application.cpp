@@ -89,9 +89,9 @@ void Application::InitWindow()
 
 void Application::InitVulkan()
 {
-    VKInstance::GetInstanceManager()->Init("Hello Vulkan", window->getGLFWwindow(), enableValidationLayers);
+    VKInstance::Get()->Init("Hello Vulkan", window->getGLFWwindow(), enableValidationLayers);
 
-    VKLogicalDevice::GetDeviceManager()->Init();
+    Device::GetDeviceManager()->Init();
 
     vertexShader.CreateShader((SHADER_BINARY_DIR) + std::string("/defaultVert.spv"), ShaderType::VERTEX_SHADER);
     fragmentShader.CreateShader((SHADER_BINARY_DIR) + std::string("/defaultFrag.spv"), ShaderType::FRAGMENT_SHADER);
@@ -212,11 +212,11 @@ void Application::InitImGui()
     // Setup Platform/Renderer bindings
     ImGui_ImplGlfw_InitForVulkan(window->getGLFWwindow(), true);
     ImGui_ImplVulkan_InitInfo init_info = {};
-    init_info.Instance = VKInstance::GetInstanceManager()->GetInstance();
-    init_info.PhysicalDevice = VKLogicalDevice::GetDeviceManager()->GetGPUManager().GetGPU();
+    init_info.Instance = VKInstance::Get()->get_handle();
+    init_info.PhysicalDevice = Device::GetDeviceManager()->GetGPUManager().GetGPU();
     init_info.Device = VKDEVICE;
-    init_info.QueueFamily = VKLogicalDevice::GetDeviceManager()->GetGPUManager().GetGraphicsFamilyIndex();
-    init_info.Queue = VKLogicalDevice::GetDeviceManager()->GetGraphicsQueue();
+    init_info.QueueFamily = Device::GetDeviceManager()->GetGPUManager().GetGraphicsFamilyIndex();
+    init_info.Queue = Device::GetDeviceManager()->GetGraphicsQueue();
     init_info.PipelineCache = VK_NULL_HANDLE;
     init_info.DescriptorPool = imguiDescriptorPool;
     init_info.Allocator = nullptr;
@@ -245,7 +245,7 @@ void Application::InitImGui()
     end_info.pCommandBuffers = &imguiCmdBuffer;
     vkEndCommandBuffer(imguiCmdBuffer);
 
-    if(VK_CALL(vkQueueSubmit(VKLogicalDevice::GetDeviceManager()->GetGraphicsQueue(), 1, &end_info, VK_NULL_HANDLE)))
+    if(VK_CALL(vkQueueSubmit(Device::GetDeviceManager()->GetGraphicsQueue(), 1, &end_info, VK_NULL_HANDLE)))
         throw std::runtime_error("Cannot submit imgui command buffer!");
     else VK_LOG_SUCCESS("succesfully submitted ImGui command buffer!");
 
@@ -352,7 +352,7 @@ void Application::DrawFrame()
     submitInfo.pSignalSemaphores = signalSemaphores;
 
     vkResetFences(VKDEVICE, 1, &inFlightFences[currentFrame]);
-    if(VK_CALL(vkQueueSubmit(VKLogicalDevice::GetDeviceManager()->GetGraphicsQueue(), 1, &submitInfo, inFlightFences[currentFrame]))) {
+    if(VK_CALL(vkQueueSubmit(Device::GetDeviceManager()->GetGraphicsQueue(), 1, &submitInfo, inFlightFences[currentFrame]))) {
         throw std::runtime_error("Cannot submit command buffer!");
     }
 
@@ -365,7 +365,7 @@ void Application::DrawFrame()
     presentInfo.pSwapchains = swapChains;
     presentInfo.pImageIndices = &imageIndex;
 
-    result = vkQueuePresentKHR(VKLogicalDevice::GetDeviceManager()->GetPresentQueue(), &presentInfo);
+    result = vkQueuePresentKHR(Device::GetDeviceManager()->GetPresentQueue(), &presentInfo);
 
     if(result == VK_ERROR_OUT_OF_DATE_KHR || result == VK_SUBOPTIMAL_KHR || window->IsResized()) {
         window->SetResizedFalse();
@@ -398,8 +398,8 @@ void Application::CleanUp()
     vertexShader.DestroyModule();
     fragmentShader.DestroyModule();
     outlineFragmentShader.DestroyModule();
-    VKLogicalDevice::GetDeviceManager()->Destroy();
-    VKInstance::GetInstanceManager()->Destroy();
+    Device::GetDeviceManager()->Destroy();
+    VKInstance::Get()->Destroy();
 }
 /******************************************************************************/
 

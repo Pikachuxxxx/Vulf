@@ -64,8 +64,6 @@ static bool VulkanCheckErrorStatus(VkResult x, const char* file, int line)
 
 #define VK_LOG(...) std::cout , "\033[1;32m[VULKAN]\033[1;33m - LOG : " , __VA_ARGS__ , " \033[0m" , std::endl
 
-#define VKDEVICE VKLogicalDevice::Get()->GetLogicalDevice()
-
 template <typename T>
 static std::ostream& operator,(std::ostream& out, const T& t) {
   out << t;

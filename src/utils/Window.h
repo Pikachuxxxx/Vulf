@@ -40,6 +40,8 @@ public:
     /// Gets the current window's pointer to it's native object.
     inline GLFWwindow* getGLFWwindow() const { return m_Window; }
 
+    void setTitle(std::string& title);
+
     bool IsResized() {return m_IsResized; }
     void SetResizedFalse() { m_IsResized = false; }
     /// Tells if a particular key on the keyboard was pressed or not.

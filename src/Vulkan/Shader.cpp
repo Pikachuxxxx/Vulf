@@ -3,7 +3,7 @@
 #include <fstream>
 #include <sstream>
 
-#include "VKDevice.h"
+#include "Device.h"
 #include "../utils/VulkanCheckResult.h"
 
 void Shader::CreateShader(const std::string& path, ShaderType type)

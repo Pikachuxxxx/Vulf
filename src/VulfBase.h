@@ -45,7 +45,7 @@
 #include <spirv_reflect.h>
 
 // Profiling
-#define TRACY_ENABLE
+//#define TRACY_ENABLE
 #include <Tracy.hpp>
 // Optick
 #define USE_OPTICK 1
@@ -64,7 +64,7 @@
 
 // Vulkan Abstractions
 #include "Vulkan/Instance.h"
-#include "Vulkan/VKDevice.h"
+#include "Vulkan/Device.h"
 #include "Vulkan/Swapchain.h"
 #include "Vulkan/Shader.h"
 #include "Vulkan/FixedPipelineFuncs.h"
@@ -118,11 +118,13 @@ namespace Vulf {
 
         Camera3D& getCamera() { return m_Camera; }
         const Window* getWindow() { return m_Window; }
+
     protected:
         CmdPool     _def_CommandPool;       /* The default command pool used to allocate buffer     */
         Swapchain   _def_Swapchain;
         RenderPass  _def_RenderPass;
         CmdBuffer   _def_SubmissionCommandBuffers;
+
     protected:
         /**
          * Creates the Shader resources to be used by the pipeline
@@ -182,7 +184,7 @@ namespace Vulf {
         uint32_t get_next_image_index() const { return m_ImageIndex;  }
         ImGuiOverlay& get_ui_overlay() { return m_ImGuiOVerlay; }
         const std::string& get_app_name() { return m_AppName; }
-        VKLogicalDevice get_logical_device() { return m_Device; }
+        Device get_device() { return m_Device; }
     private:
     // Application flow
         std::string                 m_AppName;                      /* The name of the application                                                      */
@@ -198,7 +200,7 @@ namespace Vulf {
     private:
         // Vulkan Stuff
         Instance                    m_Instance;                     /* The Vulkan abstracted Instance                                                   */
-        VKLogicalDevice             m_Device;                       /* The Vulkan physical and logical device abstraction                               */
+        Device                      m_Device;                       /* The Vulkan physical and logical device abstraction                               */
         std::vector<VkSemaphore>    m_ImageAvailableSemaphores;     /* Semaphore to tell when an image is free to use to draw onto (GPU-GPU)            */
         std::vector<VkSemaphore>    m_RenderingFinishedSemaphores;  /* Semaphore to tell when the rendering to a particular swapchain image is done     */
         std::vector<VkFence>        m_InFlightFences;               /* Use to synchronize the GPU-CPU so that they draw onto the right image in flight  */

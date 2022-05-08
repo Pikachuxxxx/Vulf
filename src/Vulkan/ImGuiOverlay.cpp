@@ -1,6 +1,6 @@
 #include "ImGuiOverlay.h"
 
-#include "Vulkan/VKDevice.h"
+#include "Vulkan/Device.h"
 #include "VulkanInitializers.hpp"
 #include "utils/VulkanCheckResult.h"
 
@@ -250,26 +250,24 @@ namespace Vulf {
 
         // Vertex buffer
         if ((m_ImGuiVBO.get_buffer() == VK_NULL_HANDLE) || (vertexCount != imDrawData->TotalVtxCount)) {
-            m_ImGuiVBO.unmap();
-            // Destroy the buffer here before creating a new one
-            VKLogicalDevice::Get()->createBuffer(VK_BUFFER_USAGE_VERTEX_BUFFER_BIT, VK_MEMORY_PROPERTY_HOST_VISIBLE_BIT, &m_ImGuiVBO, vertexBufferSize);
-
+            // m_ImGuiVBO.unmap();
+            // m_ImGuiVBO.DestroyBuffer();
+            Device::Get()->createBuffer(VK_BUFFER_USAGE_VERTEX_BUFFER_BIT, VK_MEMORY_PROPERTY_HOST_VISIBLE_BIT, &m_ImGuiVBO, vertexBufferSize);
             vertexCount = imDrawData->TotalVtxCount;
-            m_ImGuiVBO.unmap();
-            m_ImGuiVBO.map();
+            m_ImGuiVBO.map(vertexBufferSize);
             updateCmdBuffers = true;
         }
 
 
         // Index  buffer
         if ((m_ImGuiIBO.get_buffer() == VK_NULL_HANDLE) || (indexCount != imDrawData->TotalIdxCount)) {
-            m_ImGuiIBO.unmap();
-            // Destroy the buffer here before creating a new one
-            VKLogicalDevice::Get()->createBuffer(VK_BUFFER_USAGE_INDEX_BUFFER_BIT, VK_MEMORY_PROPERTY_HOST_VISIBLE_BIT, &m_ImGuiIBO, indexBufferSize);
+            // m_ImGuiIBO.unmap();
+
+            Device::Get()->createBuffer(VK_BUFFER_USAGE_INDEX_BUFFER_BIT, VK_MEMORY_PROPERTY_HOST_VISIBLE_BIT, &m_ImGuiIBO, indexBufferSize);
 
             indexCount = imDrawData->TotalIdxCount;
-            m_ImGuiIBO.unmap();
-            m_ImGuiIBO.map();
+            // m_ImGuiIBO.unmap();
+            m_ImGuiIBO.map(indexBufferSize);
             updateCmdBuffers = true;
         }
 
@@ -285,8 +283,10 @@ namespace Vulf {
             idxDst += cmd_list->IdxBuffer.Size;
         }
 
-        m_ImGuiVBO.flush();
-        m_ImGuiIBO.flush();
+        m_ImGuiIBO.unmap();
+        m_ImGuiIBO.unmap();
+        // m_ImGuiVBO.flush();
+        // m_ImGuiIBO.flush();
 
         return updateCmdBuffers;
     }

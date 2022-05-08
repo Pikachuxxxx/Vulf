@@ -1,6 +1,6 @@
 #include "Texture.h"
 
-#include "VKDevice.h"
+#include "Device.h"
 #include "../utils/VulkanCheckResult.h"
 #include "CmdPool.h"
 
@@ -26,7 +26,7 @@ void Texture::CreateTexture(const std::string& path, CmdPool& cmdPool)
         VK_IMAGE_TILING_OPTIMAL,    // Tiling
         VK_IMAGE_USAGE_TRANSFER_DST_BIT | VK_IMAGE_USAGE_SAMPLED_BIT, // Image Usage Flags
         VK_MEMORY_PROPERTY_DEVICE_LOCAL_BIT);    // Memory Property Flags
-        
+
 
     /*
      *    There are two transitions we need to handle:
@@ -55,7 +55,7 @@ void Texture::CreateTexture(const std::string& path, CmdPool& cmdPool)
     samplerInfo.addressModeW = VK_SAMPLER_ADDRESS_MODE_REPEAT;
     samplerInfo.anisotropyEnable = VK_TRUE;
     VkPhysicalDeviceProperties properties{};
-    vkGetPhysicalDeviceProperties(VKLogicalDevice::Get()->GetGPUManager().GetGPU(), &properties);
+    vkGetPhysicalDeviceProperties(Device::Get()->get_gpu(), &properties);
     samplerInfo.maxAnisotropy = properties.limits.maxSamplerAnisotropy;
     samplerInfo.borderColor = VK_BORDER_COLOR_INT_OPAQUE_BLACK;
     samplerInfo.unnormalizedCoordinates = VK_FALSE;
@@ -140,7 +140,7 @@ void Texture::UploadTexture(const void* imageData, VkDeviceSize imageSize, uint3
 
     // Copy the image to the buffer
     //cmdPool.CopyBufferToImage(m_ImageStagingBuffer.GetBuffer(), m_TextureImage.GetImage(), m_Width, m_Height);
-    VKLogicalDevice::Get()->copyBufferToImage(m_ImageStagingBuffer.get_buffer(), m_TextureImage.GetImage(), width, height);
+    Device::Get()->copy_buffer_to_image(m_ImageStagingBuffer.get_buffer(), m_TextureImage.GetImage(), width, height);
 
     // Change the formate such that we can sample it from the shader
     m_TextureImage.TransitionImageLayout( VK_FORMAT_R8G8B8A8_UNORM, VK_IMAGE_LAYOUT_TRANSFER_DST_OPTIMAL, VK_IMAGE_LAYOUT_SHADER_READ_ONLY_OPTIMAL);
@@ -158,7 +158,7 @@ void Texture::UploadTexture(const void* imageData, VkDeviceSize imageSize, uint3
     samplerInfo.addressModeW = VK_SAMPLER_ADDRESS_MODE_REPEAT;
     samplerInfo.anisotropyEnable = VK_TRUE;
     VkPhysicalDeviceProperties properties{};
-    vkGetPhysicalDeviceProperties(VKLogicalDevice::Get()->GetGPUManager().GetGPU(), &properties);
+    vkGetPhysicalDeviceProperties(Device::Get()->get_gpu(), &properties);
     samplerInfo.maxAnisotropy = properties.limits.maxSamplerAnisotropy;
     samplerInfo.borderColor = VK_BORDER_COLOR_INT_OPAQUE_BLACK;
     samplerInfo.unnormalizedCoordinates = VK_FALSE;

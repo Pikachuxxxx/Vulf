@@ -32,7 +32,7 @@
 
 
 #include "Vulkan/VKInstance.h"
-#include "Vulkan/VKDevice.h"
+#include "Vulkan/Device.h"
 #include "Vulkan/VKSwapchain.h"
 #include "Vulkan/VKShader.h"
 #include "Vulkan/VKFixedPipelineFuncs.h"
