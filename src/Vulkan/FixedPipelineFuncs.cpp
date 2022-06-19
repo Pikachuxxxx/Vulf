@@ -168,14 +168,14 @@ void FixedPipelineFuncs::SetDynamicSCI() {
 }
 
 // TODO: Make this dynamic to support usage of multiple uniform buffers
-void FixedPipelineFuncs::SetPipelineLayout(VkDescriptorSetLayout layout, VkPushConstantRange& pushConstants)
+void FixedPipelineFuncs::SetPipelineLayout(VkDescriptorSetLayout layout, VkPushConstantRange* pushConstants)
 {
 
     layoutCI.sType = VK_STRUCTURE_TYPE_PIPELINE_LAYOUT_CREATE_INFO;
     layoutCI.setLayoutCount = layout == VK_NULL_HANDLE ? 0 : 1;
     layoutCI.pSetLayouts = &layout;
-    layoutCI.pushConstantRangeCount = 1;
-    layoutCI.pPushConstantRanges = &pushConstants;
+    layoutCI.pushConstantRangeCount = 0;
+    layoutCI.pPushConstantRanges = pushConstants;
 
     if(VK_CALL(vkCreatePipelineLayout(VKDEVICE, &layoutCI, nullptr, &m_PipelineLayout)))
         throw std::runtime_error("Cannot create pipeline layout");

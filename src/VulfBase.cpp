@@ -54,10 +54,17 @@ namespace Vulf {
         Device::Get()->Init();
 
 #ifdef _WIN32
+<<<<<<< HEAD
         auto device         = Device::Get()->get_handle();
         auto physicalDevice = Device::Get()->get_gpu();
         auto queuefam       = Device::Get()->get_graphics_queue();
         uint32_t numQueues  = Device::Get()->get_graphics_family_index();
+=======
+        auto device = Device::Get()->get_handle();
+        auto physicalDevice = Device::Get()->get_gpu();
+        auto queuefam = Device::Get()->get_graphics_queue();
+        uint32_t numQueues = Device::Get()->get_graphics_queue_index();
+>>>>>>> 0db70fd986e271ddbcc8ef72ff2e3d694b1a219b
         OPTICK_GPU_INIT_VULKAN(&device, &physicalDevice, &queuefam, &numQueues, 1, nullptr);
 #endif
         // Load the shaders

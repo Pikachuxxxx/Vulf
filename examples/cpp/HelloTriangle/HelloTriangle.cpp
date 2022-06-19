@@ -13,7 +13,7 @@ std::vector<const char*> g_InstanceExtensions = {
     VK_EXT_DEBUG_UTILS_EXTENSION_NAME
 };
 
-std::vector<const char*> deviceExtensions = {
+std::vector<const char*> g_DeviceExtensions = {
    VK_KHR_SWAPCHAIN_EXTENSION_NAME,
 #if (__APPLE__)
    "VK_KHR_portability_subset"
@@ -91,7 +91,7 @@ private:
         depthImage.CreateDepthImage(_def_Swapchain.get_extent().width, _def_Swapchain.get_extent().height, _def_CommandPool);
 
         // Grid Texture
-        gridTexture.CreateTexture((SRC_DIR) + std::string("/data/textures/TestGrid_256.png"), _def_CommandPool);
+        gridTexture.CreateTexture((SRC_DIR) + std::string("/data/textures/TestGrid_1024.png"), _def_CommandPool);
 
         // Checker Texture;
         checkerTexture.CreateTexture((SRC_DIR) + std::string("/data/textures/TestCheckerMap.png"), _def_CommandPool);
@@ -140,10 +140,7 @@ private:
 
     void CleanUpPipeline() override {
         ZoneScopedC(0xffffff);
-        VK_LOG("I'm Here next");
         vkDeviceWaitIdle(VKDEVICE);
-        // simpleCommandBuffer.Destroy(_def_CommandPool.GetPool());
-        VK_LOG("I'm Here Last!");
         simpleFrameBuffer.Destroy();
         gridTexture.Destroy();
         checkerTexture.Destroy();
@@ -176,7 +173,7 @@ private:
         int i = imageIndex;
 
 #ifdef _WIN32
-        OPTICK_GPU_CONTEXT(cmdBuffers[i]);
+        OPTICK_GPU_CONTEXT(commandBuffer);
         OPTICK_GPU_EVENT("Recording cmd buffers");
 #endif
         _def_SubmissionCommandBuffers.RecordBuffer(commandBuffer);
@@ -225,7 +222,7 @@ private:
     {
         ImGui::NewFrame();
 
-        //ImGui::ShowDemoWindow();
+        ImGui::ShowDemoWindow();
 
         if(ImGui::Begin("Vulkan Example"))
         {

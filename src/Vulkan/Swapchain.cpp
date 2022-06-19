@@ -216,3 +216,72 @@ void Swapchain::create_swapchain_image_views()
         else VK_LOG("Image view(id=", i ,") succesfully created!");
     }
 }
+
+
+void Swapchain::create_sets()
+{
+
+    VkDescriptorPoolSize poolSize;
+    poolSize.type = (VkDescriptorType) VK_DESCRIPTOR_TYPE_COMBINED_IMAGE_SAMPLER;
+    poolSize.descriptorCount = 1;
+
+    VkDescriptorPoolCreateInfo poolInfo{};
+    poolInfo.sType = VK_STRUCTURE_TYPE_DESCRIPTOR_POOL_CREATE_INFO;
+    poolInfo.poolSizeCount = static_cast<uint32_t>(1);
+    poolInfo.pPoolSizes = &poolSize;
+    poolInfo.maxSets = static_cast<uint32_t>(3);
+
+    if (VK_CALL(vkCreateDescriptorPool(VKDEVICE, &poolInfo, nullptr, &m_DescriptorPool)))
+        throw std::runtime_error("Cannot create the descriptor pool!");
+    else VK_LOG_SUCCESS("successuflly create descriptor pool!");
+
+    VkDescriptorSetLayoutBinding binding[1] = {};
+    binding[0].descriptorType = VK_DESCRIPTOR_TYPE_COMBINED_IMAGE_SAMPLER;
+    binding[0].descriptorCount = 1;
+    binding[0].stageFlags = VK_SHADER_STAGE_FRAGMENT_BIT;
+    VkDescriptorSetLayoutCreateInfo info = {};
+    info.sType = VK_STRUCTURE_TYPE_DESCRIPTOR_SET_LAYOUT_CREATE_INFO;
+    info.bindingCount = 1;
+    info.pBindings = binding;
+    vkCreateDescriptorSetLayout(VKDEVICE, &info, nullptr, &g_DescriptorSetLayout);
+
+    // if(allocated < 2)
+    // Create Descriptor Set:
+        std::vector<VkDescriptorSetLayout> layouts(3, g_DescriptorSetLayout);
+    {
+        VkDescriptorSetAllocateInfo alloc_info = {};
+        alloc_info.sType = VK_STRUCTURE_TYPE_DESCRIPTOR_SET_ALLOCATE_INFO;
+        alloc_info.descriptorPool = m_DescriptorPool;
+        alloc_info.descriptorSetCount = layouts.size();
+        alloc_info.pSetLayouts = layouts.data();
+
+        m_DescriptorSets.clear();
+        m_DescriptorSets.resize(3);
+
+        if (VK_CALL(vkAllocateDescriptorSets(VKDEVICE, &alloc_info, m_DescriptorSets.data())))
+            throw std::runtime_error("failed to create texture descriptor set for texture!");
+    }
+}
+
+void Swapchain::update_sets()
+{
+    // Update the Descriptor Sets
+
+    for (size_t i = 0; i < 3; i++)
+    {
+        VkDescriptorImageInfo desc_image[1] = {};
+        VkWriteDescriptorSet write_desc[1] = {};
+
+        desc_image[0].sampler = m_ImageSampler;
+        desc_image[0].imageView = m_SwapchainImageViews[i];
+        desc_image[0].imageLayout = VK_IMAGE_LAYOUT_SHADER_READ_ONLY_OPTIMAL;
+        write_desc[0].sType = VK_STRUCTURE_TYPE_WRITE_DESCRIPTOR_SET;
+        write_desc[0].dstSet = m_DescriptorSets[i];
+        write_desc[0].dstBinding = 0;
+        write_desc[0].descriptorCount = 1;
+        write_desc[0].descriptorType = VK_DESCRIPTOR_TYPE_COMBINED_IMAGE_SAMPLER;
+        write_desc[0].pImageInfo = desc_image;
+        
+        vkUpdateDescriptorSets(VKDEVICE, 1, write_desc, 0, nullptr);
+    }
+}

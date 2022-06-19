@@ -29,6 +29,12 @@ void Shader::CreateShader(const std::string& path, ShaderType type)
         case ShaderType::FRAGMENT_SHADER :
             m_ShaderStageInfo.stage = VK_SHADER_STAGE_FRAGMENT_BIT;
             break;
+        case ShaderType::MESH_SHADER:
+            m_ShaderStageInfo.stage = VK_SHADER_STAGE_MESH_BIT_NV;
+            break;
+        case ShaderType::TASK_SHADER:
+            m_ShaderStageInfo.stage = VK_SHADER_STAGE_TASK_BIT_NV;
+            break;
     }
     m_ShaderStageInfo.module = m_Module;
     m_ShaderStageInfo.pName = "main";
@@ -48,6 +54,12 @@ std::string Shader::GetShaderTypeString()
             break;
         case ShaderType::FRAGMENT_SHADER :
             return "Fragment";
+            break;
+        case ShaderType::MESH_SHADER:
+            return "Mesh";
+            break;;
+        case  ShaderType::TASK_SHADER:
+            return "Task Shader";
             break;
     }
 }

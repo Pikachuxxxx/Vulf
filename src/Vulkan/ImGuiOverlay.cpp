@@ -256,7 +256,6 @@ namespace Vulf {
             vertexCount = imDrawData->TotalVtxCount;
             m_ImGuiVBO.map(vertexBufferSize);
             updateCmdBuffers = true;
-            // m_ImGuiVBO.unmap();
         }
 
 

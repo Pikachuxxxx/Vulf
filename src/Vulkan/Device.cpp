@@ -8,7 +8,7 @@
 #include "../utils/VulkanCheckResult.h"
 
 /******************************************************************************/
-/*                              Instance class                                */
+/*                          PhysicalDevice class                              */
 /******************************************************************************/
 
 void PhysicalDevice::Init()
@@ -74,7 +74,7 @@ bool PhysicalDevice::is_device_suitable(VkPhysicalDevice& gpu)
 {
     vkGetPhysicalDeviceProperties(gpu, &m_DeviceProperties);
     vkGetPhysicalDeviceFeatures(gpu, &m_DeviceFeatures);
-    // For now only finding the supportted uqueues will suffice
+    // For now only finding the supported queues will suffice
     find_queue_family_indices(gpu);
     return m_QueueFamilyIndices.isComplete();
 }
@@ -92,12 +92,14 @@ void PhysicalDevice::find_queue_family_indices(VkPhysicalDevice gpu)
         if(queue.queueFlags & VK_QUEUE_GRAPHICS_BIT)
             m_QueueFamilyIndices.graphicsFamily = i;
 
-            // Check for presentation support
+            // Check for presentation support (usually we see that both graphics and queue family is same)
             VkBool32 presentationSupported = false;
             vkGetPhysicalDeviceSurfaceSupportKHR(gpu, i, Instance::Get()->get_surface(), &presentationSupported);
 
             if(presentationSupported)
                 m_QueueFamilyIndices.presentFamily = i;
+
+            // TODO: Check for Compute queue
 
             if(m_QueueFamilyIndices.isComplete())
                 break;
@@ -138,13 +140,45 @@ void Device::Init()
     deviceFeatures.fillModeNonSolid = VK_TRUE;
     deviceFeatures.samplerAnisotropy = VK_TRUE;
 
-    // Create the Logica Device
+    VkPhysicalDeviceMeshShaderFeaturesNV meshShaderFeatures{};
+    meshShaderFeatures.sType = VK_STRUCTURE_TYPE_PHYSICAL_DEVICE_MESH_SHADER_FEATURES_NV;
+    meshShaderFeatures.pNext = nullptr;
+    meshShaderFeatures.taskShader = VK_TRUE;
+    meshShaderFeatures.meshShader = VK_TRUE;
+
+    // Get the list of all the extensions supported by the physical device
+    uint32_t extensionsCount = 0;
+    if (VK_CALL(vkEnumerateDeviceExtensionProperties(get_gpu(), nullptr, &extensionsCount, nullptr)))
+        throw std::runtime_error("cannot query device extensions!");
+    std::vector<VkExtensionProperties> availableDeviceExtensions;
+    availableDeviceExtensions.resize(extensionsCount);
+    vkEnumerateDeviceExtensionProperties(m_GPUManager.get_gpu(), nullptr, &extensionsCount, availableDeviceExtensions.data());
+
+    // check if the user requested extensions are supported or not
+    // Now print the layers only for debug purposes
+#ifndef NDEBUG
+    PrettyTable<std::string, std::string> vt({"Requested Extensions", "isAvailable"});
+    for (uint32_t i = 0; i < extensionsCount; i++) {
+        for (uint32_t j = 0; j < g_DeviceExtensions.size(); j++) {
+            if (strcmp(availableDeviceExtensions[i].extensionName, g_DeviceExtensions[j]) == 0) {
+                vt.addRow(g_DeviceExtensions[j], "Yes");
+            }
+            //else {
+            //    vt.addRow(availableDeviceExtensions[i].extensionName, "", "");
+            //}
+        }
+    }
+    vt.print(std::cout);
+#endif
+
+    // Create the Logical Device
     VkDeviceCreateInfo deviceCI{};
     deviceCI.sType = VK_STRUCTURE_TYPE_DEVICE_CREATE_INFO;
+    deviceCI.pNext = &meshShaderFeatures;
     deviceCI.queueCreateInfoCount = queueCreateInfos.size();
     deviceCI.pQueueCreateInfos = queueCreateInfos.data();
-    deviceCI.enabledExtensionCount = deviceExtensions.size();
-    deviceCI.ppEnabledExtensionNames = deviceExtensions.data();
+    deviceCI.enabledExtensionCount = g_DeviceExtensions.size();
+    deviceCI.ppEnabledExtensionNames = g_DeviceExtensions.data();
     deviceCI.pEnabledFeatures = &deviceFeatures;
 
     if(VK_CALL(vkCreateDevice(m_GPUManager.get_gpu(), &deviceCI, nullptr, &m_Device)))

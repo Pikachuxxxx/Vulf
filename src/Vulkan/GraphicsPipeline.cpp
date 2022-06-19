@@ -19,10 +19,10 @@ void GraphicsPipeline::Create(std::vector<VkPipelineShaderStageCreateInfo> shade
     m_VertexInputSCI.sType = VK_STRUCTURE_TYPE_PIPELINE_VERTEX_INPUT_STATE_CREATE_INFO;
     m_VertexInputSCI.flags = 0;
     m_VertexInputSCI.pNext = nullptr;
-    m_VertexInputSCI.vertexBindingDescriptionCount      = 1;
-    m_VertexInputSCI.pVertexBindingDescriptions         = &bindingDescription;
-    m_VertexInputSCI.vertexAttributeDescriptionCount    = attributeDescriptions.size();
-    m_VertexInputSCI.pVertexAttributeDescriptions       = attributeDescriptions.data();
+    //m_VertexInputSCI.vertexBindingDescriptionCount      = 1;
+    //m_VertexInputSCI.pVertexBindingDescriptions         = &bindingDescription;
+    //m_VertexInputSCI.vertexAttributeDescriptionCount    = attributeDescriptions.size();
+    //m_VertexInputSCI.pVertexAttributeDescriptions       = attributeDescriptions.data();
 
     std::vector<VkDynamicState> dynamicStateDescriptors;
 
