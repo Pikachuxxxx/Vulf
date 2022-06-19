@@ -20,12 +20,12 @@ public:
     VkSampler GetImageSampler() const { return m_ImageSampler; }
     VkDescriptorImageInfo GetDescriptorInfo() const { return m_DescrioptorInfo; }
 private:
-    VkImage m_Image;
-    VkDeviceMemory m_ImageMemory;
-    VkImageView m_ImageView;
+    VkImage                     m_Image;
+    VkDeviceMemory              m_ImageMemory;
+    VkImageView                 m_ImageView;
     // TODO: Read about these in detail!
-    VkPipelineStageFlags m_ImageSourceStage;
-    VkPipelineStageFlags m_ImageDestinationStage;
-    VkSampler m_ImageSampler;
-    VkDescriptorImageInfo m_DescrioptorInfo;
+    VkPipelineStageFlags        m_ImageSourceStage;
+    VkPipelineStageFlags        m_ImageDestinationStage;
+    VkSampler                   m_ImageSampler;
+    VkDescriptorImageInfo       m_DescrioptorInfo;
 };

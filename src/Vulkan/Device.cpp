@@ -152,8 +152,10 @@ void Device::Init()
     else
         VK_LOG_SUCCESS("Logical Device succesfully created!");
 
+    //--------------------------------------------------------------------------
     // Create the queue handles
     create_queues();
+    //--------------------------------------------------------------------------
 
     // Create a default instantaneous command pool to allocate command buffers on fly(Graphics Only)
     VkCommandPoolCreateInfo cmdPoolInfo = {};

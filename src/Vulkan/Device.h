@@ -81,6 +81,7 @@ public:
     void end_single_time_cmd_buffer(VkCommandBuffer cmdBuf);
     void flush_cmd_buffer(VkCommandBuffer cmdBuf, VkQueue queue, bool free = true);
 
+    // TODO: Implement the same native ones with abstracted objects
     VkResult create_buffer(VkBufferUsageFlags usageFlags, VkMemoryPropertyFlags memoryPropertyFlags, VkDeviceSize size, VkBuffer& buffer, VkDeviceMemory& memory, void* data = nullptr);
     VkResult createBuffer(VkBufferUsageFlags usageFlags, VkMemoryPropertyFlags memoryPropertyFlags, Buffer* buffer, VkDeviceSize size, void* data = nullptr);
     void copy_buffer_to_image(VkBuffer buffer, VkImage image, uint32_t width, uint32_t height);
@@ -91,6 +92,7 @@ public:
     inline const uint32_t& get_graphics_queue_index() { return m_GPUManager.get_graphics_family_index(); }
     inline const uint32_t& get_present_queue_index() { return m_GPUManager.get_present_family_index(); }
     inline const uint32_t& get_compute_queue_index() { return m_GPUManager.get_compute_family_index(); }
+
     inline const VkQueue& get_graphics_queue() const { return m_GraphicsQueue; }
     inline const VkQueue& get_present_queue() const { return m_PresentQueue; }
     inline const VkQueue& get_compute_queue() const { return m_ComputeQueue; }

@@ -52,12 +52,12 @@ namespace Vulf {
 
         // Create the Device
         Device::Get()->Init();
-        //void InitGpuVulkan(VkDevice * vkDevices, VkPhysicalDevice * vkPhysicalDevices, VkQueue * vkQueues, uint32_t * cmdQueuesFamily, uint32_t numQueues, const VulkanFunctions * functions)
+
 #ifdef _WIN32
-        auto device = Device::Get()->GetLogicalDevice();
-        auto physicalDevice = Device::Get()->GetGPUManager().GetGPU();
-        auto queuefam = Device::Get()->GetGraphicsQueue();
-        uint32_t numQueues = Device::Get()->GetGPUManager().GetGraphicsFamilyIndex();
+        auto device         = Device::Get()->get_handle();
+        auto physicalDevice = Device::Get()->get_gpu();
+        auto queuefam       = Device::Get()->get_graphics_queue();
+        uint32_t numQueues  = Device::Get()->get_graphics_family_index();
         OPTICK_GPU_INIT_VULKAN(&device, &physicalDevice, &queuefam, &numQueues, 1, nullptr);
 #endif
         // Load the shaders
@@ -82,119 +82,11 @@ namespace Vulf {
         m_ImGuiOVerlay.upload_ui_font("FiraCode-Light.ttf");
         m_ImGuiOVerlay.prepare_pipeline(_def_RenderPass.GetRenderPass());
         ImGui_ImplGlfw_InitForVulkan(m_Window->getGLFWwindow(), true);
-
     }
-
-    void VulfBase::CreateSynchronizationPrimitives() {
-
-        // Create the synchronization stuff
-        VkSemaphoreCreateInfo semaphoreInfo{};
-        semaphoreInfo.sType = VK_STRUCTURE_TYPE_SEMAPHORE_CREATE_INFO;
-        m_ImageAvailableSemaphores.resize(MAX_FRAMES_IN_FLIGHT);
-        m_RenderingFinishedSemaphores.resize(MAX_FRAMES_IN_FLIGHT);
-
-        VkFenceCreateInfo fenceInfo{};
-        fenceInfo.sType = VK_STRUCTURE_TYPE_FENCE_CREATE_INFO;
-        fenceInfo.flags = VK_FENCE_CREATE_SIGNALED_BIT;
-        m_InFlightFences.resize(MAX_FRAMES_IN_FLIGHT);
-        // m_ImagesInFlight.resize(SWAP_IMAGES_COUNT, VK_NULL_HANDLE); // 3 swapchain images are used
-
-        for (size_t i = 0; i < MAX_FRAMES_IN_FLIGHT; i++) {
-            if (VK_CALL(vkCreateSemaphore(VKDEVICE, &semaphoreInfo, nullptr, &m_ImageAvailableSemaphores[i])) ||
-                VK_CALL(vkCreateSemaphore(VKDEVICE, &semaphoreInfo, nullptr, &m_RenderingFinishedSemaphores[i])) ||
-                VK_CALL(vkCreateFence(VKDEVICE, &fenceInfo, nullptr, &m_InFlightFences[i]))) {
-                throw std::runtime_error("Cannot create Synchronization primitives!");
-            }
-            else {
-                VkDebugUtilsObjectNameInfoEXT name_info = { VK_STRUCTURE_TYPE_DEBUG_UTILS_OBJECT_NAME_INFO_EXT };
-                name_info.objectType = VK_OBJECT_TYPE_FENCE;
-                name_info.objectHandle = (uint64_t) m_InFlightFences[i];
-                name_info.pObjectName = (std::string("Fence : ") + std::to_string(i)).c_str();
-                //vkSetDebugUtilsObjectNameEXT(VKDEVICE, &name_info);
-            }
-        }
-
-
-    }
-
-// Protected
-/*******************************************************************************
- *                  Client Side Customization(default behavior)                *
- ******************************************************************************/
 
     ////////////////////////////////////////////////////////////////////////////
-    void VulfBase::BuildCommandPipeline() {
-        // Create the swapchain
-        BuildSwapchain();
-
-        // Build texture and image resources
-        BuildTextureResources();
-
-        // Create Buffer Resources such as Vertex, Index and Uniform buffers
-        BuildBufferResource();
-
-        // Build the fixed pipeline stage
-        BuildFixedPipeline();
-
-        // Build render passes
-        BuildRenderPass();
-
-        // Create the Graphics Pipeline
-        BuildGraphicsPipeline();
-
-        // Build the framebuffers
-        BuildFramebuffer();
-
-        // Build the command buffers
-        BuildCommandBuffers();
-
-        // Build the descriptor sets
-        BuildDescriptorSets();
-    }
-    ////////////////////////////////////////////////////////////////////////////
-
-    void VulfBase::BuildCommandPool() {
-        _def_CommandPool.Init();
-    }
-
-    void VulfBase::BuildTextureResources() {
-
-    }
-
-    void VulfBase::BuildSwapchain() {
-        _def_Swapchain.Init(m_Window->getGLFWwindow());
-    }
-
-    void VulfBase::BuildFixedPipeline() {
-
-    }
-
-    void VulfBase::BuildRenderPass() {
-        _def_RenderPass.Init(_def_Swapchain.GetSwapFormat());
-    }
-
-    void VulfBase::BuildGraphicsPipeline() {
-
-    }
-
-    void VulfBase::BuildFramebuffer() {
-
-    }
-
-    void VulfBase::BuildCommandBuffers() {
-        // Build the default (aka submissible) command buffers onto which we can record draw commands
-        // _def_SubmissionCommandBuffers.resize(MAX_FRAMES_IN_FLIGHT);
-
-        // One for each frame in flight
-        _def_SubmissionCommandBuffers.AllocateBuffers(_def_CommandPool.GetPool(), MAX_FRAMES_IN_FLIGHT);
-    }
-
-    void VulfBase::BuildDescriptorSets() {
-
-    }
-
-//-----------------------------------------------------------------------------//
-// Render Loop
+    // PRIVATE
+    // Render Loop Beginning
     void VulfBase::RenderLoop() {
 
         OnStart();
@@ -237,9 +129,97 @@ namespace Vulf {
             vkDestroyFence(VKDEVICE, m_InFlightFences[i], nullptr);
         }
     }
+    ////////////////////////////////////////////////////////////////////////////
+
+// Protected
+/*******************************************************************************
+ *                  Client Side Customization(default behavior)                *
+ ******************************************************************************/
+
+    ////////////////////////////////////////////////////////////////////////////
+    // PRIVATE
+    void VulfBase::BuildCommandPipeline() {
+        // Create the swapchain
+        BuildSwapchain();
+
+        // Build texture and image resources
+        BuildTextureResources();
+
+        // Create Buffer Resources such as Vertex, Index and Uniform buffers
+        BuildBufferResource();
+
+        // Build the fixed pipeline stage
+        BuildFixedPipeline();
+
+        // Build render passes
+        BuildRenderPass();
+
+        // Create the Graphics Pipeline
+        BuildGraphicsPipeline();
+
+        // Build the framebuffers
+        BuildFramebuffer();
+
+        // Build the command buffers
+        BuildCommandBuffers();
+
+        // Build the descriptor sets
+        BuildDescriptorSets();
+    }
+    ////////////////////////////////////////////////////////////////////////////
+
+    void VulfBase::BuildCommandPool() {
+
+        // This is a graphics pool for allocationf command bufers that can only be sunmitted to graphics queues
+        _def_CommandPool.Init(Device::Get()->get_graphics_queue_index());
+    }
+
+    void VulfBase::BuildTextureResources() {
+
+    }
+
+    void VulfBase::BuildSwapchain() {
+        _def_Swapchain.Init(m_Window->getGLFWwindow());
+    }
+
+    void VulfBase::BuildFixedPipeline() {
+
+    }
+
+    void VulfBase::BuildRenderPass() {
+        _def_RenderPass.Init(_def_Swapchain.get_format());
+    }
+
+    void VulfBase::BuildGraphicsPipeline() {
+
+    }
+
+    void VulfBase::BuildFramebuffer() {
+
+    }
+
+    void VulfBase::BuildCommandBuffers() {
+        // Build the default (aka submissible) command buffers onto which we can record draw commands
+        // _def_SubmissionCommandBuffers.resize(MAX_FRAMES_IN_FLIGHT);
+
+        // One for each frame in flight
+    }
+
+    void VulfBase::BuildDescriptorSets() {
+
+    }
 
 //-----------------------------------------------------------------------------//
+// Draw Frame + Submission logic + cleanup
 
+    void VulfBase::CleanUpPipeline() {
+
+        // Default swapchain manager
+        _def_Swapchain.Destroy();
+    }
+
+    ////////////////////////////////////////////////////////////////////////////
+    // Draw the Frame
     void VulfBase::DrawFrame() {
         ZoneScopedC(0xff0000)
 #ifdef _WIN32
@@ -250,7 +230,7 @@ namespace Vulf {
         vkResetFences(VKDEVICE, 1, &m_InFlightFences[m_CurrentFrame]);
 
         // Acquire the image to render onto
-        VkResult result = vkAcquireNextImageKHR(VKDEVICE, _def_Swapchain.GetSwapchainKHR(), UINT64_MAX, m_ImageAvailableSemaphores[m_CurrentFrame], VK_NULL_HANDLE, &m_ImageIndex);
+        VkResult result = vkAcquireNextImageKHR(VKDEVICE, _def_Swapchain.get_handle(), UINT64_MAX, m_ImageAvailableSemaphores[m_CurrentFrame], VK_NULL_HANDLE, &m_ImageIndex);
 
         if(result == VK_ERROR_OUT_OF_DATE_KHR) {
             RecreateSwapchain();
@@ -265,29 +245,27 @@ namespace Vulf {
         //
         // m_ImagesInFlight[m_ImageIndex] = m_InFlightFences[m_CurrentFrame];
         // Reset and record the command buffer
-        if(VK_CALL(vkResetCommandBuffer(_def_SubmissionCommandBuffers.GetBufferAt(m_CurrentFrame), /*VkCommandBufferResetFlagBits*/ 0)))
-            throw std::runtime_error("Cannot reset the command buffer");
+        // if(VK_CALL(vkResetCommandBuffer(_def_SubmissionCommandBuffers.GetBufferAt(m_CurrentFrame), /*VkCommandBufferResetFlagBits*/ 0)))
+        //     throw std::runtime_error("Cannot reset the command buffer");
         // else
         //     VK_LOG_SUCCESS("Command buffer reset successful");
 
 
         ImGui_ImplGlfw_NewFrame();
         OnImGui();
-        auto buf = _def_SubmissionCommandBuffers.GetBufferAt(m_CurrentFrame);
+        VkCommandBuffer buf;
         OnRender(buf, m_ImageIndex);
 
-        UpdateBuffers(m_ImageIndex);
+        OnUpdateBuffers(m_ImageIndex);
 
         SubmitFrame();
 
         FrameMark
     }
+    ////////////////////////////////////////////////////////////////////////////
 
-    void VulfBase::UpdateBuffers(uint32_t imageIndex) {
-        ZoneScopedC(0xffff00);
-
-    }
-
+    ////////////////////////////////////////////////////////////////////////////
+    // Sunmit the frame for presentation and the command buffers for execution
     void VulfBase::SubmitFrame() {
         ZoneScopedC(0x0000ff);
 #ifdef _WIN32
@@ -310,7 +288,7 @@ namespace Vulf {
         //     buffers.push_back(submissionCommandBuffers[i].GetBufferAt(m_ImageIndex));
         // }
 
-        submitInfo.pCommandBuffers = &(_def_SubmissionCommandBuffers.GetBufferAt(m_CurrentFrame));
+        submitInfo.pCommandBuffers = nullptr;//&(_def_SubmissionCommandBuffers.GetBufferAt(m_CurrentFrame));
         VkSemaphore signalSemaphores[] = {m_RenderingFinishedSemaphores[m_CurrentFrame]};
         submitInfo.signalSemaphoreCount = 1;
         submitInfo.pSignalSemaphores = signalSemaphores;
@@ -330,7 +308,7 @@ namespace Vulf {
         presentInfo.sType = VK_STRUCTURE_TYPE_PRESENT_INFO_KHR;
         presentInfo.waitSemaphoreCount = 1;
         presentInfo.pWaitSemaphores = signalSemaphores;
-        VkSwapchainKHR swapChains[] = {_def_Swapchain.GetSwapchainKHR()};
+        VkSwapchainKHR swapChains[] = {_def_Swapchain.get_handle()};
         presentInfo.swapchainCount = 1;
         presentInfo.pSwapchains = swapChains;
         presentInfo.pImageIndices = &m_ImageIndex;
@@ -351,8 +329,10 @@ namespace Vulf {
 
         m_CurrentFrame = (m_CurrentFrame + 1 ) % MAX_FRAMES_IN_FLIGHT;
     }
+    ////////////////////////////////////////////////////////////////////////////
 
 //-----------------------------------------------------------------------------//
+// App update
 
     void VulfBase::OnStart() {
 
@@ -363,33 +343,36 @@ namespace Vulf {
     }
 
     void VulfBase::OnRender(VkCommandBuffer commandBuffer, uint32_t imageIndex) {
-        std::cout << "I'm not here";
+    }
+
+    // Update the unifomr buffers and descriptor sets
+    void VulfBase::OnUpdateBuffers(uint32_t imageIndex) {
+
     }
 
     void VulfBase::OnImGui() {
 
     }
 
-    //-----------------------------------------------------------------------------//
+//-----------------------------------------------------------------------------//
+// Private methods
 
     void VulfBase::RecreateSwapchain() {
         ZoneScopedC(0xff00ff);
         VK_LOG_SUCCESS("Recreating Swapchain..........");
+
         vkDeviceWaitIdle(VKDEVICE);
 
         CleanUpPipeline();
 
         BuildCommandPipeline();
-
-        // OnRender();
-        // OnStart();
     }
 
-    void VulfBase::CleanUpPipeline() {
+    //-----------------------------------------------------------------------------//
 
-        // Default swapchain manager
-        _def_Swapchain.Destroy();
+    void VulfBase::SyncAppWithGPU(const std::vector<Fence>& fences)
+    {
+        vkWaitForFences(VK_DEVICE, static_cast<uint32_t>(fences.sizr()), fences.data(), waitOnAllFences, UINT64_MAX);
     }
-
 /******************************************************************************/
 }

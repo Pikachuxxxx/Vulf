@@ -3,20 +3,26 @@
 #include <vulkan/vulkan.h>
 #include <vector>
 
+/**
+ * - Primary command buffers can be directly submitted to queues. They can also execute (call) secondary command buffers.
+ * - Secondary command buffers can only be executed from primary command buffers, and we are not allowed to submit them.
+ */
+
 class CmdBuffer
 {
 public:
+
+public:
     CmdBuffer() = default;
-    void AllocateBuffers(const VkCommandPool& pool, uint32_t count);
-    void RecordBuffer(VkCommandBuffer& buffer);
-    void EndRecordingBuffer(VkCommandBuffer& buffer);
+
+    void Init(const VkCommandPool& pool, bool isPrimary = true);
     void Destroy(const VkCommandPool& pool);
-    std::vector<VkCommandBuffer>& GetBuffers() { return m_CommandBuffers; }
-    VkCommandBuffer& GetBufferAt(int index) { return m_CommandBuffers[index];}
-    uint32_t GetBuffersCount() { return m_CommandBuffers.size(); }
-    static VkCommandBuffer BeginSingleTimeBuffer();
-    static void EndSingleTimeBuffer(const VkCommandBuffer& buffer);
+
+    void begin_recording();
+    void end_recording();
+
+    inline const VkCommandBuffer& get_handle() { return m_CommandBuffer; }
 private:
-    std::vector<VkCommandBuffer> m_CommandBuffers;
+    VkCommandBuffer m_CommandBuffer;
 
 };

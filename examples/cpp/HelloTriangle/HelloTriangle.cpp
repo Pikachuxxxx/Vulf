@@ -88,7 +88,7 @@ private:
 
     void BuildTextureResources() override {
         // default
-        depthImage.CreateDepthImage(_def_Swapchain.GetSwapExtent().width, _def_Swapchain.GetSwapExtent().height, _def_CommandPool);
+        depthImage.CreateDepthImage(_def_Swapchain.get_extent().width, _def_Swapchain.get_extent().height, _def_CommandPool);
 
         // Grid Texture
         gridTexture.CreateTexture((SRC_DIR) + std::string("/data/textures/TestGrid_256.png"), _def_CommandPool);
@@ -114,7 +114,7 @@ private:
         modelPushConstant.offset        = 0;
         modelPushConstant.size          = sizeof(ModelPushConstant);
 
-        fixedFunctions.SetFixedPipelineStage(VK_PRIMITIVE_TOPOLOGY_TRIANGLE_LIST, _def_Swapchain.GetSwapExtent(), false);
+        fixedFunctions.SetFixedPipelineStage(VK_PRIMITIVE_TOPOLOGY_TRIANGLE_LIST, _def_Swapchain.get_extent(), false);
         fixedFunctions.SetPipelineLayout(helloTriangleUBO.GetDescriptorSetLayout(), modelPushConstant);
     }
 
@@ -124,7 +124,7 @@ private:
 
     // default
     void BuildFramebuffer() override {
-        simpleFrameBuffer.Create(_def_RenderPass.GetRenderPass(), _def_Swapchain.GetSwapImageViews(), depthImage.GetDepthImageView(), _def_Swapchain.GetSwapExtent());
+        simpleFrameBuffer.Create(_def_RenderPass.GetRenderPass(), _def_Swapchain.get_image_views(), depthImage.GetDepthImageView(), _def_Swapchain.get_extent());
     }
 
     void UpdateBuffers(uint32_t imageIndex) override {
@@ -132,7 +132,7 @@ private:
         vpUBOData.proj = glm::mat4(1.0f);
 
         vpUBOData.view = getCamera().GetViewMatrix();
-        vpUBOData.proj = glm::perspective(glm::radians(someNum), (float) _def_Swapchain.GetSwapExtent().width / _def_Swapchain.GetSwapExtent().height, 0.01f, 100.0f);
+        vpUBOData.proj = glm::perspective(glm::radians(someNum), (float) _def_Swapchain.get_extent().width / _def_Swapchain.get_extent().height, 0.01f, 100.0f);
         //vpUBOData.proj[1][1] *= -1;
 
         helloTriangleUBO.UpdateBuffer(&vpUBOData, sizeof(ViewProjectionUBOData), imageIndex);
@@ -180,7 +180,7 @@ private:
         OPTICK_GPU_EVENT("Recording cmd buffers");
 #endif
         _def_SubmissionCommandBuffers.RecordBuffer(commandBuffer);
-        _def_RenderPass.BeginRenderPass(commandBuffer, framebuffers[i], _def_Swapchain.GetSwapExtent());
+        _def_RenderPass.BeginRenderPass(commandBuffer, framebuffers[i], _def_Swapchain.get_extent());
 
         VkViewport viewport = {};
         viewport.x = 0.0f;

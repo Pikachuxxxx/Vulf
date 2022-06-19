@@ -146,7 +146,6 @@ void Image::TransitionImageLayout(VkFormat format, VkImageLayout oldLayout, VkIm
     Device::Get()->flush_cmd_buffer(copyCmdBuffer, Device::Get()->get_graphics_queue());
 }
 
-
 void Image::Destroy()
 {
     vkFreeMemory(VKDEVICE, m_ImageMemory, nullptr);

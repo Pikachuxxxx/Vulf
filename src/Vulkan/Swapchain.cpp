@@ -13,13 +13,13 @@ void Swapchain::Init(GLFWwindow* window)
 {
     m_Window = window;
     // Query the swapchain surface properties
-    querySwapchainProperties();
+    query_swapchain_properties();
     // Get the coloe space iamge format for the swapchain
-    m_SurfaceFormat = chooseSurfaceFormats();
+    m_SurfaceFormat = choose_surface_formats();
     // Get the swpahcain extents
-    m_SwapchainExtent = getSwapchainExtent();
+    m_SwapchainExtent = get_swapchain_extent();
     // Choose the swapchain presentation mode
-    m_PresentMode = choosePresentMode();
+    m_PresentMode = choose_present_mode();
 
     // Now craete the Swapchain
     VkSwapchainCreateInfoKHR swcCI{};
@@ -64,9 +64,9 @@ void Swapchain::Init(GLFWwindow* window)
         VK_LOG_SUCCESS("Swapchain created successfully!");
 
     // Retrieve the swapchain imaes for rendering usage
-    RetrieveSwapchainImages();
+    retrieve_swapchain_images();
     // Create the image view for the swapchain images
-    CreateSwapchainImageViews();
+    create_swapchain_image_views();
 }
 
 void Swapchain::Destroy()
@@ -77,7 +77,47 @@ void Swapchain::Destroy()
     vkDestroySwapchainKHR(VKDEVICE, m_SwapchainKHR, nullptr);
 }
 
-void Swapchain::querySwapchainProperties()
+bool Swapchain::acquire_image(VkSemaphore semaphore, VkFence fence)
+{
+    VkResult result;
+    // We time out afte2 2 secons(in ns) if don't get the index of the swap image we can render to
+    result = vkAcquireNextImageKHR(VKDEVICE, m_SwapchainKHR, 2000000000, semaphore, fence, &m_ImageIndex);
+
+    switch (result) {
+        case VK_SUCCESS:
+        case VK_SUBOPTIMAL_KHR:
+            return true;
+        default:
+            return false;
+    }
+}
+
+bool Swapchain::present_swapchain(VkQueue presentQueue, std::vector<VkSemaphore> waitSemaphores)
+{
+    VkResult result;
+
+    VkPresentInfoKHR presentInfo{};
+    presentInfo.sType               = VK_STRUCTURE_TYPE_PRESENT_INFO_KHR;
+    presentInfo.waitSemaphoreCount  = waitSemaphores.size();
+    presentInfo.pWaitSemaphores     = waitSemaphores.data();
+
+    VkSwapchainKHR swapChains[]     = {m_SwapchainKHR};
+    presentInfo.swapchainCount      = 1;
+    presentInfo.pSwapchains         = swapChains;
+
+    presentInfo.pImageIndices       = &m_ImageIndex;
+
+    result = vkQueuePresentKHR(presentQueue, &presentInfo);
+
+    switch(result) {
+        case VK_SUCCESS:
+            return true;
+        default:
+            return false;
+    }
+}
+
+void Swapchain::query_swapchain_properties()
 {
     // Get the surface capabilities
     vkGetPhysicalDeviceSurfaceCapabilitiesKHR(Device::Get()->get_gpu(), Instance::Get()->get_surface(), &m_SurfaceProperties.capabilities);
@@ -93,7 +133,7 @@ void Swapchain::querySwapchainProperties()
     vkGetPhysicalDeviceSurfacePresentModesKHR(Device::Get()->get_gpu(), Instance::Get()->get_surface(), &presentModesCount, m_SurfaceProperties.presentModes.data());
 }
 
-VkExtent2D Swapchain::getSwapchainExtent()
+VkExtent2D Swapchain::get_swapchain_extent()
 {
     // choose the bnest swpachain resolution to present the image onto
     if(m_SurfaceProperties.capabilities.currentExtent.width != UINT32_MAX)
@@ -117,7 +157,7 @@ VkExtent2D Swapchain::getSwapchainExtent()
     }
 }
 
-VkSurfaceFormatKHR Swapchain::chooseSurfaceFormats()
+VkSurfaceFormatKHR Swapchain::choose_surface_formats()
 {
     // Get the right color space
     // Get the right image format for the swapchain iamges to present mode
@@ -129,7 +169,7 @@ VkSurfaceFormatKHR Swapchain::chooseSurfaceFormats()
     return m_SurfaceProperties.formats[0];
 }
 
-VkPresentModeKHR Swapchain::choosePresentMode()
+VkPresentModeKHR Swapchain::choose_present_mode()
 {
     // Choose the right kind of image presentation mode for the  swapchain images
     for (const auto& presentMode : m_SurfaceProperties.presentModes)
@@ -141,7 +181,7 @@ VkPresentModeKHR Swapchain::choosePresentMode()
     return VK_PRESENT_MODE_FIFO_KHR;
 }
 
-void Swapchain::RetrieveSwapchainImages()
+void Swapchain::retrieve_swapchain_images()
 {
     vkGetSwapchainImagesKHR(VKDEVICE, m_SwapchainKHR, &m_SwapchainImageCount, nullptr);
     m_SwapchainImages.resize(m_SwapchainImageCount);
@@ -151,7 +191,7 @@ void Swapchain::RetrieveSwapchainImages()
         VK_LOG("Swapchain images(", m_SwapchainImageCount, ") have been retrieved succesfully!");
 }
 
-void Swapchain::CreateSwapchainImageViews()
+void Swapchain::create_swapchain_image_views()
 {
     m_SwapchainImageViews.resize(m_SwapchainImageCount);
     for (size_t i = 0; i < m_SwapchainImageCount; i++)

@@ -120,10 +120,12 @@ namespace Vulf {
         const Window* getWindow() { return m_Window; }
 
     protected:
-        CmdPool     _def_CommandPool;       /* The default command pool used to allocate buffer     */
-        Swapchain   _def_Swapchain;
-        RenderPass  _def_RenderPass;
-        CmdBuffer   _def_SubmissionCommandBuffers;
+        // App setting to customize
+        bool        waitOnAllFences = true; /* Whether or not to wail on all fences for reset               */
+        // App default primitives that one can use
+        CmdPool     baseCommandPool;        /* The default command pool used to allocate command buffers    */
+        Swapchain   baseSwapchain;          /* The base swapchain from which the images are used to render  */
+        RenderPass  baseRenderPass;         /* The base renderpass used to transition the images            */
 
     protected:
         /**
@@ -142,7 +144,7 @@ namespace Vulf {
         /* Create the Texture/image resources for the client */
         virtual void BuildTextureResources();
         /* Creates the necessary buffers resources */
-        virtual void BuildBufferResource() = 0;
+        virtual void BuildBufferResource();
         /* Build swapchain */
         virtual void BuildSwapchain();
         /* Build the fixed pipelines and pipeline cache*/
@@ -163,8 +165,6 @@ namespace Vulf {
 
         /* The draw commands that will be executed */
         virtual void DrawFrame();
-        /* Updates Uniform buffers, SSAO and other \buffer resources */
-        virtual void UpdateBuffers(uint32_t imageIndex);
         /* Default image acquire + submission and command buffer submission */
         virtual void SubmitFrame();
 
@@ -177,42 +177,33 @@ namespace Vulf {
          */
         virtual void OnUpdate(double dt);
         /* Client defines how the scene is rendered and it's resources are used */
-        virtual void OnRender(VkCommandBuffer commandBuffer, uint32_t imageIndex);
+        virtual void OnRender(CmdBuffer cmdBufer);
+        /* Updates Uniform buffers, SSAO and other buffer resources */
+        virtual void OnUpdateBuffers(uint32_t imageIndex);
         /* ImGui Overlay */
         virtual void OnImGui();
 
-        uint32_t get_next_image_index() const { return m_ImageIndex;  }
-        ImGuiOverlay& get_ui_overlay() { return m_ImGuiOVerlay; }
-        const std::string& get_app_name() { return m_AppName; }
-        Device get_device() { return m_Device; }
+        inline const std::string& get_app_name() { return m_AppName; }
+        inline const uint32_t& get_next_renderable_image_index() const { return m_ImageIndex;  }
+        inline ImGuiOverlay& get_ui_overlay() { return m_ImGuiOVerlay; }
     private:
     // Application flow
         std::string                 m_AppName;                      /* The name of the application                                                      */
         Window*                     m_Window;                       /* The window abstraction                                                           */
         Camera3D                    m_Camera;                       /* The default free-fly camera in th e scene                                        */
         bool                        m_FramebufferResized;           /* Boolean to identify screen resize event                                          */
-        uint32_t                    m_FrameCounter    = 0;          /* Number of frames rendered in a second                                            */
         Ms                          m_FrameTimer;                   /* Time taken for a single frame to render since the last frame was rendered        */
         HighResClock                m_LastTimestamp;                /* High resolution clock to measure the last time when a frame was rendered         */
-        uint32_t                    m_ImageIndex = 0;               /* The next image index from the swapchain images list                              */
-        uint32_t                    m_CurrentFrame = 0;             /* The index of the current in-flight frame being rendered                          */
+        uint32_t                    m_FrameCounter      = 0;        /* Number of frames rendered in a second                                            */
+        uint32_t                    m_ImageIndex        = 0;        /* The next image index from the swapchain images list to which we can render to    */
+        uint32_t                    m_CurrentFrame      = 0;        /* The index of the frame/swap image index that is being presented on the screen    */
 
     private:
-        // Vulkan Stuff
-        Instance                    m_Instance;                     /* The Vulkan abstracted Instance                                                   */
-        Device                      m_Device;                       /* The Vulkan physical and logical device abstraction                               */
-        std::vector<VkSemaphore>    m_ImageAvailableSemaphores;     /* Semaphore to tell when an image is free to use to draw onto (GPU-GPU)            */
-        std::vector<VkSemaphore>    m_RenderingFinishedSemaphores;  /* Semaphore to tell when the rendering to a particular swapchain image is done     */
-        std::vector<VkFence>        m_InFlightFences;               /* Use to synchronize the GPU-CPU so that they draw onto the right image in flight  */
-
         ImGuiOverlay                m_ImGuiOVerlay;                 /* ImGui overlay for the application                                                */
 
     private:
         /* The entire command pipeline that needs to be rebuilt for swapchain re-creation */
         void BuildCommandPipeline();
-
-        /* The render loop that controls the application */
-        void RenderLoop();
 
         /* Initializes any resources before the application starts up */
         void InitResources();
@@ -223,11 +214,12 @@ namespace Vulf {
         /* Initializes ImGui for UI Overlay */
         void InitImGui();
 
-        /* Creates the Synchronization primitives for the application */
-        // Note:- The fences must be initially explicitly signaled (Remove this note)
-        void CreateSynchronizationPrimitives();
+        /* The render loop that controls the application */
+        void RenderLoop();
 
         void RecreateSwapchain();
+
+        void SyncAppWithGPU();
     };
 
 
