@@ -20,7 +20,7 @@ void Buffer::Init(VkDeviceSize size, VkBufferUsageFlags usage, VkMemoryPropertyF
     VkMemoryRequirements memRequirements;
     vkGetBufferMemoryRequirements(VKDEVICE, m_Buffer, &memRequirements);
 
-    // Now allocate actual Physical memry for the buffer
+    // Now allocate actual Physical memory for the buffer
     VkMemoryAllocateInfo allocInfo{};
     allocInfo.sType = VK_STRUCTURE_TYPE_MEMORY_ALLOCATE_INFO;
     allocInfo.allocationSize = memRequirements.size;
@@ -69,11 +69,13 @@ void Buffer::MapImage(unsigned char* imageData, VkDeviceSize imageSize)
 void Buffer::CopyBufferToDevice(CmdPool pool, VkBuffer dstBuffer, VkDeviceSize size)
 {
     VkCommandBuffer commandBuffer = Device::Get()->begin_single_time_cmd_buffer();
+    {
         VkBufferCopy copyRegion{};
         copyRegion.srcOffset = 0; // Optional
         copyRegion.dstOffset = 0; // Optional
         copyRegion.size = size;
         vkCmdCopyBuffer(commandBuffer, m_Buffer, dstBuffer, 1, &copyRegion);
+    }
     Device::Get()->end_single_time_cmd_buffer(commandBuffer);
 }
 

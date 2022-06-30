@@ -28,9 +28,7 @@ public:
     VulfHelloTriangle() : VulfBase("Hello Triangle") {}
 
      ~VulfHelloTriangle() {
-        VK_LOG("I'm Here!");
-        CleanUpPipeline();
-        // baseCommandPool.Destroy();
+        VK_LOG("Quitting...");
         defaultVertShader.DestroyModule();
         defaultFragShader.DestroyModule();
     }
@@ -137,9 +135,7 @@ private:
         helloTriangleUBO.Destroy();
         helloTriangleVBO.Destroy();
         simpleGraphicsPipeline.Destroy();
-        baseRenderPass.Destroy();
         fixedFunctions.DestroyPipelineLayout();
-        baseSwapchain.Destroy();
     }
 
 
