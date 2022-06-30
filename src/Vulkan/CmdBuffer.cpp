@@ -15,12 +15,17 @@ void CmdBuffer::Init(const VkCommandPool& pool, bool isPrimary /*= true*/)
 
     if(VK_CALL(vkAllocateCommandBuffers(VKDEVICE, &allocInfo, &m_CommandBuffer)))
         throw std::runtime_error("Cannot create command buffer!");
-    else VK_LOG_SUCCESS("Command Buffer (1) succesfully Allocated!");
+    else VK_LOG_SUCCESS("Command Buffer succesfully Allocated!");
 }
 
 void CmdBuffer::Destroy(const VkCommandPool& pool)
 {
-    vkFreeCommandBuffers(VKDEVICE, pool, 1, m_CommandBuffer);
+    vkFreeCommandBuffers(VKDEVICE, pool, 1, &m_CommandBuffer);
+}
+
+void CmdBuffer::reset()
+{
+    vkResetCommandBuffer(m_CommandBuffer, 0);
 }
 
 void CmdBuffer::begin_recording()
@@ -32,16 +37,16 @@ void CmdBuffer::begin_recording()
 	beginInfo.pInheritanceInfo = nullptr;
 
     // Resetting command buffer before starting to record
-    vkResetCommandBuffer(buffer, 0);
+    vkResetCommandBuffer(m_CommandBuffer, 0);
 
-	if (VK_CALL(vkBeginCommandBuffer(buffer, &beginInfo)))
+	if (VK_CALL(vkBeginCommandBuffer(m_CommandBuffer, &beginInfo)))
 		throw std::runtime_error("Cannot record onto CommandBuffer!");
 	//else VK_LOG("Recording to command buffer...");
 }
 
 void CmdBuffer::end_recording()
 {
-	if (VK_CALL(vkEndCommandBuffer(buffer))) {
+	if (VK_CALL(vkEndCommandBuffer(m_CommandBuffer))) {
 		throw std::runtime_error("failed to record CommandBuffer!");
 	}
 }

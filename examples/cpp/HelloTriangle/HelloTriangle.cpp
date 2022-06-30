@@ -30,7 +30,7 @@ public:
      ~VulfHelloTriangle() {
         VK_LOG("I'm Here!");
         CleanUpPipeline();
-        _def_CommandPool.Destroy();
+        // baseCommandPool.Destroy();
         defaultVertShader.DestroyModule();
         defaultFragShader.DestroyModule();
     }
@@ -88,18 +88,18 @@ private:
 
     void BuildTextureResources() override {
         // default
-        depthImage.CreateDepthImage(_def_Swapchain.get_extent().width, _def_Swapchain.get_extent().height, _def_CommandPool);
+        depthImage.CreateDepthImage(baseSwapchain.get_extent().width, baseSwapchain.get_extent().height, baseCommandPool);
 
         // Grid Texture
-        gridTexture.CreateTexture((SRC_DIR) + std::string("/data/textures/TestGrid_1024.png"), _def_CommandPool);
+        gridTexture.CreateTexture((SRC_DIR) + std::string("/data/textures/TestGrid_1024.png"), baseCommandPool);
 
         // Checker Texture;
-        checkerTexture.CreateTexture((SRC_DIR) + std::string("/data/textures/TestCheckerMap.png"), _def_CommandPool);
+        checkerTexture.CreateTexture((SRC_DIR) + std::string("/data/textures/TestCheckerMap.png"), baseCommandPool);
     }
 
     void BuildBufferResource() override {
         // Triangle vertices and indices
-        helloTriangleVBO.Create(rainbowTriangleVertices, _def_CommandPool);
+        helloTriangleVBO.Create(rainbowTriangleVertices, baseCommandPool);
 
         // View Projection Uniform Buffer
         helloTriangleUBO.AddDescriptor(UniformBuffer::DescriptorInfo(0, ShaderType::VERTEX_SHADER, sizeof(ViewProjectionUBOData), 0));
@@ -114,28 +114,17 @@ private:
         modelPushConstant.offset        = 0;
         modelPushConstant.size          = sizeof(ModelPushConstant);
 
-        fixedFunctions.SetFixedPipelineStage(VK_PRIMITIVE_TOPOLOGY_TRIANGLE_LIST, _def_Swapchain.get_extent(), false);
-        fixedFunctions.SetPipelineLayout(helloTriangleUBO.GetDescriptorSetLayout(), modelPushConstant);
+        fixedFunctions.SetFixedPipelineStage(VK_PRIMITIVE_TOPOLOGY_TRIANGLE_LIST, baseSwapchain.get_extent(), false);
+        fixedFunctions.SetPipelineLayout(helloTriangleUBO.GetDescriptorSetLayout(), &modelPushConstant);
     }
 
     void BuildGraphicsPipeline() override {
-        simpleGraphicsPipeline.Create(defaultShaders, fixedFunctions, _def_RenderPass.GetRenderPass());
+        simpleGraphicsPipeline.Create(defaultShaders, fixedFunctions, baseRenderPass.GetRenderPass());
     }
 
     // default
     void BuildFramebuffer() override {
-        simpleFrameBuffer.Create(_def_RenderPass.GetRenderPass(), _def_Swapchain.get_image_views(), depthImage.GetDepthImageView(), _def_Swapchain.get_extent());
-    }
-
-    void UpdateBuffers(uint32_t imageIndex) override {
-        vpUBOData.view = glm::mat4(1.0f);
-        vpUBOData.proj = glm::mat4(1.0f);
-
-        vpUBOData.view = getCamera().GetViewMatrix();
-        vpUBOData.proj = glm::perspective(glm::radians(someNum), (float) _def_Swapchain.get_extent().width / _def_Swapchain.get_extent().height, 0.01f, 100.0f);
-        //vpUBOData.proj[1][1] *= -1;
-
-        helloTriangleUBO.UpdateBuffer(&vpUBOData, sizeof(ViewProjectionUBOData), imageIndex);
+        simpleFrameBuffer.Create(baseRenderPass.GetRenderPass(), baseSwapchain.get_image_views(), depthImage.GetDepthImageView(), baseSwapchain.get_extent());
     }
 
     void CleanUpPipeline() override {
@@ -148,9 +137,9 @@ private:
         helloTriangleUBO.Destroy();
         helloTriangleVBO.Destroy();
         simpleGraphicsPipeline.Destroy();
-        _def_RenderPass.Destroy();
+        baseRenderPass.Destroy();
         fixedFunctions.DestroyPipelineLayout();
-        _def_Swapchain.Destroy();
+        baseSwapchain.Destroy();
     }
 
 
@@ -161,23 +150,21 @@ private:
 
     }
 
-    void OnRender(VkCommandBuffer commandBuffer, uint32_t imageIndex) override
+    void OnRender(CmdBuffer dcb) override
     {
         ZoneScopedC(0xffa500);
         OPTICK_EVENT();
 
-        _def_RenderPass.SetClearColor(0.0f, 0.0f, 0.0f);
+        baseRenderPass.SetClearColor(0.0f, 0.0f, 0.0f);
         auto framebuffers = simpleFrameBuffer.GetFramebuffers();
         auto descriptorSets = helloTriangleUBO.GetSets();
 
-        int i = imageIndex;
-
 #ifdef _WIN32
-        OPTICK_GPU_CONTEXT(commandBuffer);
+        OPTICK_GPU_CONTEXT(dcb.get_handle());
         OPTICK_GPU_EVENT("Recording cmd buffers");
 #endif
-        _def_SubmissionCommandBuffers.RecordBuffer(commandBuffer);
-        _def_RenderPass.BeginRenderPass(commandBuffer, framebuffers[i], _def_Swapchain.get_extent());
+        dcb.begin_recording();
+        baseRenderPass.BeginRenderPass(dcb.get_handle(), framebuffers[get_image_idx()], baseSwapchain.get_extent());
 
         VkViewport viewport = {};
         viewport.x = 0.0f;
@@ -191,31 +178,42 @@ private:
         scissor.offset = { 0, 0 };
         scissor.extent = { getWindow()->getWidth(), getWindow()->getHeight()};
 
-        vkCmdSetViewport(commandBuffer, 0, 1, &viewport);
-        vkCmdSetScissor(commandBuffer, 0, 1, &scissor);
+        vkCmdSetViewport(dcb.get_handle(), 0, 1, &viewport);
+        vkCmdSetScissor(dcb.get_handle(), 0, 1, &scissor);
 
-        simpleGraphicsPipeline.Bind(commandBuffer);
+        simpleGraphicsPipeline.Bind(dcb.get_handle());
 
         // Bind the appropriate descriptor sets
-        vkCmdBindDescriptorSets(commandBuffer, VK_PIPELINE_BIND_POINT_GRAPHICS, fixedFunctions.GetPipelineLayout(), 0, 1, &descriptorSets[i], 0, nullptr);
+        vkCmdBindDescriptorSets(dcb.get_handle(), VK_PIPELINE_BIND_POINT_GRAPHICS, fixedFunctions.GetPipelineLayout(), 0, 1, &descriptorSets[get_frame_idx()], 0, nullptr);
 
         // Bind the push constants
         modelPCData.model = glm::rotate(glm::mat4(1.0f), (float) glm::radians(90.0f * 1.0f), glm::vec3(0.0f, 0.0f, 1.0f));
-        vkCmdPushConstants(commandBuffer, fixedFunctions.GetPipelineLayout(), VK_SHADER_STAGE_VERTEX_BIT | VK_SHADER_STAGE_FRAGMENT_BIT, 0, sizeof(ModelPushConstant), &modelPCData);
+        vkCmdPushConstants(dcb.get_handle(), fixedFunctions.GetPipelineLayout(), VK_SHADER_STAGE_VERTEX_BIT | VK_SHADER_STAGE_FRAGMENT_BIT, 0, sizeof(ModelPushConstant), &modelPCData);
 
-        helloTriangleVBO.Bind(commandBuffer);
+        helloTriangleVBO.Bind(dcb.get_handle());
 
-        vkCmdDraw(commandBuffer, rainbowTriangleVertices.size(), 1, 0, 0);
+        vkCmdDraw(dcb.get_handle(), rainbowTriangleVertices.size(), 1, 0, 0);
 
         ImGuiIO& io = ImGui::GetIO();
 
         io.DisplaySize = ImVec2((float) getWindow()->getWidth(), (float) getWindow()->getHeight());
 
         get_ui_overlay().update_imgui_buffers();
-            get_ui_overlay().draw(commandBuffer);
+            get_ui_overlay().draw(dcb.get_handle());
 
-        _def_RenderPass.EndRenderPass(commandBuffer);
-        _def_SubmissionCommandBuffers.EndRecordingBuffer(commandBuffer);
+        baseRenderPass.EndRenderPass(dcb.get_handle());
+        dcb.end_recording();
+    }
+
+    void OnUpdateBuffers(uint32_t frameIdx) override {
+        vpUBOData.view = glm::mat4(1.0f);
+        vpUBOData.proj = glm::mat4(1.0f);
+
+        //vpUBOData.view = getCamera().GetViewMatrix();
+        //vpUBOData.proj = glm::perspective(glm::radians(someNum), (float) baseSwapchain.get_extent().width / baseSwapchain.get_extent().height, 0.01f, 100.0f);
+        ////vpUBOData.proj[1][1] *= -1;
+
+        helloTriangleUBO.UpdateBuffer(&vpUBOData, sizeof(ViewProjectionUBOData), frameIdx);
     }
 
     void OnImGui() override

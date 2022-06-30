@@ -217,7 +217,7 @@ void Swapchain::create_swapchain_image_views()
     }
 }
 
-
+/*
 void Swapchain::create_sets()
 {
 
@@ -281,7 +281,8 @@ void Swapchain::update_sets()
         write_desc[0].descriptorCount = 1;
         write_desc[0].descriptorType = VK_DESCRIPTOR_TYPE_COMBINED_IMAGE_SAMPLER;
         write_desc[0].pImageInfo = desc_image;
-        
+
         vkUpdateDescriptorSets(VKDEVICE, 1, write_desc, 0, nullptr);
     }
 }
+*/

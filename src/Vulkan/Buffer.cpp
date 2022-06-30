@@ -3,7 +3,7 @@
 #include "Device.h"
 #include "../utils/VulkanCheckResult.h"
 
-void Buffer::CreateBuffer(VkDeviceSize size, VkBufferUsageFlags usage, VkMemoryPropertyFlags properties)
+void Buffer::Init(VkDeviceSize size, VkBufferUsageFlags usage, VkMemoryPropertyFlags properties)
 {
     VkBufferCreateInfo bufferInfo{};
     bufferInfo.sType = VK_STRUCTURE_TYPE_BUFFER_CREATE_INFO;
@@ -12,7 +12,7 @@ void Buffer::CreateBuffer(VkDeviceSize size, VkBufferUsageFlags usage, VkMemoryP
     bufferInfo.sharingMode = VK_SHARING_MODE_EXCLUSIVE;
 
     if(VK_CALL(vkCreateBuffer(VKDEVICE, &bufferInfo, nullptr, &m_Buffer)))
-        throw std::runtime_error("Cannot create vertex buffer!");
+        throw std::runtime_error("Cannot create buffer!");
     else VK_LOG_SUCCESS("Buffer successuflly created!");
 
 
@@ -30,6 +30,13 @@ void Buffer::CreateBuffer(VkDeviceSize size, VkBufferUsageFlags usage, VkMemoryP
 
     // Bind the buffer to the allocated memory
     vkBindBufferMemory(VKDEVICE, m_Buffer, m_BufferMemory, 0);
+}
+
+
+void Buffer::Destroy()
+{
+    vkFreeMemory(VKDEVICE, m_BufferMemory, nullptr);
+    vkDestroyBuffer(VKDEVICE, m_Buffer, nullptr);
 }
 
 void Buffer::MapVertexBufferData(const std::vector<Vertex>& vertexData)
@@ -61,16 +68,16 @@ void Buffer::MapImage(unsigned char* imageData, VkDeviceSize imageSize)
 
 void Buffer::CopyBufferToDevice(CmdPool pool, VkBuffer dstBuffer, VkDeviceSize size)
 {
-    VkCommandBuffer commandBuffer = pool.BeginSingleTimeBuffer();
+    VkCommandBuffer commandBuffer = Device::Get()->begin_single_time_cmd_buffer();
         VkBufferCopy copyRegion{};
         copyRegion.srcOffset = 0; // Optional
         copyRegion.dstOffset = 0; // Optional
         copyRegion.size = size;
         vkCmdCopyBuffer(commandBuffer, m_Buffer, dstBuffer, 1, &copyRegion);
-    pool.EndSingleTimeBuffer(commandBuffer);
+    Device::Get()->end_single_time_cmd_buffer(commandBuffer);
 }
 
-void Buffer::map_copy_unmap(void* data, VkDeviceSize size)
+void Buffer::copy_to_mapped(void* data, VkDeviceSize size)
 {
     vkMapMemory(VKDEVICE, m_BufferMemory, 0, size, 0, &m_Mapped);
     memcpy(m_Mapped, data, size);
@@ -99,10 +106,4 @@ VkResult Buffer::flush(VkDeviceSize size /*= VK_WHOLE_SIZE*/, VkDeviceSize offse
     mappedRange.size = size;
     return vkFlushMappedMemoryRanges(VKDEVICE, 1, &mappedRange);
 
-}
-
-void Buffer::DestroyBuffer()
-{
-    vkFreeMemory(VKDEVICE, m_BufferMemory, nullptr);
-    vkDestroyBuffer(VKDEVICE, m_Buffer, nullptr);
 }

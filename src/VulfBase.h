@@ -80,6 +80,8 @@
 #include "Vulkan/Texture.h"
 #include "Vulkan/DepthImage.h"
 #include "Vulkan/ImGuiOverlay.h"
+#include "Vulkan/Fence.h"
+#include "Vulkan/Semaphore.h"
 
 // Application Helper Defines
 #define STRINGIZE(s) #s
@@ -94,7 +96,6 @@ namespace Vulf {
 
     /* The max number of frames that will be concurrently rendered to while the presentation is in process */
     const int MAX_FRAMES_IN_FLIGHT = 2;
-    const int SWAP_IMAGES_COUNT = 3;
 
     /*
      * Vulf Base class with application flow abstraction
@@ -177,14 +178,15 @@ namespace Vulf {
          */
         virtual void OnUpdate(double dt);
         /* Client defines how the scene is rendered and it's resources are used */
-        virtual void OnRender(CmdBuffer cmdBufer);
+        virtual void OnRender(CmdBuffer dcb);
         /* Updates Uniform buffers, SSAO and other buffer resources */
-        virtual void OnUpdateBuffers(uint32_t imageIndex);
+        virtual void OnUpdateBuffers(uint32_t frameIdx);
         /* ImGui Overlay */
         virtual void OnImGui();
 
         inline const std::string& get_app_name() { return m_AppName; }
-        inline const uint32_t& get_next_renderable_image_index() const { return m_ImageIndex;  }
+        inline const uint32_t& get_image_idx() const { return m_ImageIndex;  }
+        inline const uint32_t& get_frame_idx() const { return m_CurrentFrame; }
         inline ImGuiOverlay& get_ui_overlay() { return m_ImGuiOVerlay; }
     private:
     // Application flow
@@ -193,17 +195,20 @@ namespace Vulf {
         Camera3D                    m_Camera;                       /* The default free-fly camera in th e scene                                        */
         bool                        m_FramebufferResized;           /* Boolean to identify screen resize event                                          */
         Ms                          m_FrameTimer;                   /* Time taken for a single frame to render since the last frame was rendered        */
+        uint32_t                    m_FrameCounter;
         HighResClock                m_LastTimestamp;                /* High resolution clock to measure the last time when a frame was rendered         */
-        uint32_t                    m_FrameCounter      = 0;        /* Number of frames rendered in a second                                            */
         uint32_t                    m_ImageIndex        = 0;        /* The next image index from the swapchain images list to which we can render to    */
         uint32_t                    m_CurrentFrame      = 0;        /* The index of the frame/swap image index that is being presented on the screen    */
 
     private:
         ImGuiOverlay                m_ImGuiOVerlay;                 /* ImGui overlay for the application                                                */
+        std::vector<CmdBuffer>      m_DrawCmdBuffers;
+        std::vector<Semaphore>      m_RenderFinishedSemaphores;
+        std::vector<Semaphore>      m_ImageAvailableSemaphores;
+        std::vector<Fence>          m_InFlightFences;
 
     private:
-        /* The entire command pipeline that needs to be rebuilt for swapchain re-creation */
-        void BuildCommandPipeline();
+        // Init, render loop & build occur right after run in naming and then folowed by protexted and remaining private methods
 
         /* Initializes any resources before the application starts up */
         void InitResources();
@@ -217,9 +222,12 @@ namespace Vulf {
         /* The render loop that controls the application */
         void RenderLoop();
 
-        void RecreateSwapchain();
+        /* The entire command pipeline that needs to be rebuilt for swapchain re-creation */
+        void BuildCommandPipeline();
 
-        void SyncAppWithGPU();
+        void InitSyncPrimitives();
+        void RecreateSwapchain();
+        void QuitApp();
     };
 
 

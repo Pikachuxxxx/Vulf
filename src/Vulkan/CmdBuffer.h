@@ -18,10 +18,11 @@ public:
     void Init(const VkCommandPool& pool, bool isPrimary = true);
     void Destroy(const VkCommandPool& pool);
 
+    void reset();
     void begin_recording();
     void end_recording();
 
-    inline const VkCommandBuffer& get_handle() { return m_CommandBuffer; }
+    inline VkCommandBuffer& get_handle() { return m_CommandBuffer; }
 private:
     VkCommandBuffer m_CommandBuffer;
 

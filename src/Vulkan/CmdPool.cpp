@@ -29,12 +29,12 @@ void CmdPool::Destroy()
     vkDestroyCommandPool(VKDEVICE, m_CommandPool, nullptr);
 }
 
-std::vector<CmdBuffer> CmdPool::allocate_buffers(uint32_t count, bool isPrimary /*=true*/);
+std::vector<CmdBuffer> CmdPool::allocate_buffers(uint32_t count, bool isPrimary /*=true*/)
 {
     std::vector<CmdBuffer> buffers(count);
 
     for (size_t i = 0; i < count; i++)
-        buffer[i].Init(m_CommandPool, isPrimary);
+        buffers[i].Init(m_CommandPool, isPrimary);
 
     return buffers;
 }

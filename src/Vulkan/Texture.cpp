@@ -14,7 +14,7 @@ void Texture::CreateTexture(const std::string& path, CmdPool& cmdPool)
     VkDeviceSize imageSize = m_Height * m_Width * 4;
     std::cout << "\033[4;33;49m Hmmmmmmmmmmmm \033[0m" << std::endl;
     std::cout << "\033[4;33;49m Image Height : " << m_Height << ", Width : " << m_Width << " BPP : " << m_BPP << " Size : " << imageSize << "\033[0m" << std::endl;
-    m_ImageStagingBuffer.CreateBuffer(imageSize, VK_BUFFER_USAGE_TRANSFER_SRC_BIT, VK_MEMORY_PROPERTY_HOST_VISIBLE_BIT | VK_MEMORY_PROPERTY_HOST_COHERENT_BIT);
+    m_ImageStagingBuffer.Init(imageSize, VK_BUFFER_USAGE_TRANSFER_SRC_BIT, VK_MEMORY_PROPERTY_HOST_VISIBLE_BIT | VK_MEMORY_PROPERTY_HOST_COHERENT_BIT);
 
     m_ImageStagingBuffer.MapImage(imageData, imageSize);
 
@@ -37,7 +37,8 @@ void Texture::CreateTexture(const std::string& path, CmdPool& cmdPool)
     m_TextureImage.TransitionImageLayout(VK_FORMAT_R8G8B8A8_UNORM, VK_IMAGE_LAYOUT_UNDEFINED, VK_IMAGE_LAYOUT_TRANSFER_DST_OPTIMAL);
 
     // Copy the image to the buffer
-    cmdPool.CopyBufferToImage(m_ImageStagingBuffer.get_buffer(), m_TextureImage.GetImage(), m_Width, m_Height);
+    // cmdPool.CopyBufferToImage(m_ImageStagingBuffer.get_handle(), m_TextureImage.GetImage(), m_Width, m_Height);
+    Device::Get()->copy_buffer_to_image(m_ImageStagingBuffer.get_handle(), m_TextureImage.GetImage(), m_Width, m_Height);
 
     // Change the formate such that we can sample it from the shader
     m_TextureImage.TransitionImageLayout( VK_FORMAT_R8G8B8A8_UNORM, VK_IMAGE_LAYOUT_TRANSFER_DST_OPTIMAL, VK_IMAGE_LAYOUT_SHADER_READ_ONLY_OPTIMAL);
@@ -71,7 +72,7 @@ void Texture::CreateTexture(const std::string& path, CmdPool& cmdPool)
 
 
     // Delete the staging buffer
-    m_ImageStagingBuffer.DestroyBuffer();
+    m_ImageStagingBuffer.Destroy();
 
 
     VkDescriptorPoolSize poolSize;
@@ -119,7 +120,7 @@ void Texture::CreateTexture(const std::string& path, CmdPool& cmdPool)
 void Texture::UploadTexture(const void* imageData, VkDeviceSize imageSize, uint32_t width, uint32_t height)
 {
 
-    m_ImageStagingBuffer.CreateBuffer(imageSize, VK_BUFFER_USAGE_TRANSFER_SRC_BIT, VK_MEMORY_PROPERTY_HOST_VISIBLE_BIT | VK_MEMORY_PROPERTY_HOST_COHERENT_BIT);
+    m_ImageStagingBuffer.Init(imageSize, VK_BUFFER_USAGE_TRANSFER_SRC_BIT, VK_MEMORY_PROPERTY_HOST_VISIBLE_BIT | VK_MEMORY_PROPERTY_HOST_COHERENT_BIT);
 
     m_ImageStagingBuffer.MapImage((unsigned char*)imageData, imageSize);
 
@@ -140,7 +141,7 @@ void Texture::UploadTexture(const void* imageData, VkDeviceSize imageSize, uint3
 
     // Copy the image to the buffer
     //cmdPool.CopyBufferToImage(m_ImageStagingBuffer.GetBuffer(), m_TextureImage.GetImage(), m_Width, m_Height);
-    Device::Get()->copy_buffer_to_image(m_ImageStagingBuffer.get_buffer(), m_TextureImage.GetImage(), width, height);
+    Device::Get()->copy_buffer_to_image(m_ImageStagingBuffer.get_handle(), m_TextureImage.GetImage(), width, height);
 
     // Change the formate such that we can sample it from the shader
     m_TextureImage.TransitionImageLayout( VK_FORMAT_R8G8B8A8_UNORM, VK_IMAGE_LAYOUT_TRANSFER_DST_OPTIMAL, VK_IMAGE_LAYOUT_SHADER_READ_ONLY_OPTIMAL);
@@ -173,7 +174,7 @@ void Texture::UploadTexture(const void* imageData, VkDeviceSize imageSize, uint3
        throw std::runtime_error("failed to create texture sampler!");
 
     // Delete the staging buffer
-    m_ImageStagingBuffer.DestroyBuffer();
+    m_ImageStagingBuffer.Destroy();
 }
 
 unsigned char* Texture::LoadImage(const std::string& path)

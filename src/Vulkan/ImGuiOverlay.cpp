@@ -249,9 +249,9 @@ namespace Vulf {
             return false;
 
         // Vertex buffer
-        if ((m_ImGuiVBO.get_buffer() == VK_NULL_HANDLE) || (vertexCount != imDrawData->TotalVtxCount)) {
+        if ((m_ImGuiVBO.get_handle() == VK_NULL_HANDLE) || (vertexCount != imDrawData->TotalVtxCount)) {
             // m_ImGuiVBO.unmap();
-            // m_ImGuiVBO.DestroyBuffer();
+            // m_ImGuiVBO.Destroy();
             Device::Get()->createBuffer(VK_BUFFER_USAGE_VERTEX_BUFFER_BIT, VK_MEMORY_PROPERTY_HOST_VISIBLE_BIT, &m_ImGuiVBO, vertexBufferSize);
             vertexCount = imDrawData->TotalVtxCount;
             m_ImGuiVBO.map(vertexBufferSize);
@@ -260,7 +260,7 @@ namespace Vulf {
 
 
         // Index  buffer
-        if ((m_ImGuiIBO.get_buffer() == VK_NULL_HANDLE) || (indexCount != imDrawData->TotalIdxCount)) {
+        if ((m_ImGuiIBO.get_handle() == VK_NULL_HANDLE) || (indexCount != imDrawData->TotalIdxCount)) {
             // m_ImGuiIBO.unmap();
 
             Device::Get()->createBuffer(VK_BUFFER_USAGE_INDEX_BUFFER_BIT, VK_MEMORY_PROPERTY_HOST_VISIBLE_BIT, &m_ImGuiIBO, indexBufferSize);
@@ -330,8 +330,8 @@ namespace Vulf {
 
         // Bind the index and vertex buffers
         VkDeviceSize offsets[1] = { 0 };
-        vkCmdBindVertexBuffers(commandBuffer, 0, 1, &m_ImGuiVBO.get_buffer(), offsets);
-        vkCmdBindIndexBuffer(commandBuffer, m_ImGuiIBO.get_buffer(), 0, VK_INDEX_TYPE_UINT16);
+        vkCmdBindVertexBuffers(commandBuffer, 0, 1, &m_ImGuiVBO.get_handle(), offsets);
+        vkCmdBindIndexBuffer(commandBuffer, m_ImGuiIBO.get_handle(), 0, VK_INDEX_TYPE_UINT16);
 
         for (uint32_t i = 0; i < imDrawData->CmdListsCount; ++i) {
             const ImDrawList* cmd_list = imDrawData->CmdLists[i];
@@ -361,8 +361,8 @@ namespace Vulf {
 
     void ImGuiOverlay::free_resources()
     {
-        m_ImGuiVBO.DestroyBuffer();
-        m_ImGuiIBO.DestroyBuffer();
+        m_ImGuiVBO.Destroy();
+        m_ImGuiIBO.Destroy();
         vkDestroyImageView(VKDEVICE, m_ImGuiFontTexture.get_image_view(), nullptr);
         vkDestroyImage(VKDEVICE, m_ImGuiFontTexture.get_image(), nullptr);
         vkFreeMemory(VKDEVICE, m_ImGuiFontTexture.get_image_memory(), nullptr);

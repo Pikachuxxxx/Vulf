@@ -29,8 +29,8 @@ void FixedPipelineFuncs::SetVertexInputSCI()
     m_VertexInputSCI.flags = 0;
     m_VertexInputSCI.pNext = nullptr;
     m_VertexInputSCI.vertexBindingDescriptionCount = 1;
-    m_VertexInputSCI.vertexAttributeDescriptionCount = attributeDescriptions.size();
     m_VertexInputSCI.pVertexBindingDescriptions = &bindingDescription;
+    m_VertexInputSCI.vertexAttributeDescriptionCount = attributeDescriptions.size();
     m_VertexInputSCI.pVertexAttributeDescriptions = attributeDescriptions.data();
 }
 
@@ -174,7 +174,7 @@ void FixedPipelineFuncs::SetPipelineLayout(VkDescriptorSetLayout layout, VkPushC
     layoutCI.sType = VK_STRUCTURE_TYPE_PIPELINE_LAYOUT_CREATE_INFO;
     layoutCI.setLayoutCount = layout == VK_NULL_HANDLE ? 0 : 1;
     layoutCI.pSetLayouts = &layout;
-    layoutCI.pushConstantRangeCount = 0;
+    layoutCI.pushConstantRangeCount = 1;
     layoutCI.pPushConstantRanges = pushConstants;
 
     if(VK_CALL(vkCreatePipelineLayout(VKDEVICE, &layoutCI, nullptr, &m_PipelineLayout)))

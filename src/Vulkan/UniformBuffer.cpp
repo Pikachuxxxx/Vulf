@@ -11,7 +11,7 @@ void UniformBuffer::CreateUniformBuffer(uint32_t swapImagesCount, uint32_t buffe
     m_UniformBuffers.resize(swapImagesCount);
 
     for (size_t i = 0; i < swapImagesCount; i++)
-        m_UniformBuffers[i].CreateBuffer(bufferSize, VK_BUFFER_USAGE_UNIFORM_BUFFER_BIT, VK_MEMORY_PROPERTY_HOST_VISIBLE_BIT | VK_MEMORY_PROPERTY_HOST_COHERENT_BIT);
+        m_UniformBuffers[i].Init(bufferSize, VK_BUFFER_USAGE_UNIFORM_BUFFER_BIT, VK_MEMORY_PROPERTY_HOST_VISIBLE_BIT | VK_MEMORY_PROPERTY_HOST_COHERENT_BIT);
 
     // Create the pool
     CreatePool();
@@ -103,7 +103,7 @@ void UniformBuffer::UpdateDescriptorSetConfig( )
                 case DescriptorInfo::DescriptorType::BUFFER:
                 {
                     VkDescriptorBufferInfo bufferInfo{};
-                    bufferInfo.buffer   = m_UniformBuffers[i].get_buffer();
+                    bufferInfo.buffer   = m_UniformBuffers[i].get_handle();
                     bufferInfo.offset   = m_Descriptors[j].offset;
                     bufferInfo.range    = m_Descriptors[j].size;
                     m_VkDescriptorBufferInfos.push_back(bufferInfo);
@@ -180,7 +180,7 @@ void UniformBuffer::Destroy()
     m_DescriptorSets.clear();
     vkDestroyDescriptorPool(VKDEVICE, m_DescriptorPool, nullptr);
     for (size_t i = 0; i < m_UniformBuffers.size(); i++)
-        m_UniformBuffers[i].DestroyBuffer();
+        m_UniformBuffers[i].Destroy();
     vkDestroyDescriptorSetLayout(VKDEVICE, m_UBODescriptorSetLayout, nullptr);
 
 }

@@ -26,7 +26,7 @@ layout (push_constant) uniform ModelPushConstantData{
 
 void main() {
     gl_PointSize    = 5.0;
-    gl_Position     = ubo.proj * ubo.view * modelPushConstantData.model * vec4(inPosition, 1.0);
+    gl_Position     = vec4(inPosition, 1.0);
 
     vs_out.FragPos      = inPosition;
     vs_out.Normal       = inNormal;

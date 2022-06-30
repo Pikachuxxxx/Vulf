@@ -1,5 +1,7 @@
 #pragma once
 
+#include <vulkan/vulkan.h>
+
 /**
  * Fences, opposite to semaphores, are used to synchronize an application with
  * commands submitted to the graphics hardware. They inform the application when
@@ -11,7 +13,7 @@ class Fence
 public:
     Fence() = default;
 
-    void Init(bool signalled);
+    void Init(bool signalled = true);
     void Destroy();
 
     inline const VkFence& get_handle() { return m_Fence; }

@@ -36,7 +36,7 @@ public:
      */
     std::vector<CmdBuffer> allocate_buffers(uint32_t count, bool isPrimary = true);
 
-    inline const VkCommandPool& get_handle() { return m_CommandPool; }
+    inline VkCommandPool& get_handle() { return m_CommandPool; }
 
 private:
     VkCommandPool m_CommandPool;

@@ -79,7 +79,7 @@ public:
 
     static Device* Get() { if(s_Instance ==  nullptr) s_Instance = new Device; return s_Instance; }
 
-    VkCommandBuffer begin_single_time_cmd_buffer(VkCommandBufferLevel level, bool begin = true);
+    VkCommandBuffer begin_single_time_cmd_buffer(VkCommandBufferLevel level = VK_COMMAND_BUFFER_LEVEL_PRIMARY, bool begin = true);
     void end_single_time_cmd_buffer(VkCommandBuffer cmdBuf);
     void flush_cmd_buffer(VkCommandBuffer cmdBuf, VkQueue queue, bool free = true);
 

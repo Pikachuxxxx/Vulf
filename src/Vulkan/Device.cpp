@@ -311,13 +311,13 @@ VkResult Device::createBuffer(VkBufferUsageFlags usageFlags, VkMemoryPropertyFla
     bufferCreateInfo.usage = usageFlags;
     bufferCreateInfo.size = size;
     bufferCreateInfo.sharingMode = VK_SHARING_MODE_EXCLUSIVE;
-    VK_CALL(vkCreateBuffer(m_Device, &bufferCreateInfo, nullptr, &buffer->get_buffer()));
+    VK_CALL(vkCreateBuffer(m_Device, &bufferCreateInfo, nullptr, &buffer->get_handle()));
 
     // Create the memory backing up the buffer handle
     VkMemoryRequirements memReqs;
     VkMemoryAllocateInfo memAlloc{};
     memAlloc.sType = VK_STRUCTURE_TYPE_MEMORY_ALLOCATE_INFO;
-    vkGetBufferMemoryRequirements(m_Device, buffer->get_buffer(), &memReqs);
+    vkGetBufferMemoryRequirements(m_Device, buffer->get_handle(), &memReqs);
     memAlloc.allocationSize = memReqs.size;
     // Find a memory type index that fits the properties of the buffer
     memAlloc.memoryTypeIndex = get_physical_device().find_memory_type_index(memReqs.memoryTypeBits, memoryPropertyFlags);
@@ -341,7 +341,7 @@ VkResult Device::createBuffer(VkBufferUsageFlags usageFlags, VkMemoryPropertyFla
     }
 
     // Attach the memory to the buffer object
-    VK_CALL(vkBindBufferMemory(m_Device, buffer->get_buffer(), buffer->get_memory(), 0));
+    VK_CALL(vkBindBufferMemory(m_Device, buffer->get_handle(), buffer->get_memory(), 0));
 
     return VK_SUCCESS;
 }
