@@ -57,7 +57,7 @@ namespace Vulf {
         auto device         = Device::Get()->get_handle();
         auto physicalDevice = Device::Get()->get_gpu();
         auto queuefam       = Device::Get()->get_graphics_queue();
-        uint32_t numQueues  = Device::Get()->get_graphics_family_index();
+        uint32_t numQueues  = Device::Get()->get_graphics_queue_index();
         OPTICK_GPU_INIT_VULKAN(&device, &physicalDevice, &queuefam, &numQueues, 1, nullptr);
 #endif
         // Load the shaders
@@ -124,7 +124,15 @@ namespace Vulf {
         }
         vkDeviceWaitIdle(VKDEVICE);
 
+        CleanUpPipeline();
+
         QuitApp();
+        for (size_t i = 0; i < MAX_FRAMES_IN_FLIGHT; i++) {
+            m_ImageAvailableSemaphores[i].Destroy();
+            m_RenderFinishedSemaphores[i].Destroy();
+            m_InFlightFences[i].Destroy();
+        }
+        baseCommandPool.Destroy(); // --> Automatically frees cmdBuffers out of existence
     }
     ////////////////////////////////////////////////////////////////////////////
 
@@ -347,7 +355,7 @@ namespace Vulf {
     void VulfBase::OnRender(CmdBuffer dcb) {
     }
 
-    // Update the unifomr buffers and descriptor sets
+    // Update the uniform buffers and descriptor sets
     void VulfBase::OnUpdateBuffers(uint32_t frameIdx) {
 
     }
@@ -388,13 +396,7 @@ namespace Vulf {
 
     void VulfBase::QuitApp() {
         // Destroy sync primitives; cmd pool --> dcbs; swapChain & rp properly; (base stuff handled by Vulf)
-        for (size_t i = 0; i < MAX_FRAMES_IN_FLIGHT; i++) {
-            m_ImageAvailableSemaphores[i].Destroy();
-            m_RenderFinishedSemaphores[i].Destroy();
-            m_InFlightFences[i].Destroy();
-        }
         baseRenderPass.Destroy();
-        baseCommandPool.Destroy(); // --> Automatically frees cmdBuffers out of existence
         baseSwapchain.Destroy();
     }
 /******************************************************************************/
