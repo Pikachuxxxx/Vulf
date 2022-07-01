@@ -114,8 +114,7 @@ void Buffer::CopyBufferToDevice(CmdPool pool, VkBuffer dstBuffer, VkDeviceSize s
         copyRegion.dstOffset = 0; // Optional
         copyRegion.size = size;
         vkCmdCopyBuffer(commandBuffer, m_Buffer, dstBuffer, 1, &copyRegion);
-    // Device::Get()->end_single_time_cmd_buffer(commandBuffer);
-    // Flush it
+    }
     Device::Get()->flush_cmd_buffer(commandBuffer, Device::Get()->get_graphics_queue());
 }
 

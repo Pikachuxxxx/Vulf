@@ -205,8 +205,8 @@ private:
         vpUBOData.view = glm::mat4(1.0f);
         vpUBOData.proj = glm::mat4(1.0f);
 
-        //vpUBOData.view = getCamera().GetViewMatrix();
-        //vpUBOData.proj = glm::perspective(glm::radians(someNum), (float) baseSwapchain.get_extent().width / baseSwapchain.get_extent().height, 0.01f, 100.0f);
+        vpUBOData.view = getCamera().GetViewMatrix();
+        vpUBOData.proj = glm::perspective(glm::radians(someNum), (float) baseSwapchain.get_extent().width / baseSwapchain.get_extent().height, 0.01f, 100.0f);
         ////vpUBOData.proj[1][1] *= -1;
 
         helloTriangleUBO.UpdateBuffer(&vpUBOData, sizeof(ViewProjectionUBOData), frameIdx);
