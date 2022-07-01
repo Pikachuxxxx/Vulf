@@ -826,7 +826,7 @@ void Application::OnImGui()
     {
         // imguiGridTexture = ImGui_ImplVulkan_AddTexture(gridTexture.GetTextureImageSampler(), gridTexture.GetTextureImageView(), VK_IMAGE_LAYOUT_SHADER_READ_ONLY_OPTIMAL);
         // imguiEarthTexture = ImGui_ImplVulkan_AddTexture(earthTexture.GetTextureImageSampler(), earthTexture.GetTextureImageView(), VK_IMAGE_LAYOUT_SHADER_READ_ONLY_OPTIMAL);
-        // ImGui::Image((ImTextureID)ImGui_ImplVulkan_AddTexture(depthImage.GetImage().GetImageSampler(), depthImage.GetDepthImageView(), VK_IMAGE_LAYOUT_DEPTH_STENCIL_ATTACHMENT_OPTIMAL), ImVec2(200, 200));
+        // ImGui::Image((ImTextureID)ImGui_ImplVulkan_AddTexture(depthImage.get_handle().GetImageSampler(), depthImage.GetDepthImageView(), VK_IMAGE_LAYOUT_DEPTH_STENCIL_ATTACHMENT_OPTIMAL), ImVec2(200, 200));
         // ImGui::Image((ImTextureID)imguiEarthTexture, ImVec2(200, 200));
     }
     ImGui::End();

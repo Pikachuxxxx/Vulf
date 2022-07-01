@@ -4,7 +4,7 @@
 #include "../utils/VulkanCheckResult.h"
 #include "CmdPool.h"
 
-void Image::CreateImage(uint32_t width, uint32_t height, VkFormat format, VkImageTiling tiling, VkImageUsageFlags usage, VkMemoryPropertyFlags properties)
+void Image::Init(uint32_t width, uint32_t height, VkFormat format, VkImageTiling tiling, VkImageUsageFlags usage, VkMemoryPropertyFlags properties)
 {
     // Fill the image create info
     VkImageCreateInfo imageInfo{};
@@ -14,7 +14,7 @@ void Image::CreateImage(uint32_t width, uint32_t height, VkFormat format, VkImag
     imageInfo.extent.height = height;
     imageInfo.extent.depth = 1;
     imageInfo.mipLevels = 1; // Currently we do not support mip maps yet!
-    imageInfo.arrayLayers = 1;
+    imageInfo.arrayLayers = 1; // 6 if using cubemap
     imageInfo.format = format;
     imageInfo.tiling = tiling; // Because of staging buffer the linearity of it not necessary as we won't be interacting with it at all
     imageInfo.initialLayout = VK_IMAGE_LAYOUT_UNDEFINED;

@@ -39,6 +39,7 @@ public:
 
     void Init();
 
+    // TODO: [optimize] cache this function! don't call vkGetPhysicalDeviceMemoryProperties eveyrtime we need to allocate a buffer
     uint32_t find_memory_type_index(uint32_t typeBitFieldFilter, VkMemoryPropertyFlags flags);
     VkFormat find_supported_format(const std::vector<VkFormat>& candidates, VkImageTiling tiling, VkFormatFeatureFlags features);
     VkFormat find_depth_format();

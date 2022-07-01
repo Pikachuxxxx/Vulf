@@ -220,6 +220,7 @@ VkCommandBuffer Device::begin_single_time_cmd_buffer(VkCommandBufferLevel level,
     if (begin) {
         VkCommandBufferBeginInfo commandBufferBI{};
         commandBufferBI.sType = VK_STRUCTURE_TYPE_COMMAND_BUFFER_BEGIN_INFO;
+        commandBufferBI.flags = VK_COMMAND_BUFFER_USAGE_ONE_TIME_SUBMIT_BIT;
         VK_CALL(vkBeginCommandBuffer(cmdBuffer, &commandBufferBI));
     }
 

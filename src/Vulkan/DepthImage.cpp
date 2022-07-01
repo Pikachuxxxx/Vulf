@@ -10,7 +10,7 @@ void DepthImage::CreateDepthImage(uint32_t width, uint32_t height, CmdPool cmdPo
     m_DepthFormat = Device::Get()->get_physical_device().find_depth_format();
 
     // Create the proper image views for the depth texture
-    m_DepthImage.CreateImage(width, height,
+    m_DepthImage.Init(width, height,
         m_DepthFormat,
         VK_IMAGE_TILING_OPTIMAL,
         VK_IMAGE_USAGE_DEPTH_STENCIL_ATTACHMENT_BIT,

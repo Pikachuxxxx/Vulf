@@ -21,7 +21,7 @@ void Texture::CreateTexture(const std::string& path, CmdPool& cmdPool)
     stbi_image_free(imageData);
 
     // Create the image
-    m_TextureImage.CreateImage(m_Width, m_Height,
+    m_TextureImage.Init(m_Width, m_Height,
         VK_FORMAT_R8G8B8A8_UNORM,   //Format
         VK_IMAGE_TILING_OPTIMAL,    // Tiling
         VK_IMAGE_USAGE_TRANSFER_DST_BIT | VK_IMAGE_USAGE_SAMPLED_BIT, // Image Usage Flags
@@ -37,8 +37,8 @@ void Texture::CreateTexture(const std::string& path, CmdPool& cmdPool)
     m_TextureImage.TransitionImageLayout(VK_FORMAT_R8G8B8A8_UNORM, VK_IMAGE_LAYOUT_UNDEFINED, VK_IMAGE_LAYOUT_TRANSFER_DST_OPTIMAL);
 
     // Copy the image to the buffer
-    // cmdPool.CopyBufferToImage(m_ImageStagingBuffer.get_handle(), m_TextureImage.GetImage(), m_Width, m_Height);
-    Device::Get()->copy_buffer_to_image(m_ImageStagingBuffer.get_handle(), m_TextureImage.GetImage(), m_Width, m_Height);
+    // cmdPool.CopyBufferToImage(m_ImageStagingBuffer.get_handle(), m_TextureImage.get_handle(), m_Width, m_Height);
+    Device::Get()->copy_buffer_to_image(m_ImageStagingBuffer.get_handle(), m_TextureImage.get_handle(), m_Width, m_Height);
 
     // Change the formate such that we can sample it from the shader
     m_TextureImage.TransitionImageLayout( VK_FORMAT_R8G8B8A8_UNORM, VK_IMAGE_LAYOUT_TRANSFER_DST_OPTIMAL, VK_IMAGE_LAYOUT_SHADER_READ_ONLY_OPTIMAL);
@@ -125,7 +125,7 @@ void Texture::UploadTexture(const void* imageData, VkDeviceSize imageSize, uint3
     m_ImageStagingBuffer.MapImage((unsigned char*)imageData, imageSize);
 
     // Create the image
-    m_TextureImage.CreateImage(width, height,
+    m_TextureImage.Init(width, height,
         VK_FORMAT_R8G8B8A8_UNORM,   //Format
         VK_IMAGE_TILING_OPTIMAL,    // Tiling
         VK_IMAGE_USAGE_TRANSFER_DST_BIT | VK_IMAGE_USAGE_SAMPLED_BIT, // Image Usage Flags
@@ -140,8 +140,8 @@ void Texture::UploadTexture(const void* imageData, VkDeviceSize imageSize, uint3
     m_TextureImage.TransitionImageLayout(VK_FORMAT_R8G8B8A8_UNORM, VK_IMAGE_LAYOUT_UNDEFINED, VK_IMAGE_LAYOUT_TRANSFER_DST_OPTIMAL);
 
     // Copy the image to the buffer
-    //cmdPool.CopyBufferToImage(m_ImageStagingBuffer.GetBuffer(), m_TextureImage.GetImage(), m_Width, m_Height);
-    Device::Get()->copy_buffer_to_image(m_ImageStagingBuffer.get_handle(), m_TextureImage.GetImage(), width, height);
+    //cmdPool.CopyBufferToImage(m_ImageStagingBuffer.GetBuffer(), m_TextureImage.get_handle(), m_Width, m_Height);
+    Device::Get()->copy_buffer_to_image(m_ImageStagingBuffer.get_handle(), m_TextureImage.get_handle(), width, height);
 
     // Change the formate such that we can sample it from the shader
     m_TextureImage.TransitionImageLayout( VK_FORMAT_R8G8B8A8_UNORM, VK_IMAGE_LAYOUT_TRANSFER_DST_OPTIMAL, VK_IMAGE_LAYOUT_SHADER_READ_ONLY_OPTIMAL);

@@ -20,7 +20,7 @@ public:
 
     VkPipelineStageFlags GetCurrentImageSourceStage() { return m_ImageSourceStage; }
     VkPipelineStageFlags GetCurrentImageDestinationStage() { return m_ImageDestinationStage; }
-    VkImage get_image() { return m_TextureImage.GetImage(); }
+    VkImage get_image() { return m_TextureImage.get_handle(); }
     VkDeviceMemory get_image_memory() { return m_TextureImage.GetImageMemory(); }
     VkImageView get_image_view() { return m_TextureImage.GetImageView(); }
     VkSampler get_sampler() { return m_TextureSampler; }
