@@ -68,7 +68,7 @@ namespace Vulf {
         VkDeviceSize uploadSize = texWidth * texHeight * 4 * sizeof(char);
 
         // Create and upload the font as a image texture to the GPU
-        m_ImGuiFontTexture.UploadTexture(fontData, uploadSize, texWidth, texHeight);
+        m_ImGuiFontTexture.upload_to_device(fontData, uploadSize, texWidth, texHeight);
 
         // Descriptor pool - Single pool for binding the font texture
         std::vector<VkDescriptorPoolSize> poolSizes = {
@@ -90,7 +90,7 @@ namespace Vulf {
         VK_CHECK_CALL(vkAllocateDescriptorSets(VKDEVICE, &allocInfo, &m_ImGuiDescriptorSet));
         VkDescriptorImageInfo fontDescriptor = Vulf::initializers::descriptorImageInfo(
             m_ImGuiFontTexture.get_sampler(),
-            m_ImGuiFontTexture.get_image_view(),
+            m_ImGuiFontTexture.get_view(),
             VK_IMAGE_LAYOUT_SHADER_READ_ONLY_OPTIMAL
         );
         std::vector<VkWriteDescriptorSet> writeDescriptorSets = {
@@ -363,7 +363,7 @@ namespace Vulf {
     {
         m_ImGuiVBO.Destroy();
         m_ImGuiIBO.Destroy();
-        vkDestroyImageView(VKDEVICE, m_ImGuiFontTexture.get_image_view(), nullptr);
+        vkDestroyImageView(VKDEVICE, m_ImGuiFontTexture.get_view(), nullptr);
         vkDestroyImage(VKDEVICE, m_ImGuiFontTexture.get_image(), nullptr);
         vkFreeMemory(VKDEVICE, m_ImGuiFontTexture.get_image_memory(), nullptr);
         vkDestroySampler(VKDEVICE, m_ImGuiFontTexture.get_sampler(), nullptr);

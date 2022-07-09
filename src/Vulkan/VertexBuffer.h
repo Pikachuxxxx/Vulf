@@ -12,5 +12,4 @@ public:
     void Bind(VkCommandBuffer cmdBuffer);
 private:
     Buffer  m_VertexBuffer;
-    Buffer  m_StagingBuffer;
 };

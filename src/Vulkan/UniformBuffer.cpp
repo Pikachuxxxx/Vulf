@@ -113,7 +113,7 @@ void UniformBuffer::UpdateDescriptorSetConfig( )
                 {
                     VkDescriptorImageInfo bufferInfo{};
                     bufferInfo.imageLayout  = VK_IMAGE_LAYOUT_SHADER_READ_ONLY_OPTIMAL;
-                    bufferInfo.imageView    = m_Descriptors[j].image.get_image_view();
+                    bufferInfo.imageView    = m_Descriptors[j].image.get_view();
                     bufferInfo.sampler      = m_Descriptors[j].image.get_sampler();
                     m_VkDescriptorImageInfos.push_back(bufferInfo);
                     break;

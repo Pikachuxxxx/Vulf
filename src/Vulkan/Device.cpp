@@ -236,7 +236,7 @@ void Device::end_single_time_cmd_buffer(VkCommandBuffer cmdBuf)
 
 void Device::flush_cmd_buffer(VkCommandBuffer cmdBuf, VkQueue queue, bool free /*= true*/) {
 
-    VK_CALL(vkEndCommandBuffer(cmdBuf));
+    end_single_time_cmd_buffer(cmdBuf);
 
     VkSubmitInfo submitInfo{};
     submitInfo.sType = VK_STRUCTURE_TYPE_SUBMIT_INFO;

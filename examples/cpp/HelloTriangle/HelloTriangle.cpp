@@ -89,10 +89,10 @@ private:
         depthImage.CreateDepthImage(baseSwapchain.get_extent().width, baseSwapchain.get_extent().height, baseCommandPool);
 
         // Grid Texture
-        gridTexture.CreateTexture((SRC_DIR) + std::string("/data/textures/TestGrid_1024.png"), baseCommandPool);
+        gridTexture.Init((SRC_DIR) + std::string("/data/textures/TestGrid_1024.png"));
 
         // Checker Texture;
-        checkerTexture.CreateTexture((SRC_DIR) + std::string("/data/textures/TestCheckerMap.png"), baseCommandPool);
+        checkerTexture.Init((SRC_DIR) + std::string("/data/textures/TestCheckerMap.png"));
     }
 
     void BuildBufferResource() override {

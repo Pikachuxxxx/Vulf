@@ -4,12 +4,12 @@
 #include "../utils/VulkanCheckResult.h"
 
 //------------------------------------------------------------------------------
-// class : BufferTransitionManager
+// class : BufferMemoryBarrier
 
-std::vector<BufferTransitionInfo> BufferTransitionManager::s_Transitions;
-std::vector<VkBufferMemoryBarrier> BufferTransitionManager::s_BufMemBarriers;
+std::vector<BufferTransitionInfo> BufferMemoryBarrier::s_Transitions;
+std::vector<VkBufferMemoryBarrier> BufferMemoryBarrier::s_BufMemBarriers;
 
-void BufferTransitionManager::register_for_transtion(BufferTransitionInfo& transitionInfo)
+void BufferMemoryBarrier::register_for_transtion(BufferTransitionInfo transitionInfo)
 {
     s_Transitions.push_back(transitionInfo);
 
@@ -27,13 +27,28 @@ void BufferTransitionManager::register_for_transtion(BufferTransitionInfo& trans
     s_BufMemBarriers.push_back(barrier);
 }
 
-void BufferTransitionManager::start_transition(VkPipelineStageFlags srcStages, VkPipelineStageFlags dstStages)
+void BufferMemoryBarrier::start_transition(VkPipelineStageFlags srcStages, VkPipelineStageFlags dstStages)
 {
     VkCommandBuffer cmdBuf = Device::Get()->begin_single_time_cmd_buffer();
     {
         vkCmdPipelineBarrier(cmdBuf, srcStages, dstStages, 0, 0, nullptr, static_cast<uint32_t>(s_BufMemBarriers.size()), &s_BufMemBarriers[0], 0, nullptr);
     }
-    Device::Get()->end_single_time_cmd_buffer(cmdBuf);
+    Device::Get()->flush_cmd_buffer(cmdBuf, Device::Get()->get_graphics_queue());
+
+    clear();
+}
+
+void BufferMemoryBarrier::insert_barrier(BufferTransitionInfo transitionInfo, VkPipelineStageFlags srcStages, VkPipelineStageFlags dstStages)
+{
+    register_for_transtion(transitionInfo);
+    start_transition(srcStages, dstStages);
+    clear();
+}
+
+void BufferMemoryBarrier::clear()
+{
+    s_BufMemBarriers.clear();
+    s_Transitions.clear();
 }
 
 //------------------------------------------------------------------------------
@@ -78,44 +93,23 @@ void Buffer::Destroy()
     vkDestroyBuffer(VKDEVICE, m_Buffer, nullptr);
 }
 
-void Buffer::MapVertexBufferData(const std::vector<Vertex>& vertexData)
+VkBufferView Buffer::create_buffer_view(VkFormat viewFormat, VkDeviceSize mem_offset, VkDeviceSize mem_range)
 {
-    void* data;
-    vkMapMemory(VKDEVICE, m_BufferMemory, 0, sizeof(vertexData[0]) * vertexData.size(), 0, &data);
-    memcpy(data, vertexData.data(), (size_t) sizeof(vertexData[0]) * vertexData.size());
-    vkUnmapMemory(VKDEVICE, m_BufferMemory);
-}
+    VkBufferView bufferView;
 
-void Buffer::MapIndexBufferData(const std::vector<uint16_t>& indexData)
-{
-    void* data;
-    vkMapMemory(VKDEVICE, m_BufferMemory, 0, sizeof(indexData[0]) * indexData.size(), 0, &data);
-    memcpy(data, indexData.data(), (size_t) sizeof(indexData[0]) * indexData.size());
-    vkUnmapMemory(VKDEVICE, m_BufferMemory);
-}
+    VkBufferViewCreateInfo viewCI{};
+    viewCI.sType = VK_STRUCTURE_TYPE_BUFFER_VIEW_CREATE_INFO;
+    viewCI.pNext = nullptr;
+    viewCI.flags = 0;
+    viewCI.buffer = m_Buffer;
+    viewCI.format = viewFormat;
+    viewCI.offset = mem_offset;
+    viewCI.range = mem_range;
 
-void Buffer::MapImage(unsigned char* imageData, VkDeviceSize imageSize)
-{
-    void* data;
-    vkMapMemory(VKDEVICE, m_BufferMemory, 0, imageSize, 0, &data);
-    std::cout << "\033[4;30;49m Hereeeeeee!!!!!!!!!!! \033[0m" << std::endl;
-    memcpy(data, imageData, static_cast<size_t>(imageSize));
-    std::cout << "\033[4;33;49m Hereeeeeee!!!!!!!!!!! \033[0m" << std::endl;
-    vkUnmapMemory(VKDEVICE, m_BufferMemory);
-    std::cout << "\033[4;34;49m Hereeeeeee!!!!!!!!!!! \033[0m" << std::endl;
-}
+    if(VK_CALL(vkCreateBufferView(VKDEVICE, &viewCI, nullptr, &bufferView)))
+        throw std::runtime_error("Cannot create buffer view!");
 
-void Buffer::CopyBufferToDevice(CmdPool pool, VkBuffer dstBuffer, VkDeviceSize size)
-{
-    VkCommandBuffer commandBuffer = Device::Get()->begin_single_time_cmd_buffer();
-    {
-        VkBufferCopy copyRegion{};
-        copyRegion.srcOffset = 0; // Optional
-        copyRegion.dstOffset = 0; // Optional
-        copyRegion.size = size;
-        vkCmdCopyBuffer(commandBuffer, m_Buffer, dstBuffer, 1, &copyRegion);
-    }
-    Device::Get()->flush_cmd_buffer(commandBuffer, Device::Get()->get_graphics_queue());
+    return bufferView;
 }
 
 VkResult Buffer::map(VkDeviceSize size /*= VK_WHOLE_SIZE*/, VkDeviceSize offset /*= 0*/)
@@ -148,21 +142,15 @@ void Buffer::copy_to_mapped(void* data, VkDeviceSize size)
     vkUnmapMemory(VKDEVICE, m_BufferMemory);
 }
 
-VkBufferView Buffer::create_buffer_view(VkFormat viewFormat, VkDeviceSize mem_offset, VkDeviceSize mem_range)
+void Buffer::copy_buffer_to_device(VkBuffer dstBuffer, VkDeviceSize size)
 {
-    VkBufferView bufferView;
-
-    VkBufferViewCreateInfo viewCI{};
-    viewCI.sType = VK_STRUCTURE_TYPE_BUFFER_VIEW_CREATE_INFO;
-    viewCI.pNext = nullptr;
-    viewCI.flags = 0;
-    viewCI.buffer = m_Buffer;
-    viewCI.format = viewFormat;
-    viewCI.offset = mem_offset;
-    viewCI.range = mem_range;
-
-    if(VK_CALL(vkCreateBufferView(VKDEVICE, &viewCI, nullptr, &bufferView)))
-        throw std::runtime_error("Cannot create buffer view!");
-
-    return bufferView;
+    VkCommandBuffer commandBuffer = Device::Get()->begin_single_time_cmd_buffer();
+    {
+        VkBufferCopy copyRegion{};
+        copyRegion.srcOffset = 0; // Optional
+        copyRegion.dstOffset = 0; // Optional
+        copyRegion.size = size;
+        vkCmdCopyBuffer(commandBuffer, m_Buffer, dstBuffer, 1, &copyRegion);
+    }
+    Device::Get()->flush_cmd_buffer(commandBuffer, Device::Get()->get_graphics_queue());
 }

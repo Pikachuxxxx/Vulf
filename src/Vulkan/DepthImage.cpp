@@ -16,7 +16,7 @@ void DepthImage::CreateDepthImage(uint32_t width, uint32_t height, CmdPool cmdPo
         VK_IMAGE_USAGE_DEPTH_STENCIL_ATTACHMENT_BIT,
         VK_MEMORY_PROPERTY_DEVICE_LOCAL_BIT);
 
-    m_DepthImage.CreateImageView(m_DepthFormat, VK_IMAGE_ASPECT_DEPTH_BIT);
+    m_DepthImage.create_image_view(m_DepthFormat, VK_IMAGE_ASPECT_DEPTH_BIT);
 }
 
 bool DepthImage::HasStencilComponent(VkFormat format)
