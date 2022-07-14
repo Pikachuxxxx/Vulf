@@ -55,7 +55,7 @@ namespace Vulf{
         VkDescriptorPool        m_ImguiDescriptorPool;
         VkDescriptorSetLayout   m_ImGuiDescriptorSetLayout;
         VkDescriptorSet         m_ImGuiDescriptorSet;
-        VkDescriptorSet*         m_ImguiImageSet;
+        VkDescriptorSet*        m_ImguiImageSet;
 
         VkPipelineLayout        m_ImGuiPipelineLayout;
         VkPipeline              m_ImGuiPipeline;
@@ -75,4 +75,3 @@ namespace Vulf{
 
     };
 }
-

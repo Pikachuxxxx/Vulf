@@ -132,6 +132,8 @@ namespace Vulf {
             m_RenderFinishedSemaphores[i].Destroy();
             m_InFlightFences[i].Destroy();
         }
+        m_ImageAvailableSemaphores.clear();
+        m_RenderFinishedSemaphores.clear();
         baseCommandPool.Destroy(); // --> Automatically frees cmdBuffers out of existence
     }
     ////////////////////////////////////////////////////////////////////////////
@@ -369,6 +371,9 @@ namespace Vulf {
 
     void VulfBase::InitSyncPrimitives() {
 
+        m_ImageAvailableSemaphores.clear();
+        m_RenderFinishedSemaphores.clear();
+        m_InFlightFences.clear();
         m_ImageAvailableSemaphores.resize(MAX_FRAMES_IN_FLIGHT);
         m_RenderFinishedSemaphores.resize(MAX_FRAMES_IN_FLIGHT);
         m_InFlightFences.resize(MAX_FRAMES_IN_FLIGHT);

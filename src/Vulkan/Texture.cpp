@@ -192,7 +192,7 @@ void Texture::upload_to_device(const void* imageData, VkDeviceSize imageSize, ui
 
 void Texture::update_set()
 {
-    // Update the Descriptor Set:
+    // Update the Descriptor Set
     VkDescriptorImageInfo desc_image[1] = {};
     desc_image[0].sampler = get_sampler();
     desc_image[0].imageView = get_view();
