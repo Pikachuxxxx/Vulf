@@ -80,7 +80,7 @@ namespace Vulf {
 
         m_ImGuiOVerlay.init();
         m_ImGuiOVerlay.upload_ui_font("FiraCode-Light.ttf");
-        m_ImGuiOVerlay.prepare_pipeline(baseRenderPass.GetRenderPass());
+        m_ImGuiOVerlay.prepare_pipeline(baseRenderPass.get_handle());
         // This is not necessary if one creates their own hooks for Input system and ImGui (GLFW does it for us)
         ImGui_ImplGlfw_InitForVulkan(m_Window->getGLFWwindow(), true);
     }

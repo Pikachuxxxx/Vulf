@@ -70,7 +70,7 @@ void RenderPass::Destroy()
     vkDestroyRenderPass(VKDEVICE, m_RenderPass, nullptr);
 }
 
-void RenderPass::BeginRenderPass(VkCommandBuffer& cmdBuffer, VkFramebuffer& framebuffer, const VkExtent2D& swapextent)
+void RenderPass::begin_pass(VkCommandBuffer& cmdBuffer, VkFramebuffer& framebuffer, const VkExtent2D& swapextent)
 {
     // VK_LOG("Starting render pass!");
 	VkRenderPassBeginInfo beginInfo{};
@@ -88,7 +88,7 @@ void RenderPass::BeginRenderPass(VkCommandBuffer& cmdBuffer, VkFramebuffer& fram
 	vkCmdBeginRenderPass(cmdBuffer, &beginInfo, VK_SUBPASS_CONTENTS_INLINE);
 }
 
-void RenderPass::EndRenderPass(VkCommandBuffer& cmdBuffer)
+void RenderPass::end_pass(VkCommandBuffer& cmdBuffer)
 {
     vkCmdEndRenderPass(cmdBuffer);
 }

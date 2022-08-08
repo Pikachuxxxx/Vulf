@@ -48,6 +48,8 @@ private:
     }vpUBOData;
 
     float someNum = 45.0f;
+    bool useOrtho = false;
+    float aspectRatio = 1280/720;
 private:
     // default stuff required for initialization, these resources are all explicitly allocated and to not follow RAII, hence the defauly ones are provided by Vulf
     FixedPipelineFuncs      fixedFunctions;
@@ -117,12 +119,12 @@ private:
     }
 
     void BuildGraphicsPipeline() override {
-        simpleGraphicsPipeline.Create(defaultShaders, fixedFunctions, baseRenderPass.GetRenderPass());
+        simpleGraphicsPipeline.Create(defaultShaders, fixedFunctions, baseRenderPass.get_handle());
     }
 
     // default
     void BuildFramebuffer() override {
-        simpleFrameBuffer.Create(baseRenderPass.GetRenderPass(), baseSwapchain.get_image_views(), depthImage.GetDepthImageView(), baseSwapchain.get_extent());
+        simpleFrameBuffer.Create(baseRenderPass.get_handle(), baseSwapchain.get_image_views(), depthImage.GetDepthImageView(), baseSwapchain.get_extent());
     }
 
     void CleanUpPipeline() override {
@@ -148,10 +150,12 @@ private:
 
     void OnRender(CmdBuffer dcb) override
     {
+        aspectRatio = (float)getWindow()->getWidth() / (float)getWindow()->getHeight();
+
         ZoneScopedC(0xffa500);
         OPTICK_EVENT();
 
-        baseRenderPass.SetClearColor(0.0f, 0.0f, 0.0f);
+        baseRenderPass.set_clear_color(0.8f, 0.2f, 0.2f);
         auto framebuffers = simpleFrameBuffer.GetFramebuffers();
         auto descriptorSets = helloTriangleUBO.GetSets();
 
@@ -160,7 +164,7 @@ private:
         OPTICK_GPU_EVENT("Recording cmd buffers");
 #endif
         dcb.begin_recording();
-        baseRenderPass.BeginRenderPass(dcb.get_handle(), framebuffers[get_image_idx()], baseSwapchain.get_extent());
+        baseRenderPass.begin_pass(dcb.get_handle(), framebuffers[get_image_idx()], baseSwapchain.get_extent());
 
         VkViewport viewport = {};
         viewport.x = 0.0f;
@@ -182,13 +186,21 @@ private:
         // Bind the appropriate descriptor sets
         vkCmdBindDescriptorSets(dcb.get_handle(), VK_PIPELINE_BIND_POINT_GRAPHICS, fixedFunctions.GetPipelineLayout(), 0, 1, &descriptorSets[get_frame_idx()], 0, nullptr);
 
-        // Bind the push constants
-        modelPCData.model = glm::rotate(glm::mat4(1.0f), (float) glm::radians(90.0f * 1.0f), glm::vec3(0.0f, 0.0f, 1.0f));
-        vkCmdPushConstants(dcb.get_handle(), fixedFunctions.GetPipelineLayout(), VK_SHADER_STAGE_VERTEX_BIT | VK_SHADER_STAGE_FRAGMENT_BIT, 0, sizeof(ModelPushConstant), &modelPCData);
-
+        // vkCmdDraw(dcb.get_handle(), rainbowTriangleVertices.size(), 1, 0, 0);
         helloTriangleVBO.Bind(dcb.get_handle());
 
-        vkCmdDraw(dcb.get_handle(), rainbowTriangleVertices.size(), 1, 0, 0);
+        for (float x = -8.0f; x < 8.0f;  x+=0.5) {
+            for (float y = -8.0f; y < 8.0f; y+=0.5) {
+                // Update the size properly
+                // Bind the push constants with the appropriate size
+                modelPCData.model = glm::translate(glm::mat4(1.0f), glm::vec3(x / 10.0f, y / 10.0f, 0.0f));
+                modelPCData.model *= glm::rotate(glm::mat4(1.0f), (float) glm::radians(90.0f * sin(glfwGetTime())), glm::vec3(0.0f, 0.0f, 1.0f));
+                modelPCData.model *= glm::scale(glm::mat4(1.0f), glm::vec3(0.04f));
+                vkCmdPushConstants(dcb.get_handle(), fixedFunctions.GetPipelineLayout(), VK_SHADER_STAGE_VERTEX_BIT | VK_SHADER_STAGE_FRAGMENT_BIT, 0, sizeof(ModelPushConstant), &modelPCData);
+                // Draw stuff
+                vkCmdDraw(dcb.get_handle(), rainbowTriangleVertices.size(), 1, 0, 0);
+            }
+        }
 
         ImGuiIO& io = ImGui::GetIO();
 
@@ -197,7 +209,7 @@ private:
         get_ui_overlay().update_imgui_buffers();
             get_ui_overlay().draw(dcb.get_handle());
 
-        baseRenderPass.EndRenderPass(dcb.get_handle());
+        baseRenderPass.end_pass(dcb.get_handle());
         dcb.end_recording();
     }
 
@@ -207,7 +219,7 @@ private:
 
         vpUBOData.view = getCamera().GetViewMatrix();
         vpUBOData.proj = glm::perspective(glm::radians(someNum), (float) baseSwapchain.get_extent().width / baseSwapchain.get_extent().height, 0.01f, 100.0f);
-        ////vpUBOData.proj[1][1] *= -1;
+        //vpUBOData.proj[1][1] *= -1;
 
         helloTriangleUBO.UpdateBuffer(&vpUBOData, sizeof(ViewProjectionUBOData), frameIdx);
     }

@@ -95,7 +95,7 @@ namespace Vulf {
     using Ms = std::chrono::duration<double, std::milli>;
 
     /* The max number of frames that will be concurrently rendered to while the presentation is in process */
-    const int MAX_FRAMES_IN_FLIGHT = 2;
+    const int MAX_FRAMES_IN_FLIGHT = 3;
 
     /*
      * Vulf Base class with application flow abstraction
@@ -121,11 +121,14 @@ namespace Vulf {
         const Window* getWindow() { return m_Window; }
 
     protected:
-        // App setting to customize
+        // App setting to customize (this is BS!)
         bool        waitOnAllFences = true; /* Whether or not to wail on all fences for reset               */
-        // App default primitives that one can use
+        // TODO: Remove all vulkan primitives that we give by default that aren't constant remove any dependencies except for cmd buffers and pools + Swapchain
+        // TODO: Rename this as Graphics Command Pool (apt name tbd) and use it only for DCB, CCB will use a Compute CmdPool
         CmdPool     baseCommandPool;        /* The default command pool used to allocate command buffers    */
+        // TODO: Move this to a new class called Context or Instance as we have only one Swapchain (default framebuffer will still be handled by user as offline rendering is possible)
         Swapchain   baseSwapchain;          /* The base swapchain from which the images are used to render  */
+        // TODO: Remove!!! this from here!!! This is at the mercy of the use to create and use
         RenderPass  baseRenderPass;         /* The base renderpass used to transition the images            */
 
     protected:

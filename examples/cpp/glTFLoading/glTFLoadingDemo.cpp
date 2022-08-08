@@ -174,7 +174,7 @@ private:
 
     void OnStart() override {
 
-        simpleRenderPass.SetClearColor(0.0f, 0.0f, 0.0f);
+        simpleRenderPass.set_clear_color(0.0f, 0.0f, 0.0f);
         auto& cmdBuffers = simpleCommandBuffer.GetBuffers();
         auto framebuffers = simpleFrameBuffer.GetFramebuffers();
         auto descriptorSets = helloTriangleUBO.GetSets();
@@ -186,7 +186,7 @@ private:
             OPTICK_GPU_EVENT("Recording cmd buffers");
 #endif
             simpleCommandBuffer.RecordBuffer(cmdBuffers[i]);
-            simpleRenderPass.BeginRenderPass(cmdBuffers[i], framebuffers[i], _def_Swapchain.GetSwapExtent());
+            simpleRenderPass.begin_pass(cmdBuffers[i], framebuffers[i], _def_Swapchain.GetSwapExtent());
 
             simpleGraphicsPipeline.Bind(cmdBuffers[i]);
 
@@ -201,7 +201,7 @@ private:
 
             // testModel.draw(cmdBuffers[i]);
 
-            simpleRenderPass.EndRenderPass(cmdBuffers[i]);
+            simpleRenderPass.end_pass(cmdBuffers[i]);
             simpleCommandBuffer.EndRecordingBuffer(cmdBuffers[i]);
         }
 
