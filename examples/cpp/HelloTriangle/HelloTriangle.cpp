@@ -107,7 +107,7 @@ private:
         helloTriangleVBO.Init(rainbowTriangleVertices);
         std::vector<Vertex> vertices;
         std::vector<uint16_t> indices;
-        LoadObjModel((SRC_DIR) + std::string("/data/models/sponza.obj"), vertices, indices);
+        LoadObjModel((SRC_DIR) + std::string("/data/models/stanford-bunny.obj"), vertices, indices);
 
         modelVBO.Init(vertices);
         modelIBO.Init(indices);
@@ -202,9 +202,9 @@ private:
         // Bind the appropriate descriptor sets
         vkCmdBindDescriptorSets(dcb.get_handle(), VK_PIPELINE_BIND_POINT_GRAPHICS, fixedFunctions.GetPipelineLayout(), 0, 1, &descriptorSets[get_frame_idx()], 0, nullptr);
 
-        helloTriangleVBO.bind(dcb.get_handle());
-        //modelVBO.bind(dcb.get_handle());
-        //modelIBO.bind(dcb.get_handle());
+        //helloTriangleVBO.bind(dcb.get_handle());
+        modelVBO.bind(dcb.get_handle());
+        modelIBO.bind(dcb.get_handle());
 
         //for (float x = -8.0f; x < 8.0f; x++) {
         //    for (float y = -8.0f; y < 8.0f; y++) {
@@ -213,7 +213,7 @@ private:
         //            modelPCData.model = glm::translate(glm::mat4(1.0f), glm::vec3(x / 10.0f, y / 10.0f, 0.0f));
         //            modelPCData.model *= glm::rotate(glm::mat4(1.0f), (float) glm::radians(90.0f * sin(glfwGetTime())), glm::vec3(0.0f, 0.0f, 1.0f));
         //            modelPCData.model *= glm::scale(glm::mat4(1.0f), glm::vec3(0.04f));
-        //            vkCmdPushConstants(dcb.get_handle(), fixedFunctions.GetPipelineLayout(), VK_SHADER_STAGE_VERTEX_BIT | VK_SHADER_STAGE_FRAGMENT_BIT, 0, sizeof(ModelPushConstant), &modelPCData);
+        vkCmdPushConstants(dcb.get_handle(), fixedFunctions.GetPipelineLayout(), VK_SHADER_STAGE_VERTEX_BIT | VK_SHADER_STAGE_FRAGMENT_BIT, 0, sizeof(ModelPushConstant), &modelPCData);
 
         //            //vkCmdDrawIndexed(dcb.get_handle(), modelIBO.get_index_count(), 1, 0, 0, 0);
         //             
@@ -223,11 +223,13 @@ private:
         //    }
         //}
 
-        modelPCData.model = glm::rotate(glm::mat4(1.0f), (float) glm::radians(90.0f * sin(glfwGetTime())), glm::vec3(0.0f, 0.0f, 1.0f));
-        //modelPCData.model *= glm::scale(glm::mat4(1.0f), glm::vec3(1.0f));
+        //modelPCData.model = glm::rotate(glm::mat4(1.0f), (float) glm::radians(90.0f * sin(glfwGetTime())), glm::vec3(0.0f, 0.0f, 1.0f));
+        modelPCData.model = glm::translate(glm::mat4(1.0f), glm::vec3(0.0f, 0.0f, -2.0f));
+        modelPCData.model *= glm::scale(glm::mat4(1.0f), glm::vec3(1.0f));
         vkCmdPushConstants(dcb.get_handle(), fixedFunctions.GetPipelineLayout(), VK_SHADER_STAGE_VERTEX_BIT | VK_SHADER_STAGE_FRAGMENT_BIT, 0, sizeof(ModelPushConstant), &modelPCData);
 
-        vkCmdDraw(dcb.get_handle(), helloTriangleVBO.get_vtx_count(), 1, 0, 0);
+        //vkCmdDraw(dcb.get_handle(), modelIBO.get_vtx_count(), 1, 0, 0);
+        vkCmdDrawIndexed(dcb.get_handle(), modelIBO.get_index_count(), 1, 0, 0, 0);
 
         ImGuiIO& io = ImGui::GetIO();
 
