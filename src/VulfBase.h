@@ -61,6 +61,7 @@
 #include "utils/cube.h"
 #include "utils/sphere.h"
 #include "utils/CommandLineParser.h"
+#include "utils/LoadObjModel.h"
 
 // Vulkan Abstractions
 #include "Vulkan/Instance.h"

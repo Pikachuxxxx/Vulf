@@ -8,8 +8,8 @@
 
 
 // TibyObj
-//#define TINYOBJLOADER_IMPLEMENTATION
-//#include <tinyobj/tiny_obj_loader.h>
+#define TINYOBJLOADER_IMPLEMENTATION
+#include <tinyobj/tiny_obj_loader.h>
 
 namespace Vulf {
 

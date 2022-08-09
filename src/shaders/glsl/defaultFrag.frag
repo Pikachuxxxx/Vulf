@@ -22,6 +22,8 @@ void main() {
     else
         outColor = texture(texSampler, vs_in.TexCoords) * vec4(vs_in.Color, 1.0f);
 
+    //outColor = vec4(vs_in.FragPos, 1.0f);
+
 }
 
 

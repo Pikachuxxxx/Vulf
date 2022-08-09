@@ -27,15 +27,17 @@ class VulfHelloTriangle : public Vulf::VulfBase
 public:
     VulfHelloTriangle() : VulfBase("Hello Triangle") {}
 
-     ~VulfHelloTriangle() {
+    ~VulfHelloTriangle()
+    {
         VK_LOG("Quitting...");
         defaultVertShader.DestroyModule();
         defaultFragShader.DestroyModule();
     }
 
-// Types
+    // Types
 private:
-    struct ModelPushConstant{
+    struct ModelPushConstant
+    {
         alignas(16) glm::mat4 model;
     }modelPCData;
 
@@ -67,15 +69,18 @@ private:
     ShaderStage             defaultShaders;
 
     // Buffers
-    UniformBuffer           helloTriangleUBO;
     VertexBuffer            helloTriangleVBO;
+    UniformBuffer           helloTriangleUBO;
+    VertexBuffer            modelVBO;
+    IndexBuffer             modelIBO;
 
     // Textures
     Texture                 gridTexture;
     Texture                 checkerTexture;
 
 private:
-    void LoadShaders() override {
+    void LoadShaders() override
+    {
 
         // Default shaders
         defaultVertShader.CreateShader((SHADER_BINARY_DIR) + std::string("/defaultVert.spv"), ShaderType::VERTEX_SHADER);
@@ -84,7 +89,8 @@ private:
         defaultShaders.push_back(defaultFragShader.GetShaderStageInfo());
     }
 
-    void BuildTextureResources() override {
+    void BuildTextureResources() override
+    {
         // default
         depthImage.CreateDepthImage(baseSwapchain.get_extent().width, baseSwapchain.get_extent().height, baseCommandPool);
 
@@ -95,9 +101,17 @@ private:
         checkerTexture.Init((SRC_DIR) + std::string("/data/textures/TestCheckerMap.png"));
     }
 
-    void BuildBufferResource() override {
+    void BuildBufferResource() override
+    {
         // Triangle vertices and indices
-        helloTriangleVBO.Create(rainbowTriangleVertices, baseCommandPool);
+        helloTriangleVBO.Init(rainbowTriangleVertices);
+        std::vector<Vertex> vertices;
+        std::vector<uint16_t> indices;
+        LoadObjModel((SRC_DIR) + std::string("/data/models/sponza.obj"), vertices, indices);
+
+        modelVBO.Init(vertices);
+        modelIBO.Init(indices);
+
 
         // View Projection Uniform Buffer
         helloTriangleUBO.AddDescriptor(UniformBuffer::DescriptorInfo(0, ShaderType::VERTEX_SHADER, sizeof(ViewProjectionUBOData), 0));
@@ -106,26 +120,30 @@ private:
         helloTriangleUBO.CreateUniformBuffer(3, sizeof(ViewProjectionUBOData));
     }
 
-    void BuildFixedPipeline() override {
+    void BuildFixedPipeline() override
+    {
         // Create the push constants
-        modelPushConstant.stageFlags    = ShaderType::VERTEX_SHADER | ShaderType::FRAGMENT_SHADER;
-        modelPushConstant.offset        = 0;
-        modelPushConstant.size          = sizeof(ModelPushConstant);
+        modelPushConstant.stageFlags = ShaderType::VERTEX_SHADER | ShaderType::FRAGMENT_SHADER;
+        modelPushConstant.offset = 0;
+        modelPushConstant.size = sizeof(ModelPushConstant);
 
         fixedFunctions.SetFixedPipelineStage(VK_PRIMITIVE_TOPOLOGY_TRIANGLE_LIST, baseSwapchain.get_extent(), false);
         fixedFunctions.SetPipelineLayout(helloTriangleUBO.GetDescriptorSetLayout(), &modelPushConstant);
     }
 
-    void BuildGraphicsPipeline() override {
+    void BuildGraphicsPipeline() override
+    {
         simpleGraphicsPipeline.Create(defaultShaders, fixedFunctions, baseRenderPass.GetRenderPass());
     }
 
     // default
-    void BuildFramebuffer() override {
+    void BuildFramebuffer() override
+    {
         simpleFrameBuffer.Create(baseRenderPass.GetRenderPass(), baseSwapchain.get_image_views(), depthImage.GetDepthImageView(), baseSwapchain.get_extent());
     }
 
-    void CleanUpPipeline() override {
+    void CleanUpPipeline() override
+    {
         ZoneScopedC(0xffffff);
         vkDeviceWaitIdle(VKDEVICE);
         simpleFrameBuffer.Destroy();
@@ -134,6 +152,8 @@ private:
         depthImage.Destroy();
         helloTriangleUBO.Destroy();
         helloTriangleVBO.Destroy();
+        modelVBO.Destroy();
+        modelIBO.Destroy();
         simpleGraphicsPipeline.Destroy();
         fixedFunctions.DestroyPipelineLayout();
     }
@@ -172,7 +192,7 @@ private:
 
         VkRect2D scissor = {};
         scissor.offset = { 0, 0 };
-        scissor.extent = { getWindow()->getWidth(), getWindow()->getHeight()};
+        scissor.extent = { getWindow()->getWidth(), getWindow()->getHeight() };
 
         vkCmdSetViewport(dcb.get_handle(), 0, 1, &viewport);
         vkCmdSetScissor(dcb.get_handle(), 0, 1, &scissor);
@@ -182,26 +202,46 @@ private:
         // Bind the appropriate descriptor sets
         vkCmdBindDescriptorSets(dcb.get_handle(), VK_PIPELINE_BIND_POINT_GRAPHICS, fixedFunctions.GetPipelineLayout(), 0, 1, &descriptorSets[get_frame_idx()], 0, nullptr);
 
-        // Bind the push constants
-        modelPCData.model = glm::rotate(glm::mat4(1.0f), (float) glm::radians(90.0f * 1.0f), glm::vec3(0.0f, 0.0f, 1.0f));
+        helloTriangleVBO.bind(dcb.get_handle());
+        //modelVBO.bind(dcb.get_handle());
+        //modelIBO.bind(dcb.get_handle());
+
+        //for (float x = -8.0f; x < 8.0f; x++) {
+        //    for (float y = -8.0f; y < 8.0f; y++) {
+        //        //for (size_t z = -8.0f; z < 8.0f; z++) {
+        //            // Bind the push constants
+        //            modelPCData.model = glm::translate(glm::mat4(1.0f), glm::vec3(x / 10.0f, y / 10.0f, 0.0f));
+        //            modelPCData.model *= glm::rotate(glm::mat4(1.0f), (float) glm::radians(90.0f * sin(glfwGetTime())), glm::vec3(0.0f, 0.0f, 1.0f));
+        //            modelPCData.model *= glm::scale(glm::mat4(1.0f), glm::vec3(0.04f));
+        //            vkCmdPushConstants(dcb.get_handle(), fixedFunctions.GetPipelineLayout(), VK_SHADER_STAGE_VERTEX_BIT | VK_SHADER_STAGE_FRAGMENT_BIT, 0, sizeof(ModelPushConstant), &modelPCData);
+
+        //            //vkCmdDrawIndexed(dcb.get_handle(), modelIBO.get_index_count(), 1, 0, 0, 0);
+        //             
+        //            vkCmdDraw(dcb.get_handle(), rainbowTriangleVertices.size(), 1, 0, 0);
+
+        //        //}
+        //    }
+        //}
+
+        modelPCData.model = glm::rotate(glm::mat4(1.0f), (float) glm::radians(90.0f * sin(glfwGetTime())), glm::vec3(0.0f, 0.0f, 1.0f));
+        //modelPCData.model *= glm::scale(glm::mat4(1.0f), glm::vec3(1.0f));
         vkCmdPushConstants(dcb.get_handle(), fixedFunctions.GetPipelineLayout(), VK_SHADER_STAGE_VERTEX_BIT | VK_SHADER_STAGE_FRAGMENT_BIT, 0, sizeof(ModelPushConstant), &modelPCData);
 
-        helloTriangleVBO.Bind(dcb.get_handle());
-
-        vkCmdDraw(dcb.get_handle(), rainbowTriangleVertices.size(), 1, 0, 0);
+        vkCmdDraw(dcb.get_handle(), helloTriangleVBO.get_vtx_count(), 1, 0, 0);
 
         ImGuiIO& io = ImGui::GetIO();
 
         io.DisplaySize = ImVec2((float) getWindow()->getWidth(), (float) getWindow()->getHeight());
 
         get_ui_overlay().update_imgui_buffers();
-            get_ui_overlay().draw(dcb.get_handle());
+        get_ui_overlay().draw(dcb.get_handle());
 
         baseRenderPass.EndRenderPass(dcb.get_handle());
         dcb.end_recording();
     }
 
-    void OnUpdateBuffers(uint32_t frameIdx) override {
+    void OnUpdateBuffers(uint32_t frameIdx) override
+    {
         vpUBOData.view = glm::mat4(1.0f);
         vpUBOData.proj = glm::mat4(1.0f);
 
@@ -218,14 +258,13 @@ private:
 
         ImGui::ShowDemoWindow();
 
-        if(ImGui::Begin("Vulkan Example"))
-        {
+        if (ImGui::Begin("Vulkan Example")) {
             ImGui::Text("Hello ImGui");
             ImGui::TextUnformatted(get_app_name().c_str());
             ImGui::DragFloat("Position", &someNum, 0.1f, 0.0f, 100.0f);
 
-            ImGui::Image((void*)gridTexture.get_descriptor_set(), ImVec2(ImGui::GetWindowSize()[0], 200), ImVec2(0, 0), ImVec2(1.0f, -1.0f));
-            ImGui::Image((void*)checkerTexture.get_descriptor_set(), ImVec2(ImGui::GetWindowSize()[0], 200), ImVec2(0, 0), ImVec2(1.0f, -1.0f));
+            ImGui::Image((void*) gridTexture.get_descriptor_set(), ImVec2(ImGui::GetWindowSize()[0], 200), ImVec2(0, 0), ImVec2(1.0f, -1.0f));
+            ImGui::Image((void*) checkerTexture.get_descriptor_set(), ImVec2(ImGui::GetWindowSize()[0], 200), ImVec2(0, 0), ImVec2(1.0f, -1.0f));
         }
         ImGui::End();
 

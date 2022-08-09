@@ -7,9 +7,12 @@ class VertexBuffer
 {
 public:
     VertexBuffer() = default;
-    void Create(std::vector<Vertex> vertices, CmdPool pool);
+    void Init(std::vector<Vertex> vertices);
     void Destroy();
-    void Bind(VkCommandBuffer cmdBuffer);
+
+    void bind(VkCommandBuffer cmdBuffer);
+    inline const uint32_t& get_vtx_count() { return m_VtxCount; }
 private:
+    uint32_t m_VtxCount;
     Buffer  m_VertexBuffer;
 };

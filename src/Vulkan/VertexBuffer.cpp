@@ -1,8 +1,10 @@
 #include "VertexBuffer.h"
 
-void VertexBuffer::Create(std::vector<Vertex> vertices, CmdPool pool)
+void VertexBuffer::Init(std::vector<Vertex> vertices)
 {
     Buffer  m_StagingBuffer;
+
+    m_VtxCount = vertices.size();
 
     VkDeviceSize vertexDataSize = sizeof(vertices[0]) * vertices.size();
     m_StagingBuffer.Init(vertexDataSize, VK_BUFFER_USAGE_TRANSFER_SRC_BIT, VK_MEMORY_PROPERTY_HOST_VISIBLE_BIT | VK_MEMORY_PROPERTY_HOST_COHERENT_BIT);
@@ -19,7 +21,7 @@ void VertexBuffer::Destroy()
     m_VertexBuffer.Destroy();
 }
 
-void VertexBuffer::Bind(VkCommandBuffer cmdBuffer)
+void VertexBuffer::bind(VkCommandBuffer cmdBuffer)
 {
     VkBuffer vertexBuffers[] = {m_VertexBuffer.get_handle()};
     VkDeviceSize offsets[] = {0};
