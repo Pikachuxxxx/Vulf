@@ -6,7 +6,6 @@
 
 class Buffer;
 
-// TODO: Identify transition by string IDs so that we can re-use registered transitions
 struct BufferTransitionInfo
 {
     Buffer&         buffer;
@@ -32,7 +31,7 @@ public:
     static void clear();
 };
 
-
+// TODO: Add buffer memory barriers when using staging buffer
 class Buffer
 {
 public:

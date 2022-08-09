@@ -50,6 +50,8 @@ private:
     }vpUBOData;
 
     float someNum = 45.0f;
+    bool useOrtho = false;
+    float aspectRatio = 1280/720;
 private:
     // default stuff required for initialization, these resources are all explicitly allocated and to not follow RAII, hence the defauly ones are provided by Vulf
     FixedPipelineFuncs      fixedFunctions;
@@ -168,10 +170,12 @@ private:
 
     void OnRender(CmdBuffer dcb) override
     {
+        aspectRatio = (float)getWindow()->getWidth() / (float)getWindow()->getHeight();
+
         ZoneScopedC(0xffa500);
         OPTICK_EVENT();
 
-        baseRenderPass.SetClearColor(0.0f, 0.0f, 0.0f);
+        baseRenderPass.set_clear_color(0.8f, 0.2f, 0.2f);
         auto framebuffers = simpleFrameBuffer.GetFramebuffers();
         auto descriptorSets = helloTriangleUBO.GetSets();
 
@@ -180,7 +184,7 @@ private:
         OPTICK_GPU_EVENT("Recording cmd buffers");
 #endif
         dcb.begin_recording();
-        baseRenderPass.BeginRenderPass(dcb.get_handle(), framebuffers[get_image_idx()], baseSwapchain.get_extent());
+        baseRenderPass.begin_pass(dcb.get_handle(), framebuffers[get_image_idx()], baseSwapchain.get_extent());
 
         VkViewport viewport = {};
         viewport.x = 0.0f;
@@ -238,7 +242,7 @@ private:
         get_ui_overlay().update_imgui_buffers();
         get_ui_overlay().draw(dcb.get_handle());
 
-        baseRenderPass.EndRenderPass(dcb.get_handle());
+        baseRenderPass.end_pass(dcb.get_handle());
         dcb.end_recording();
     }
 
@@ -249,7 +253,7 @@ private:
 
         vpUBOData.view = getCamera().GetViewMatrix();
         vpUBOData.proj = glm::perspective(glm::radians(someNum), (float) baseSwapchain.get_extent().width / baseSwapchain.get_extent().height, 0.01f, 100.0f);
-        ////vpUBOData.proj[1][1] *= -1;
+        //vpUBOData.proj[1][1] *= -1;
 
         helloTriangleUBO.UpdateBuffer(&vpUBOData, sizeof(ViewProjectionUBOData), frameIdx);
     }

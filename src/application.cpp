@@ -521,8 +521,8 @@ void Application::RecordCommands()
     for (int i = 0; i <  cmdBuffers.size(); i++) {
 
         swapCmdBuffers.RecordBuffer(cmdBuffers[i]);
-        // renderPassManager.SetClearColor(0.85, 0.44, 0.48);
-        renderPassManager.BeginRenderPass(cmdBuffers[i], framebuffers[i], swapchainManager.GetSwapExtent());
+        // renderPassManager.set_clear_color(0.85, 0.44, 0.48);
+        renderPassManager.begin_pass(cmdBuffers[i], framebuffers[i], swapchainManager.GetSwapExtent());
         // if(!enableWireframe)
         //     graphicsPipeline.Bind(cmdBuffers[i]);
         // else
@@ -620,7 +620,7 @@ void Application::RecordCommands()
             }
         }
 
-        renderPassManager.EndRenderPass(cmdBuffers[i]);
+        renderPassManager.end_pass(cmdBuffers[i]);
 		swapCmdBuffers.EndRecordingBuffer(cmdBuffers[i]);
 
         // ImGui Commands recording
@@ -762,7 +762,7 @@ void Application::OnImGui()
         clearColor[1] = color.y;
         clearColor[2] = color.z;
         clearColor[3] = color.w;
-        renderPassManager.SetClearColor(clearColor);
+        renderPassManager.set_clear_color(clearColor);
         ImGui::Checkbox("Wireframe Mode ", &enableWireframe);
         static const char* items[] = { "Translate", "Rotate", "Scale"};
         static const char* current_item = "Translate";

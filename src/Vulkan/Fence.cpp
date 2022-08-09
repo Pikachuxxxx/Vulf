@@ -12,6 +12,8 @@ void Fence::Init(bool signalled /*= true*/)
 
     if(VK_CALL(vkCreateFence(VKDEVICE, &fenceCI, nullptr, &m_Fence)))
         throw std::runtime_error("Cannot create Fence!");
+    else
+        VK_LOG("Fence Succesfully created!");
 }
 
 void Fence::Destroy()

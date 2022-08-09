@@ -4,7 +4,7 @@
 #include "../utils/VulkanCheckResult.h"
 #include "../utils/vertex.h"
 
-void GraphicsPipeline::Create(std::vector<VkPipelineShaderStageCreateInfo> shaderStages, FixedPipelineFuncs& fixedfunctions, VkRenderPass& renderpass)
+void GraphicsPipeline::Create(std::vector<VkPipelineShaderStageCreateInfo> shaderStages, FixedPipelineFuncs& fixedfunctions, VkRenderPass renderpass)
 {
     VkGraphicsPipelineCreateInfo graphicsCI{};
     graphicsCI.sType                = VK_STRUCTURE_TYPE_GRAPHICS_PIPELINE_CREATE_INFO;

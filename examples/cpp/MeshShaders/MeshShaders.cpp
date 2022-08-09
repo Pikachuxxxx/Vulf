@@ -141,7 +141,7 @@ private:
         ZoneScopedC(0xffa500);
         OPTICK_EVENT();
 
-        _def_RenderPass.SetClearColor(0.0f, 0.0f, 0.0f);
+        _def_RenderPass.set_clear_color(0.0f, 0.0f, 0.0f);
         auto framebuffers = simpleFrameBuffer.GetFramebuffers();
 
         int i = imageIndex;
@@ -151,7 +151,7 @@ private:
         OPTICK_GPU_EVENT("Recording cmd buffers");
 #endif
         _def_SubmissionCommandBuffers.RecordBuffer(commandBuffer);
-        _def_RenderPass.BeginRenderPass(commandBuffer, framebuffers[i], _def_Swapchain.GetSwapExtent());
+        _def_RenderPass.begin_pass(commandBuffer, framebuffers[i], _def_Swapchain.GetSwapExtent());
 
         VkViewport viewport = {};
         viewport.x = 0.0f;
@@ -180,7 +180,7 @@ private:
         get_ui_overlay().update_imgui_buffers();
         get_ui_overlay().draw(commandBuffer);
 
-        _def_RenderPass.EndRenderPass(commandBuffer);
+        _def_RenderPass.end_pass(commandBuffer);
         _def_SubmissionCommandBuffers.EndRecordingBuffer(commandBuffer);
     }
 

@@ -10,9 +10,7 @@ class GraphicsPipeline
 {
 public:
     GraphicsPipeline() = default;
-    void Create(std::vector<VkPipelineShaderStageCreateInfo> shaderStages,
-    FixedPipelineFuncs& fixedfunctions,
-    VkRenderPass& renderpass);
+    void Create(std::vector<VkPipelineShaderStageCreateInfo> shaderStages, FixedPipelineFuncs& fixedfunctions, VkRenderPass renderpass);
     void Bind(VkCommandBuffer& cmdBuffers);
     void Destroy();
 private:
