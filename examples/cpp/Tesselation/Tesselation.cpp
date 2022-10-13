@@ -21,12 +21,12 @@ std::vector<const char*> g_DeviceExtensions = {
 
 using namespace Vulf;
 
-class VulfHelloTriangle : public Vulf::VulfBase
+class VulfTesselation : public Vulf::VulfBase
 {
 public:
-    VulfHelloTriangle() : VulfBase("Hello Triangle") {}
+    VulfTesselation() : VulfBase("Hello Triangle") {}
 
-    ~VulfHelloTriangle() {
+    ~VulfTesselation() {
         VK_LOG("Quitting...");
         defaultVertShader.DestroyModule();
         defaultFragShader.DestroyModule();
@@ -65,7 +65,9 @@ private:
     // Shaders
     Shader                  defaultVertShader;
     Shader                  defaultFragShader;
-    ShaderStage             defaultShaders;
+    Shader                  subdivtesscShader;
+    Shader                  subdivtesseShader;
+    ShaderStage             subdivisionShaders;
 
     // Buffers
     UniformBuffer           helloTriangleUBO;
@@ -81,8 +83,15 @@ private:
         // Default shaders
         defaultVertShader.CreateShader((SHADER_BINARY_DIR) + std::string("/defaultVert.spv"), ShaderType::VERTEX_SHADER);
         defaultFragShader.CreateShader((SHADER_BINARY_DIR) + std::string("/defaultFrag.spv"), ShaderType::FRAGMENT_SHADER);
-        defaultShaders.push_back(defaultVertShader.GetShaderStageInfo());
-        defaultShaders.push_back(defaultFragShader.GetShaderStageInfo());
+        VK_ERROR("Breakpoint at line : ", __LINE__, __FILE__);
+        subdivtesscShader.CreateShader((SHADER_BINARY_DIR) + std::string("/subdivideTriangleTesc.spv"), ShaderType::TESSELATION_CONTROL_SHADER);
+        VK_ERROR("Breakpoint at line : ", __LINE__, __FILE__);
+        subdivtesseShader.CreateShader((SHADER_BINARY_DIR) + std::string("/subdivideTriangleTese.spv"), ShaderType::TESSELATION_EVALUATION_SHADER);
+        subdivisionShaders.push_back(defaultVertShader.GetShaderStageInfo());
+        subdivisionShaders.push_back(defaultFragShader.GetShaderStageInfo());
+        subdivisionShaders.push_back(subdivtesscShader.GetShaderStageInfo());
+        subdivisionShaders.push_back(subdivtesseShader.GetShaderStageInfo());
+
     }
 
     void BuildTextureResources() override {
@@ -102,8 +111,8 @@ private:
 
         // View Projection Uniform Buffer
         helloTriangleUBO.AddDescriptor(UniformBuffer::DescriptorInfo(0, ShaderType::VERTEX_SHADER, sizeof(ViewProjectionUBOData), 0));
-        helloTriangleUBO.AddDescriptor(UniformBuffer::DescriptorInfo(1, ShaderType::FRAGMENT_SHADER, gridTexture));
-        helloTriangleUBO.AddDescriptor(UniformBuffer::DescriptorInfo(2, ShaderType::FRAGMENT_SHADER, checkerTexture));
+        // helloTriangleUBO.AddDescriptor(UniformBuffer::DescriptorInfo(1, ShaderType::FRAGMENT_SHADER, gridTexture));
+        // helloTriangleUBO.AddDescriptor(UniformBuffer::DescriptorInfo(2, ShaderType::FRAGMENT_SHADER, checkerTexture));
         helloTriangleUBO.CreateUniformBuffer(3, sizeof(ViewProjectionUBOData));
     }
 
@@ -113,12 +122,14 @@ private:
         modelPushConstant.offset        = 0;
         modelPushConstant.size          = sizeof(ModelPushConstant);
 
-        fixedFunctions.SetFixedPipelineStage(VK_PRIMITIVE_TOPOLOGY_TRIANGLE_LIST, baseSwapchain.get_extent(), false);
+        fixedFunctions.SetFixedPipelineStage(VK_PRIMITIVE_TOPOLOGY_PATCH_LIST, baseSwapchain.get_extent(), false);
         fixedFunctions.SetPipelineLayout(helloTriangleUBO.GetDescriptorSetLayout(), &modelPushConstant);
+
+        // fixedFunctions.SetRasterizerSCI(true);
     }
 
     void BuildGraphicsPipeline() override {
-        simpleGraphicsPipeline.Create(defaultShaders, fixedFunctions, baseRenderPass.get_handle());
+        simpleGraphicsPipeline.Create(subdivisionShaders, fixedFunctions, baseRenderPass.get_handle());
     }
 
     // default
@@ -154,7 +165,7 @@ private:
         ZoneScopedC(0xffa500);
         OPTICK_EVENT();
 
-        baseRenderPass.set_clear_color(0.8f, 0.2f, 0.2f);
+        baseRenderPass.set_clear_color(0.2f, 0.2f, 0.2f);
         auto framebuffers = simpleFrameBuffer.GetFramebuffers();
         auto descriptorSets = helloTriangleUBO.GetSets();
 
@@ -188,18 +199,12 @@ private:
         // vkCmdDraw(dcb.get_handle(), rainbowTriangleVertices.size(), 1, 0, 0);
         helloTriangleVBO.Bind(dcb.get_handle());
 
-        for (float x = -8.0f; x < 8.0f;  x+=0.5) {
-            for (float y = -8.0f; y < 8.0f; y+=0.5) {
-                // Update the size properly
-                // Bind the push constants with the appropriate size
-                modelPCData.model = glm::translate(glm::mat4(1.0f), glm::vec3(x / 10.0f, y / 10.0f, 0.0f));
-                modelPCData.model *= glm::rotate(glm::mat4(1.0f), (float) glm::radians(90.0f * sin(glfwGetTime())), glm::vec3(0.0f, 0.0f, 1.0f));
-                modelPCData.model *= glm::scale(glm::mat4(1.0f), glm::vec3(0.04f));
-                vkCmdPushConstants(dcb.get_handle(), fixedFunctions.GetPipelineLayout(), VK_SHADER_STAGE_VERTEX_BIT | VK_SHADER_STAGE_FRAGMENT_BIT, 0, sizeof(ModelPushConstant), &modelPCData);
-                // Draw stuff
-                vkCmdDraw(dcb.get_handle(), rainbowTriangleVertices.size(), 1, 0, 0);
-            }
-        }
+        // Update the size properly
+        // Bind the push constants with the appropriate size
+        modelPCData.model = glm::mat4(1.0f);//glm::rotate(glm::mat4(1.0f), (float) glm::radians(sin(glfwGetTime())), glm::vec3(0.0f, 0.0f, 1.0f));
+        vkCmdPushConstants(dcb.get_handle(), fixedFunctions.GetPipelineLayout(), VK_SHADER_STAGE_VERTEX_BIT | VK_SHADER_STAGE_FRAGMENT_BIT, 0, sizeof(ModelPushConstant), &modelPCData);
+        // Draw stuff
+        vkCmdDraw(dcb.get_handle(), rainbowTriangleVertices.size(), 1, 0, 0);
 
         ImGuiIO& io = ImGui::GetIO();
 
@@ -244,4 +249,4 @@ private:
     }
 };
 
-VULF_MAIN(HelloTriangle)
+VULF_MAIN(Tesselation)

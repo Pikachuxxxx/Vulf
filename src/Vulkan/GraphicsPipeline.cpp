@@ -11,6 +11,10 @@ void GraphicsPipeline::Create(std::vector<VkPipelineShaderStageCreateInfo> shade
     graphicsCI.stageCount           = shaderStages.size();
     graphicsCI.pStages              = shaderStages.data();
 
+    VkPipelineTessellationStateCreateInfo tessSCI{};
+    tessSCI.sType = VK_STRUCTURE_TYPE_PIPELINE_TESSELLATION_STATE_CREATE_INFO;
+    tessSCI.patchControlPoints = 3;
+
     auto bindingDescription = Vertex::getBindingDescription();
     auto attributeDescriptions = Vertex::getAttributeDescription();
 
@@ -48,6 +52,7 @@ void GraphicsPipeline::Create(std::vector<VkPipelineShaderStageCreateInfo> shade
     graphicsCI.subpass              = 0;
     graphicsCI.basePipelineHandle   = VK_NULL_HANDLE;
     graphicsCI.basePipelineIndex    = -1;
+    graphicsCI.pTessellationState = &tessSCI;
 
     if(VK_CALL(vkCreateGraphicsPipelines(VKDEVICE, VK_NULL_HANDLE, 1, &graphicsCI, nullptr, &m_GraphicsPipeline)))
         throw std::runtime_error("Cannot create Graphics pipeline!");

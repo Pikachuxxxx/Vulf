@@ -15,6 +15,8 @@ void Shader::CreateShader(const std::string& path, ShaderType type)
     shaderCI.codeSize = byteCode.size();
     shaderCI.pCode = reinterpret_cast<uint32_t*>(byteCode.data());
 
+    VK_ERROR("Breakpoint at line : ", __LINE__, __FILE__);
+
     if(VK_CALL(vkCreateShaderModule(VKDEVICE, &shaderCI, nullptr, &m_Module)))
         throw std::runtime_error("Cannot Create shader module!");
     else VK_LOG(GetShaderTypeString(), "shader module created!");
@@ -34,6 +36,12 @@ void Shader::CreateShader(const std::string& path, ShaderType type)
             break;
         case ShaderType::TASK_SHADER:
             m_ShaderStageInfo.stage = VK_SHADER_STAGE_TASK_BIT_NV;
+            break;
+        case ShaderType::TESSELATION_CONTROL_SHADER:
+            m_ShaderStageInfo.stage = VK_SHADER_STAGE_TESSELLATION_CONTROL_BIT;
+            break;
+        case ShaderType::TESSELATION_EVALUATION_SHADER:
+            m_ShaderStageInfo.stage = VK_SHADER_STAGE_TESSELLATION_EVALUATION_BIT;
             break;
     }
     m_ShaderStageInfo.module = m_Module;
@@ -58,8 +66,10 @@ std::string Shader::GetShaderTypeString()
         case ShaderType::MESH_SHADER:
             return "Mesh";
             break;;
-        case  ShaderType::TASK_SHADER:
-            return "Task Shader";
+        case  ShaderType::TESSELATION_CONTROL_SHADER:
+            return "Tesselation Control";
+        case  ShaderType::TESSELATION_EVALUATION_SHADER:
+            return "Tesselation Evaluation";
             break;
     }
 }
