@@ -88,8 +88,8 @@ private:
         VK_ERROR("Breakpoint at line : ", __LINE__, __FILE__);
         subdivtesseShader.CreateShader((SHADER_BINARY_DIR) + std::string("/subdivideTriangleTese.spv"), ShaderType::TESSELATION_EVALUATION_SHADER);
         subdivisionShaders.push_back(defaultVertShader.GetShaderStageInfo());
-        subdivisionShaders.push_back(defaultFragShader.GetShaderStageInfo());
         subdivisionShaders.push_back(subdivtesscShader.GetShaderStageInfo());
+        subdivisionShaders.push_back(defaultFragShader.GetShaderStageInfo());
         subdivisionShaders.push_back(subdivtesseShader.GetShaderStageInfo());
 
     }
@@ -107,12 +107,12 @@ private:
 
     void BuildBufferResource() override {
         // Triangle vertices and indices
-        helloTriangleVBO.Create(rainbowTriangleVertices, baseCommandPool);
+        helloTriangleVBO.Init(rainbowTriangleVertices);
 
         // View Projection Uniform Buffer
         helloTriangleUBO.AddDescriptor(UniformBuffer::DescriptorInfo(0, ShaderType::VERTEX_SHADER, sizeof(ViewProjectionUBOData), 0));
-        // helloTriangleUBO.AddDescriptor(UniformBuffer::DescriptorInfo(1, ShaderType::FRAGMENT_SHADER, gridTexture));
-        // helloTriangleUBO.AddDescriptor(UniformBuffer::DescriptorInfo(2, ShaderType::FRAGMENT_SHADER, checkerTexture));
+         helloTriangleUBO.AddDescriptor(UniformBuffer::DescriptorInfo(1, ShaderType::FRAGMENT_SHADER, gridTexture));
+         helloTriangleUBO.AddDescriptor(UniformBuffer::DescriptorInfo(2, ShaderType::FRAGMENT_SHADER, checkerTexture));
         helloTriangleUBO.CreateUniformBuffer(3, sizeof(ViewProjectionUBOData));
     }
 
@@ -125,7 +125,7 @@ private:
         fixedFunctions.SetFixedPipelineStage(VK_PRIMITIVE_TOPOLOGY_PATCH_LIST, baseSwapchain.get_extent(), false);
         fixedFunctions.SetPipelineLayout(helloTriangleUBO.GetDescriptorSetLayout(), &modelPushConstant);
 
-        // fixedFunctions.SetRasterizerSCI(true);
+         fixedFunctions.SetRasterizerSCI(true);
     }
 
     void BuildGraphicsPipeline() override {
@@ -197,7 +197,7 @@ private:
         vkCmdBindDescriptorSets(dcb.get_handle(), VK_PIPELINE_BIND_POINT_GRAPHICS, fixedFunctions.GetPipelineLayout(), 0, 1, &descriptorSets[get_frame_idx()], 0, nullptr);
 
         // vkCmdDraw(dcb.get_handle(), rainbowTriangleVertices.size(), 1, 0, 0);
-        helloTriangleVBO.Bind(dcb.get_handle());
+        helloTriangleVBO.bind(dcb.get_handle());
 
         // Update the size properly
         // Bind the push constants with the appropriate size
@@ -221,8 +221,8 @@ private:
         vpUBOData.view = glm::mat4(1.0f);
         vpUBOData.proj = glm::mat4(1.0f);
 
-        vpUBOData.view = getCamera().GetViewMatrix();
-        vpUBOData.proj = glm::perspective(glm::radians(someNum), (float) baseSwapchain.get_extent().width / baseSwapchain.get_extent().height, 0.01f, 100.0f);
+        //vpUBOData.view = getCamera().GetViewMatrix();
+        //vpUBOData.proj = glm::perspective(glm::radians(someNum), (float) baseSwapchain.get_extent().width / baseSwapchain.get_extent().height, 0.01f, 100.0f);
         //vpUBOData.proj[1][1] *= -1;
 
         helloTriangleUBO.UpdateBuffer(&vpUBOData, sizeof(ViewProjectionUBOData), frameIdx);

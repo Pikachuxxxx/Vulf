@@ -7,9 +7,9 @@
 void GraphicsPipeline::Create(std::vector<VkPipelineShaderStageCreateInfo> shaderStages, FixedPipelineFuncs& fixedfunctions, VkRenderPass renderpass)
 {
     VkGraphicsPipelineCreateInfo graphicsCI{};
-    graphicsCI.sType                = VK_STRUCTURE_TYPE_GRAPHICS_PIPELINE_CREATE_INFO;
-    graphicsCI.stageCount           = shaderStages.size();
-    graphicsCI.pStages              = shaderStages.data();
+    graphicsCI.sType = VK_STRUCTURE_TYPE_GRAPHICS_PIPELINE_CREATE_INFO;
+    graphicsCI.stageCount = shaderStages.size();
+    graphicsCI.pStages = shaderStages.data();
 
     VkPipelineTessellationStateCreateInfo tessSCI{};
     tessSCI.sType = VK_STRUCTURE_TYPE_PIPELINE_TESSELLATION_STATE_CREATE_INFO;
@@ -23,10 +23,10 @@ void GraphicsPipeline::Create(std::vector<VkPipelineShaderStageCreateInfo> shade
     m_VertexInputSCI.sType = VK_STRUCTURE_TYPE_PIPELINE_VERTEX_INPUT_STATE_CREATE_INFO;
     m_VertexInputSCI.flags = 0;
     m_VertexInputSCI.pNext = nullptr;
-    m_VertexInputSCI.vertexBindingDescriptionCount      = 1;
-    m_VertexInputSCI.pVertexBindingDescriptions         = &bindingDescription;
-    m_VertexInputSCI.vertexAttributeDescriptionCount    = attributeDescriptions.size();
-    m_VertexInputSCI.pVertexAttributeDescriptions       = attributeDescriptions.data();
+    m_VertexInputSCI.vertexBindingDescriptionCount = 1;
+    m_VertexInputSCI.pVertexBindingDescriptions = &bindingDescription;
+    m_VertexInputSCI.vertexAttributeDescriptionCount = attributeDescriptions.size();
+    m_VertexInputSCI.pVertexAttributeDescriptions = attributeDescriptions.data();
 
     std::vector<VkDynamicState> dynamicStateDescriptors;
 
@@ -39,22 +39,22 @@ void GraphicsPipeline::Create(std::vector<VkPipelineShaderStageCreateInfo> shade
     dynamicStateCI.dynamicStateCount = uint32_t(dynamicStateDescriptors.size());
     dynamicStateCI.pDynamicStates = dynamicStateDescriptors.data();
 
-    graphicsCI.pVertexInputState    = &m_VertexInputSCI;
-    graphicsCI.pInputAssemblyState  = &fixedfunctions.GetInputAssemblySCI();
-    graphicsCI.pViewportState       = &fixedfunctions.GetViewportStateCI();
-    graphicsCI.pRasterizationState  = &fixedfunctions.GetRazterizerSCI();
-    graphicsCI.pMultisampleState    = &fixedfunctions.GetMultiSampleSCI();
-    graphicsCI.pDepthStencilState   = &fixedfunctions.GetDepthStencilSCI();
-    graphicsCI.pColorBlendState     = &fixedfunctions.GetColorBlendSCI();
-    graphicsCI.pDynamicState        = &dynamicStateCI;
-    graphicsCI.layout               = fixedfunctions.GetPipelineLayout();
-    graphicsCI.renderPass           = renderpass;
-    graphicsCI.subpass              = 0;
-    graphicsCI.basePipelineHandle   = VK_NULL_HANDLE;
-    graphicsCI.basePipelineIndex    = -1;
+    graphicsCI.pVertexInputState = &m_VertexInputSCI;
+    graphicsCI.pInputAssemblyState = &fixedfunctions.GetInputAssemblySCI();
+    graphicsCI.pViewportState = &fixedfunctions.GetViewportStateCI();
+    graphicsCI.pRasterizationState = &fixedfunctions.GetRazterizerSCI();
+    graphicsCI.pMultisampleState = &fixedfunctions.GetMultiSampleSCI();
+    graphicsCI.pDepthStencilState = &fixedfunctions.GetDepthStencilSCI();
+    graphicsCI.pColorBlendState = &fixedfunctions.GetColorBlendSCI();
+    graphicsCI.pDynamicState = &dynamicStateCI;
+    graphicsCI.layout = fixedfunctions.GetPipelineLayout();
+    graphicsCI.renderPass = renderpass;
+    graphicsCI.subpass = 0;
+    graphicsCI.basePipelineHandle = VK_NULL_HANDLE;
+    graphicsCI.basePipelineIndex = -1;
     graphicsCI.pTessellationState = &tessSCI;
 
-    if(VK_CALL(vkCreateGraphicsPipelines(VKDEVICE, VK_NULL_HANDLE, 1, &graphicsCI, nullptr, &m_GraphicsPipeline)))
+    if (VK_CALL(vkCreateGraphicsPipelines(VKDEVICE, VK_NULL_HANDLE, 1, &graphicsCI, nullptr, &m_GraphicsPipeline)))
         throw std::runtime_error("Cannot create Graphics pipeline!");
     else VK_LOG_SUCCESS("Graphics Pipeline succesfully created!");
 }
