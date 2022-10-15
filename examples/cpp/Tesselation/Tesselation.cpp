@@ -49,6 +49,7 @@ private:
     float someNum = 45.0f;
     bool    useOrtho = false;
     float aspectRatio = 1280/720;
+
 private:
     // default stuff required for initialization, these resources are all explicitly allocated and to not follow RAII, hence the defauly ones are provided by Vulf
     FixedPipelineFuncs      fixedFunctions;
@@ -89,8 +90,8 @@ private:
         subdivtesseShader.CreateShader((SHADER_BINARY_DIR) + std::string("/subdivideTriangleTese.spv"), ShaderType::TESSELATION_EVALUATION_SHADER);
         subdivisionShaders.push_back(defaultVertShader.GetShaderStageInfo());
         subdivisionShaders.push_back(subdivtesscShader.GetShaderStageInfo());
-        subdivisionShaders.push_back(defaultFragShader.GetShaderStageInfo());
         subdivisionShaders.push_back(subdivtesseShader.GetShaderStageInfo());
+        subdivisionShaders.push_back(defaultFragShader.GetShaderStageInfo());
 
     }
 
@@ -111,8 +112,8 @@ private:
 
         // View Projection Uniform Buffer
         helloTriangleUBO.AddDescriptor(UniformBuffer::DescriptorInfo(0, ShaderType::VERTEX_SHADER, sizeof(ViewProjectionUBOData), 0));
-         helloTriangleUBO.AddDescriptor(UniformBuffer::DescriptorInfo(1, ShaderType::FRAGMENT_SHADER, gridTexture));
-         helloTriangleUBO.AddDescriptor(UniformBuffer::DescriptorInfo(2, ShaderType::FRAGMENT_SHADER, checkerTexture));
+        // helloTriangleUBO.AddDescriptor(UniformBuffer::DescriptorInfo(1, ShaderType::FRAGMENT_SHADER, gridTexture));
+        // helloTriangleUBO.AddDescriptor(UniformBuffer::DescriptorInfo(2, ShaderType::FRAGMENT_SHADER, checkerTexture));
         helloTriangleUBO.CreateUniformBuffer(3, sizeof(ViewProjectionUBOData));
     }
 
@@ -232,16 +233,10 @@ private:
     {
         ImGui::NewFrame();
 
-        ImGui::ShowDemoWindow();
-
-        if(ImGui::Begin("Vulkan Example"))
+        if(ImGui::Begin("Tesselation Example"))
         {
-            ImGui::Text("Hello ImGui");
-            ImGui::TextUnformatted(get_app_name().c_str());
-            ImGui::DragFloat("Position", &someNum, 0.1f, 0.0f, 100.0f);
-
-            ImGui::Image((void*)gridTexture.get_descriptor_set(), ImVec2(ImGui::GetWindowSize()[0], 200), ImVec2(0, 0), ImVec2(1.0f, -1.0f));
-            ImGui::Image((void*)checkerTexture.get_descriptor_set(), ImVec2(ImGui::GetWindowSize()[0], 200), ImVec2(0, 0), ImVec2(1.0f, -1.0f));
+            ImGui::Text("FPS: %d | Avg : %d | Max : %d | Min : %d", get_fps(), avgFPS, maxFPS, minFPS);
+            ImGui::Image((void*)checkerTexture.get_descriptor_set(), ImVec2(50, 50), ImVec2(0, 0), ImVec2(1.0f, -1.0f));
         }
         ImGui::End();
 
