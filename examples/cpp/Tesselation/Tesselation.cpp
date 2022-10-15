@@ -24,7 +24,7 @@ using namespace Vulf;
 class VulfTesselation : public Vulf::VulfBase
 {
 public:
-    VulfTesselation() : VulfBase("Hello Triangle") {}
+    VulfTesselation() : VulfBase("Basic Tesselation") {}
 
     ~VulfTesselation() {
         VK_LOG("Quitting...");
@@ -89,8 +89,8 @@ private:
         subdivtesseShader.CreateShader((SHADER_BINARY_DIR) + std::string("/subdivideTriangleTese.spv"), ShaderType::TESSELATION_EVALUATION_SHADER);
         subdivisionShaders.push_back(defaultVertShader.GetShaderStageInfo());
         subdivisionShaders.push_back(subdivtesscShader.GetShaderStageInfo());
-        subdivisionShaders.push_back(defaultFragShader.GetShaderStageInfo());
         subdivisionShaders.push_back(subdivtesseShader.GetShaderStageInfo());
+        subdivisionShaders.push_back(defaultFragShader.GetShaderStageInfo());
 
     }
 
@@ -111,8 +111,8 @@ private:
 
         // View Projection Uniform Buffer
         helloTriangleUBO.AddDescriptor(UniformBuffer::DescriptorInfo(0, ShaderType::VERTEX_SHADER, sizeof(ViewProjectionUBOData), 0));
-         helloTriangleUBO.AddDescriptor(UniformBuffer::DescriptorInfo(1, ShaderType::FRAGMENT_SHADER, gridTexture));
-         helloTriangleUBO.AddDescriptor(UniformBuffer::DescriptorInfo(2, ShaderType::FRAGMENT_SHADER, checkerTexture));
+         //helloTriangleUBO.AddDescriptor(UniformBuffer::DescriptorInfo(1, ShaderType::FRAGMENT_SHADER, gridTexture));
+         //helloTriangleUBO.AddDescriptor(UniformBuffer::DescriptorInfo(2, ShaderType::FRAGMENT_SHADER, checkerTexture));
         helloTriangleUBO.CreateUniformBuffer(3, sizeof(ViewProjectionUBOData));
     }
 
@@ -163,13 +163,15 @@ private:
         aspectRatio = (float)getWindow()->getWidth() / (float)getWindow()->getHeight();
 
         ZoneScopedC(0xffa500);
+#ifdef OPTICK_ENABLE
         OPTICK_EVENT();
+#endif
 
         baseRenderPass.set_clear_color(0.2f, 0.2f, 0.2f);
         auto framebuffers = simpleFrameBuffer.GetFramebuffers();
         auto descriptorSets = helloTriangleUBO.GetSets();
 
-#ifdef _WIN32
+#ifdef OPTICK_ENABLE
         OPTICK_GPU_CONTEXT(dcb.get_handle());
         OPTICK_GPU_EVENT("Recording cmd buffers");
 #endif
@@ -221,8 +223,8 @@ private:
         vpUBOData.view = glm::mat4(1.0f);
         vpUBOData.proj = glm::mat4(1.0f);
 
-        //vpUBOData.view = getCamera().GetViewMatrix();
-        //vpUBOData.proj = glm::perspective(glm::radians(someNum), (float) baseSwapchain.get_extent().width / baseSwapchain.get_extent().height, 0.01f, 100.0f);
+        vpUBOData.view = getCamera().GetViewMatrix();
+        vpUBOData.proj = glm::perspective(glm::radians(someNum), (float) baseSwapchain.get_extent().width / baseSwapchain.get_extent().height, 0.01f, 100.0f);
         //vpUBOData.proj[1][1] *= -1;
 
         helloTriangleUBO.UpdateBuffer(&vpUBOData, sizeof(ViewProjectionUBOData), frameIdx);
@@ -232,16 +234,10 @@ private:
     {
         ImGui::NewFrame();
 
-        ImGui::ShowDemoWindow();
-
-        if(ImGui::Begin("Vulkan Example"))
+        if(ImGui::Begin(get_app_name().c_str()))
         {
-            ImGui::Text("Hello ImGui");
-            ImGui::TextUnformatted(get_app_name().c_str());
-            ImGui::DragFloat("Position", &someNum, 0.1f, 0.0f, 100.0f);
-
-            ImGui::Image((void*)gridTexture.get_descriptor_set(), ImVec2(ImGui::GetWindowSize()[0], 200), ImVec2(0, 0), ImVec2(1.0f, -1.0f));
-            ImGui::Image((void*)checkerTexture.get_descriptor_set(), ImVec2(ImGui::GetWindowSize()[0], 200), ImVec2(0, 0), ImVec2(1.0f, -1.0f));
+            ImGui::Image((void*)gridTexture.get_descriptor_set(), ImVec2(50, 50), ImVec2(0, 0), ImVec2(1.0f, -1.0f)); ImGui::SameLine();
+            ImGui::Image((void*)checkerTexture.get_descriptor_set(), ImVec2(50, 50), ImVec2(0, 0), ImVec2(1.0f, -1.0f));
         }
         ImGui::End();
 

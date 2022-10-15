@@ -27,7 +27,7 @@ namespace Vulf {
         InitImGui();
 
         RenderLoop();
-#ifdef _WIN32
+#ifdef OPTICK_ENABLE
         OPTICK_SHUTDOWN();
 #endif
     }
@@ -53,12 +53,12 @@ namespace Vulf {
         // Create the Device
         Device::Get()->Init();
 
-#ifdef _WIN32
+#ifdef OPTICK_ENABLE
         auto device         = Device::Get()->get_handle();
         auto physicalDevice = Device::Get()->get_gpu();
         auto queuefam       = Device::Get()->get_graphics_queue();
         uint32_t numQueues  = Device::Get()->get_graphics_queue_index();
-        OPTICK_GPU_INIT_VULKAN(&device, &physicalDevice, &queuefam, &numQueues, 1, nullptr);
+        OPTICK_GPU_INIT_VULKAN(&device, &physicalDevice, &queuefam, &numQueues, 1);
 #endif
         // Load the shaders
         LoadShaders();
@@ -93,7 +93,7 @@ namespace Vulf {
         OnStart();
 
         while (!m_Window->closed()) {
-#ifdef _WIN32
+#ifdef OPTICK_ENABLE
             OPTICK_FRAME("MainThread");
             OPTICK_EVENT();
 #endif
@@ -234,7 +234,7 @@ namespace Vulf {
     // Draw the Frame
     void VulfBase::DrawFrame() {
         ZoneScopedC(0xff0000)
-#ifdef _WIN32
+#ifdef OPTICK_ENABLE
         OPTICK_EVENT();
         OPTICK_GPU_EVENT("Draw Frame");
 #endif
@@ -286,7 +286,7 @@ namespace Vulf {
     // Submit the frame for presentation and the command buffers for execution
     void VulfBase::SubmitFrame() {
         ZoneScopedC(0x0000ff);
-#ifdef _WIN32
+#ifdef OPTICK_ENABLE
         OPTICK_EVENT();
 #endif
         VkResult result;
@@ -305,11 +305,11 @@ namespace Vulf {
         VkSemaphore signalSemaphores[]      = {m_RenderFinishedSemaphores[m_CurrentFrame].get_handle()};
         submitInfo.signalSemaphoreCount     = 1;
         submitInfo.pSignalSemaphores        = signalSemaphores;
-#ifdef _WIN32
+#ifdef OPTICK_ENABLE
         // OPTICK_GPU_EVENT("Reset In Flight Fences");
 #endif
 
-#ifdef _WIN32
+#ifdef OPTICK_ENABLE
         OPTICK_GPU_EVENT("Queue Submit");
 #endif
         if(VK_CALL(vkQueueSubmit(Device::Get()->get_graphics_queue(), 1, &submitInfo, m_InFlightFences[m_CurrentFrame].get_handle()))) {
@@ -325,7 +325,7 @@ namespace Vulf {
         presentInfo.pSwapchains = swapChains;
         presentInfo.pImageIndices = &m_ImageIndex;
 
-#ifdef _WIN32
+#ifdef OPTICK_ENABLE
         OPTICK_GPU_EVENT("Queue Present");
 #endif
         result = vkQueuePresentKHR(Device::Get()->get_present_queue(), &presentInfo);

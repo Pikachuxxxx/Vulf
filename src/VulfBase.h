@@ -1,5 +1,7 @@
 #pragma once
 
+#define OPTICM_MSVC
+
 // Std. Libraries
 #include <iostream>
 #include <fstream>
@@ -48,9 +50,9 @@
 //#define TRACY_ENABLE
 #include <Tracy.hpp>
 // Optick
-#define USE_OPTICK 1
+#define USE_OPTICK 0
 #define OPTICK_ENABLE_GPU
-#include <optick.h>
+//#include <optick.h>
 
 // Helper utilities
 #include "utils/VulkanCheckResult.h"

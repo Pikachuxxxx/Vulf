@@ -91,7 +91,7 @@ include_directories(
     #SPIRV-Reflect
     "${CMAKE_SOURCE_DIR}/vendor/SPIRVReflect"
     # Optick
-    "${CMAKE_SOURCE_DIR}/vendor/optick/src"
+    #"${CMAKE_SOURCE_DIR}/vendor/optick/src"
     # Vulf
     "${CMAKE_SOURCE_DIR}/src"
     "${CMAKE_SOURCE_DIR}/src/Vulkan"
@@ -129,7 +129,7 @@ include_directories(
     #SPIRV-Reflect
     "${CMAKE_SOURCE_DIR}/vendor/SPIRVReflect"
     # Optick
-    "${CMAKE_SOURCE_DIR}/vendor/optick/src"
+    #"${CMAKE_SOURCE_DIR}/vendor/optick/src"
     # Vulf
     "${CMAKE_SOURCE_DIR}/src"
     "${CMAKE_SOURCE_DIR}/src/Vulkan"
@@ -174,8 +174,8 @@ file(GLOB_RECURSE VENDOR_SOURCE_FILES
     ${CMAKE_SOURCE_DIR}/vendor/ImGuizmo/ImGuizmo.cpp
     ${CMAKE_SOURCE_DIR}/vendor/ImGuizmo/ImSequencer.cpp
     ${CMAKE_SOURCE_DIR}/vendor/TracyProfiler/TracyClient.cpp
-    ${CMAKE_SOURCE_DIR}/vendor/optick/*.h
-    ${CMAKE_SOURCE_DIR}/vendor/optick/*.cpp
+    #${CMAKE_SOURCE_DIR}/vendor/optick/*.h
+    #${CMAKE_SOURCE_DIR}/vendor/optick/*.cpp
     ${CMAKE_SOURCE_DIR}/vendor/SPIRVReflect/spirv_reflect.c
     ${CMAKE_SOURCE_DIR}/vendor/SPIRVReflect/common/output_stream.cpp
     ${CMAKE_SOURCE_DIR}/vendor/ktx/*.c
