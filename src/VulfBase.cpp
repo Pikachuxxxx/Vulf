@@ -114,6 +114,19 @@ namespace Vulf {
             float fpsTimer = std::chrono::duration<double, std::milli>(tEnd - m_LastTimestamp).count();
             if (fpsTimer > 1000.0f) {
                 // VK_LOG("FPS : ", m_FrameCounter);
+                m_FPS = m_FrameCounter;
+
+                // Update the moving avg FPS
+                ++avgQnt;
+                avgFPS += ((get_fps() - avgFPS)/avgQnt);
+
+                // Update the min and max fps
+                if(get_fps() > maxFPS)
+                    maxFPS = get_fps();
+
+                if(get_fps() < minFPS)
+                    minFPS = get_fps();
+
                 auto title = m_AppName + " [FPS : " + std::to_string(m_FrameCounter) + "]";
                 m_Window->setTitle(title);
                 m_FrameCounter = 0;

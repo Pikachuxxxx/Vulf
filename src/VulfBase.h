@@ -190,21 +190,26 @@ namespace Vulf {
         /* ImGui Overlay */
         virtual void OnImGui();
 
+        inline const uint32_t& get_fps() { return m_FPS; }
         inline const std::string& get_app_name() { return m_AppName; }
         inline const uint32_t& get_image_idx() const { return m_ImageIndex;  }
         inline const uint32_t& get_frame_idx() const { return m_CurrentFrame; }
         inline ImGuiOverlay& get_ui_overlay() { return m_ImGuiOVerlay; }
-    private:
+    public:
     // Application flow
         std::string                 m_AppName;                      /* The name of the application                                                      */
         Window*                     m_Window;                       /* The window abstraction                                                           */
         Camera3D                    m_Camera;                       /* The default free-fly camera in th e scene                                        */
         bool                        m_FramebufferResized;           /* Boolean to identify screen resize event                                          */
         Ms                          m_FrameTimer;                   /* Time taken for a single frame to render since the last frame was rendered        */
-        uint32_t                    m_FrameCounter;
+        uint32_t                    m_FrameCounter      = 0;
         HighResClock                m_LastTimestamp;                /* High resolution clock to measure the last time when a frame was rendered         */
         uint32_t                    m_ImageIndex        = 0;        /* The next image index from the swapchain images list to which we can render to    */
         uint32_t                    m_CurrentFrame      = 0;        /* The index of the frame/swap image index that is being presented on the screen    */
+        uint32_t                    m_FPS               = 0;        /* The frame per second                                                             */
+        // FPS
+        int avgQnt = 1;
+        int minFPS = 1000.0f, maxFPS = 0, avgFPS = 0;
 
     private:
         ImGuiOverlay                m_ImGuiOVerlay;                 /* ImGui overlay for the application                                                */
