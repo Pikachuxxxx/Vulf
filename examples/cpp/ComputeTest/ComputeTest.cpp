@@ -124,7 +124,7 @@ private:
         //storageImageInfo.attach_resource<StorageImage>(&storageImage);
         set_per_frame.resize(3);
         for (size_t i = 0; i < 3; i++)
-            set_per_frame[i].Init({uboInfo, checkerTexInfo, gridTexInfo});
+            set_per_frame[i].Init({ checkerTexInfo, uboInfo, gridTexInfo});
     }
 
     void BuildFixedPipeline() override {

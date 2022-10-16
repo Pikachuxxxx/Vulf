@@ -55,7 +55,7 @@ void DescriptorSet::Init(std::vector<DescriptorInfo> descriptorInfos)
 
 void DescriptorSet::Destroy()
 {
-v    m_DescriptorPoolCurrentAllocations--;
+    m_DescriptorPoolCurrentAllocations--;
     m_DescriptorsInfos.clear();
     vkDestroyDescriptorSetLayout(VKDEVICE, m_SetLayout, nullptr);
 }
@@ -63,8 +63,8 @@ v    m_DescriptorPoolCurrentAllocations--;
 void DescriptorSet::update_set()
 {
 
-    std::vector<VkWriteDescriptorSet> descriptorWrites(m_DescriptorsInfos.size());
-
+    std::vector<VkDescriptorBufferInfo> m_VkDescriptorBufferInfos;
+    std::vector<VkDescriptorImageInfo> m_VkDescriptorImageInfos;
 
     for (size_t j = 0; j < m_DescriptorsInfos.size(); j++) {
         switch (m_DescriptorsInfos[j].type) {
@@ -74,21 +74,8 @@ void DescriptorSet::update_set()
             bufferInfo.buffer = m_DescriptorsInfos[j].uniformBuffer->get_handle();
             bufferInfo.offset = m_DescriptorsInfos[j].uniformBuffer->get_offset();
             bufferInfo.range = m_DescriptorsInfos[j].uniformBuffer->get_size();
+            m_VkDescriptorBufferInfos.push_back(bufferInfo);
 
-            //-------------------------------------------------
-
-            VkWriteDescriptorSet descriptorWrite{};
-            descriptorWrite.sType = VK_STRUCTURE_TYPE_WRITE_DESCRIPTOR_SET;
-            descriptorWrite.dstSet = m_DescriptorSet;
-            descriptorWrite.dstBinding = m_DescriptorsInfos[j].bindingID;
-            descriptorWrite.dstArrayElement = 0;
-            descriptorWrite.descriptorType = VK_DESCRIPTOR_TYPE_UNIFORM_BUFFER;
-            descriptorWrite.descriptorCount = 1;
-            descriptorWrite.pBufferInfo = &bufferInfo;
-            descriptorWrite.pImageInfo = nullptr;
-            descriptorWrite.pTexelBufferView = nullptr;
-
-            descriptorWrites[j] = descriptorWrite;
             break;
         }
         case DescriptorType::COMBINED_IMAGE_SAMPLER:
@@ -98,19 +85,7 @@ void DescriptorSet::update_set()
             imageBufferInfo.imageLayout = image.get_layout();
             imageBufferInfo.imageView = image.get_view();
             imageBufferInfo.sampler = image.get_sampler();
-
-            //-------------------------------------------------
-
-            VkWriteDescriptorSet descriptorImageWrite{};
-            descriptorImageWrite.sType = VK_STRUCTURE_TYPE_WRITE_DESCRIPTOR_SET;
-            descriptorImageWrite.dstSet = m_DescriptorSet;
-            descriptorImageWrite.dstBinding = m_DescriptorsInfos[j].bindingID;
-            descriptorImageWrite.dstArrayElement = 0;
-            descriptorImageWrite.descriptorType = VK_DESCRIPTOR_TYPE_COMBINED_IMAGE_SAMPLER;
-            descriptorImageWrite.descriptorCount = 1;
-            descriptorImageWrite.pImageInfo = &imageBufferInfo;
-
-            descriptorWrites[j] = descriptorImageWrite;
+            m_VkDescriptorImageInfos.push_back(imageBufferInfo);
 
             break;
         }
@@ -120,8 +95,56 @@ void DescriptorSet::update_set()
             storageImageInfo.imageLayout = m_DescriptorsInfos[j].storageImage->get_image().get_descriptor_info().imageLayout;
             storageImageInfo.imageView = m_DescriptorsInfos[j].storageImage->get_image().get_view();
             storageImageInfo.sampler = m_DescriptorsInfos[j].storageImage->get_image().get_sampler();
+            m_VkDescriptorImageInfos.push_back(storageImageInfo);
 
-            //--------------------------------------------
+            break;
+        }
+        }
+    }
+
+    std::vector<VkWriteDescriptorSet> descriptorWrites(m_DescriptorsInfos.size());
+    int imageIndex = 0;
+    int bufferIndex = 0;
+    int storageImageIndex = 0;
+
+    for (size_t j = 0; j < m_DescriptorsInfos.size(); j++) {
+        switch (m_DescriptorsInfos[j].type) {
+        case DescriptorType::UNIFORM_BUFFER:
+        {
+
+            VkWriteDescriptorSet descriptorWrite{};
+            descriptorWrite.sType = VK_STRUCTURE_TYPE_WRITE_DESCRIPTOR_SET;
+            descriptorWrite.dstSet = m_DescriptorSet;
+            descriptorWrite.dstBinding = m_DescriptorsInfos[j].bindingID;
+            descriptorWrite.dstArrayElement = 0;
+            descriptorWrite.descriptorType = VK_DESCRIPTOR_TYPE_UNIFORM_BUFFER;
+            descriptorWrite.descriptorCount = 1;
+            descriptorWrite.pBufferInfo = &m_VkDescriptorBufferInfos[bufferIndex];
+            descriptorWrite.pImageInfo = nullptr;
+            descriptorWrite.pTexelBufferView = nullptr;
+
+            descriptorWrites[j] = descriptorWrite;
+            bufferIndex++;
+            break;
+        }
+        case DescriptorType::COMBINED_IMAGE_SAMPLER:
+        {
+
+            VkWriteDescriptorSet descriptorImageWrite{};
+            descriptorImageWrite.sType = VK_STRUCTURE_TYPE_WRITE_DESCRIPTOR_SET;
+            descriptorImageWrite.dstSet = m_DescriptorSet;
+            descriptorImageWrite.dstBinding = m_DescriptorsInfos[j].bindingID;
+            descriptorImageWrite.dstArrayElement = 0;
+            descriptorImageWrite.descriptorType = VK_DESCRIPTOR_TYPE_COMBINED_IMAGE_SAMPLER;
+            descriptorImageWrite.descriptorCount = 1;
+            descriptorImageWrite.pImageInfo = &m_VkDescriptorImageInfos[imageIndex];
+
+            descriptorWrites[j] = descriptorImageWrite;
+            imageIndex++;
+            break;
+        }
+        case DescriptorType::STORAGE_IMAGE:
+        {
 
             VkWriteDescriptorSet descriptorWrite{};
             descriptorWrite.sType = VK_STRUCTURE_TYPE_WRITE_DESCRIPTOR_SET;
@@ -130,9 +153,10 @@ void DescriptorSet::update_set()
             descriptorWrite.dstArrayElement = 0;
             descriptorWrite.descriptorType = VK_DESCRIPTOR_TYPE_STORAGE_IMAGE;
             descriptorWrite.descriptorCount = 1;
-            descriptorWrite.pImageInfo = &storageImageInfo;
+            descriptorWrite.pImageInfo = &m_VkDescriptorImageInfos[storageImageIndex];
 
             descriptorWrites[j] = descriptorWrite;
+            storageImageIndex++;
             break;
         }
         }
