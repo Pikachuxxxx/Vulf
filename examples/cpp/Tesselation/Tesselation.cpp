@@ -32,9 +32,9 @@ public:
         defaultFragShader.DestroyModule();
     }
 
-// Types
+    // Types
 private:
-    struct ModelPushConstant{
+    struct ModelPushConstant {
         alignas(16) glm::mat4 model;
     }modelPCData;
 
@@ -48,7 +48,7 @@ private:
 
     float someNum = 45.0f;
     bool    useOrtho = false;
-    float aspectRatio = 1280/720;
+    float aspectRatio = 1280 / 720;
 
 private:
     // default stuff required for initialization, these resources are all explicitly allocated and to not follow RAII, hence the defauly ones are provided by Vulf
@@ -78,16 +78,18 @@ private:
     Texture                 gridTexture;
     Texture                 checkerTexture;
 
+    DescriptorSet           set;
+
 private:
     void LoadShaders() override {
 
         // Default shaders
-        defaultVertShader.CreateShader((SHADER_BINARY_DIR) + std::string("/defaultVert.spv"), ShaderType::VERTEX_SHADER);
-        defaultFragShader.CreateShader((SHADER_BINARY_DIR) + std::string("/defaultFrag.spv"), ShaderType::FRAGMENT_SHADER);
+        defaultVertShader.CreateShader((SHADER_BINARY_DIR)+std::string("/defaultVert.spv"), ShaderType::VERTEX_SHADER);
+        defaultFragShader.CreateShader((SHADER_BINARY_DIR)+std::string("/defaultFrag.spv"), ShaderType::FRAGMENT_SHADER);
         VK_ERROR("Breakpoint at line : ", __LINE__, __FILE__);
-        subdivtesscShader.CreateShader((SHADER_BINARY_DIR) + std::string("/subdivideTriangleTesc.spv"), ShaderType::TESSELATION_CONTROL_SHADER);
+        subdivtesscShader.CreateShader((SHADER_BINARY_DIR)+std::string("/subdivideTriangleTesc.spv"), ShaderType::TESSELATION_CONTROL_SHADER);
         VK_ERROR("Breakpoint at line : ", __LINE__, __FILE__);
-        subdivtesseShader.CreateShader((SHADER_BINARY_DIR) + std::string("/subdivideTriangleTese.spv"), ShaderType::TESSELATION_EVALUATION_SHADER);
+        subdivtesseShader.CreateShader((SHADER_BINARY_DIR)+std::string("/subdivideTriangleTese.spv"), ShaderType::TESSELATION_EVALUATION_SHADER);
         subdivisionShaders.push_back(defaultVertShader.GetShaderStageInfo());
         subdivisionShaders.push_back(subdivtesscShader.GetShaderStageInfo());
         subdivisionShaders.push_back(subdivtesseShader.GetShaderStageInfo());
@@ -100,33 +102,44 @@ private:
         depthImage.CreateDepthImage(baseSwapchain.get_extent().width, baseSwapchain.get_extent().height, baseCommandPool);
 
         // Grid Texture
-        gridTexture.Init((SRC_DIR) + std::string("/data/textures/TestGrid_1024.png"));
+        gridTexture.Init((SRC_DIR)+std::string("/data/textures/TestGrid_1024.png"));
 
         // Checker Texture;
-        checkerTexture.Init((SRC_DIR) + std::string("/data/textures/TestCheckerMap.png"));
+        checkerTexture.Init((SRC_DIR)+std::string("/data/textures/TestCheckerMap.png"));
     }
 
     void BuildBufferResource() override {
         // Triangle vertices and indices
         helloTriangleVBO.Init(rainbowTriangleVertices);
-
+        helloTriangleUBO.Init(sizeof(ViewProjectionUBOData));
         // View Projection Uniform Buffer
-        helloTriangleUBO.AddDescriptor(UniformBuffer::DescriptorInfo(0, ShaderType::VERTEX_SHADER, sizeof(ViewProjectionUBOData), 0));
-         //helloTriangleUBO.AddDescriptor(UniformBuffer::DescriptorInfo(1, ShaderType::FRAGMENT_SHADER, gridTexture));
-         //helloTriangleUBO.AddDescriptor(UniformBuffer::DescriptorInfo(2, ShaderType::FRAGMENT_SHADER, checkerTexture));
-        helloTriangleUBO.CreateUniformBuffer(3, sizeof(ViewProjectionUBOData));
+        //helloTriangleUBO.AddDescriptor(UniformBuffer::DescriptorInfo(0, ShaderType::VERTEX_SHADER, sizeof(ViewProjectionUBOData), 0));
+        //helloTriangleUBO.AddDescriptor(UniformBuffer::DescriptorInfo(1, ShaderType::FRAGMENT_SHADER, gridTexture));
+        //helloTriangleUBO.AddDescriptor(UniformBuffer::DescriptorInfo(2, ShaderType::FRAGMENT_SHADER, checkerTexture));
+        //helloTriangleUBO.CreateUniformBuffer(3, sizeof(ViewProjectionUBOData));
+
+        DescriptorInfo uboInfo(DescriptorType::UNIFORM_BUFFER, 0, ShaderType::VERTEX_SHADER);
+        uboInfo.attach_resource<UniformBuffer>(&helloTriangleUBO);
+
+        DescriptorInfo gridTexInfo(DescriptorType::COMBINED_IMAGE_SAMPLER, 1, ShaderType::FRAGMENT_SHADER);
+        gridTexInfo.attach_resource<Texture>(&gridTexture);
+
+        DescriptorInfo checkerTexInfo(DescriptorType::COMBINED_IMAGE_SAMPLER, 2, ShaderType::FRAGMENT_SHADER);
+        checkerTexInfo.attach_resource<Texture>(&checkerTexture);
+
+        set.Init({ uboInfo, gridTexInfo, checkerTexInfo });
     }
 
     void BuildFixedPipeline() override {
         // Create the push constants
-        modelPushConstant.stageFlags    = ShaderType::VERTEX_SHADER | ShaderType::FRAGMENT_SHADER;
-        modelPushConstant.offset        = 0;
-        modelPushConstant.size          = sizeof(ModelPushConstant);
+        modelPushConstant.stageFlags = ShaderType::VERTEX_SHADER | ShaderType::FRAGMENT_SHADER;
+        modelPushConstant.offset = 0;
+        modelPushConstant.size = sizeof(ModelPushConstant);
 
         fixedFunctions.SetFixedPipelineStage(VK_PRIMITIVE_TOPOLOGY_PATCH_LIST, baseSwapchain.get_extent(), false);
-        fixedFunctions.SetPipelineLayout(helloTriangleUBO.GetDescriptorSetLayout(), &modelPushConstant);
+        fixedFunctions.SetPipelineLayout(set.get_set_layout(), &modelPushConstant);
 
-         fixedFunctions.SetRasterizerSCI(true);
+        fixedFunctions.SetRasterizerSCI(true);
     }
 
     void BuildGraphicsPipeline() override {
@@ -170,7 +183,7 @@ private:
 
         baseRenderPass.set_clear_color(0.2f, 0.2f, 0.2f);
         auto framebuffers = simpleFrameBuffer.GetFramebuffers();
-        auto descriptorSets = helloTriangleUBO.GetSets();
+        //auto descriptorSets = helloTriangleUBO.GetSets();
 
 #ifdef OPTICK_ENABLE
         OPTICK_GPU_CONTEXT(dcb.get_handle());
@@ -189,7 +202,7 @@ private:
 
         VkRect2D scissor = {};
         scissor.offset = { 0, 0 };
-        scissor.extent = { getWindow()->getWidth(), getWindow()->getHeight()};
+        scissor.extent = { getWindow()->getWidth(), getWindow()->getHeight() };
 
         vkCmdSetViewport(dcb.get_handle(), 0, 1, &viewport);
         vkCmdSetScissor(dcb.get_handle(), 0, 1, &scissor);
@@ -197,7 +210,8 @@ private:
         simpleGraphicsPipeline.Bind(dcb.get_handle());
 
         // Bind the appropriate descriptor sets
-        vkCmdBindDescriptorSets(dcb.get_handle(), VK_PIPELINE_BIND_POINT_GRAPHICS, fixedFunctions.GetPipelineLayout(), 0, 1, &descriptorSets[get_frame_idx()], 0, nullptr);
+        auto vk_sets = set.get_set();
+        vkCmdBindDescriptorSets(dcb.get_handle(), VK_PIPELINE_BIND_POINT_GRAPHICS, fixedFunctions.GetPipelineLayout(), 0, 1, &vk_sets, 0, nullptr);
 
         // vkCmdDraw(dcb.get_handle(), rainbowTriangleVertices.size(), 1, 0, 0);
         helloTriangleVBO.bind(dcb.get_handle());
@@ -211,10 +225,10 @@ private:
 
         ImGuiIO& io = ImGui::GetIO();
 
-        io.DisplaySize = ImVec2((float) getWindow()->getWidth(), (float) getWindow()->getHeight());
+        io.DisplaySize = ImVec2((float)getWindow()->getWidth(), (float)getWindow()->getHeight());
 
         get_ui_overlay().update_imgui_buffers();
-            get_ui_overlay().draw(dcb.get_handle());
+        get_ui_overlay().draw(dcb.get_handle());
 
         baseRenderPass.end_pass(dcb.get_handle());
         dcb.end_recording();
@@ -225,21 +239,21 @@ private:
         vpUBOData.proj = glm::mat4(1.0f);
 
         vpUBOData.view = getCamera().GetViewMatrix();
-        vpUBOData.proj = glm::perspective(glm::radians(someNum), (float) baseSwapchain.get_extent().width / baseSwapchain.get_extent().height, 0.01f, 100.0f);
+        vpUBOData.proj = glm::perspective(glm::radians(someNum), (float)baseSwapchain.get_extent().width / baseSwapchain.get_extent().height, 0.01f, 100.0f);
         //vpUBOData.proj[1][1] *= -1;
 
-        helloTriangleUBO.UpdateBuffer(&vpUBOData, sizeof(ViewProjectionUBOData), frameIdx);
+        helloTriangleUBO.update_buffer(&vpUBOData, sizeof(ViewProjectionUBOData));
     }
 
     void OnImGui() override
     {
         ImGui::NewFrame();
 
-        if(ImGui::Begin(get_app_name().c_str()))
+        if (ImGui::Begin(get_app_name().c_str()))
         {
             ImGui::Text("FPS: %d | Avg : %d | Max : %d | Min : %d", get_fps(), avgFPS, maxFPS, minFPS);
             ImGui::Image((void*)gridTexture.get_descriptor_set(), ImVec2(50, 50), ImVec2(0, 0), ImVec2(1.0f, -1.0f)); ImGui::SameLine();
-            ImGui::Image((void*)checkerTexture.get_descriptor_set(), ImVec2(50, 50), ImVec2(0, 0), ImVec2(1.0f, -1.0f)); 
+            ImGui::Image((void*)checkerTexture.get_descriptor_set(), ImVec2(50, 50), ImVec2(0, 0), ImVec2(1.0f, -1.0f));
         }
         ImGui::End();
 

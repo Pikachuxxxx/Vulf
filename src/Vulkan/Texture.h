@@ -17,7 +17,6 @@ public:
     void Destroy();
 
     void upload_to_device(const void* imageData, VkDeviceSize imageSize, uint32_t width, uint32_t height);
-    VkImageView create_image_view(VkImage image, VkFormat format);
 
     void update_set();
 

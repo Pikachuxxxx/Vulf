@@ -19,8 +19,8 @@ void Framebuffer::Create(const VkRenderPass& renderpass, std::vector<VkImageView
         bufCI.renderPass = renderpass;
         bufCI.attachmentCount = static_cast<uint32_t>(attachments.size());
         bufCI.pAttachments = attachments.data();
-        bufCI.width = 3840;
-        bufCI.height = 2160;
+        bufCI.width = swapExtent.width;
+        bufCI.height = swapExtent.height;
         bufCI.layers = 1;
 
         if(VK_CALL(vkCreateFramebuffer(VKDEVICE, &bufCI, nullptr, &m_Framebuffers[i])))

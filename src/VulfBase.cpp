@@ -223,7 +223,7 @@ namespace Vulf {
     }
 
     void VulfBase::BuildCommandBuffers() {
-        // Build the default (aka submissible) command buffers onto which we can record draw commands
+        // Build the default (aka submissble) command buffers onto which we can record draw commands
         // _def_SubmissionCommandBuffers.resize(MAX_FRAMES_IN_FLIGHT);
 
         // One for each frame in flight

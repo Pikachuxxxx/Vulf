@@ -73,11 +73,13 @@ private:
     UniformBuffer           helloTriangleUBO;
     VertexBuffer            helloTriangleVBO;
 
+    StorageImage            storageImage;
+
     // Textures
     Texture                 gridTexture;
     Texture                 checkerTexture;
 
-    DescriptorSet           set;
+    std::vector<DescriptorSet>           set_per_frame;
 
 private:
     void LoadShaders() override {
@@ -106,11 +108,8 @@ private:
         // Triangle vertices and indices
         helloTriangleVBO.Init(rainbowTriangleVertices);
         helloTriangleUBO.Init(sizeof(ViewProjectionUBOData));
-        // View Projection Uniform Buffer
-        //helloTriangleUBO.AddDescriptor(UniformBuffer::DescriptorInfo(0, ShaderType::VERTEX_SHADER, sizeof(ViewProjectionUBOData), 0));
-        //helloTriangleUBO.AddDescriptor(UniformBuffer::DescriptorInfo(1, ShaderType::FRAGMENT_SHADER, gridTexture));
-        //helloTriangleUBO.AddDescriptor(UniformBuffer::DescriptorInfo(2, ShaderType::FRAGMENT_SHADER, checkerTexture));
-        //helloTriangleUBO.CreateUniformBuffer(3, sizeof(ViewProjectionUBOData));
+
+        storageImage.Init(1280, 720);
 
         DescriptorInfo uboInfo(DescriptorType::UNIFORM_BUFFER, 0, ShaderType::VERTEX_SHADER);
         uboInfo.attach_resource<UniformBuffer>(&helloTriangleUBO);
@@ -121,8 +120,11 @@ private:
         DescriptorInfo checkerTexInfo(DescriptorType::COMBINED_IMAGE_SAMPLER, 2, ShaderType::FRAGMENT_SHADER);
         checkerTexInfo.attach_resource<Texture>(&checkerTexture);
 
-        set.Init({ uboInfo, gridTexInfo, checkerTexInfo });
-
+        //DescriptorInfo storageImageInfo(DescriptorType::STORAGE_IMAGE, 3, ShaderType::FRAGMENT_SHADER);
+        //storageImageInfo.attach_resource<StorageImage>(&storageImage);
+        set_per_frame.resize(3);
+        for (size_t i = 0; i < 3; i++)
+            set_per_frame[i].Init({uboInfo, checkerTexInfo, gridTexInfo});
     }
 
     void BuildFixedPipeline() override {
@@ -132,16 +134,15 @@ private:
         modelPushConstant.size = sizeof(ModelPushConstant);
 
         fixedFunctions.SetFixedPipelineStage(VK_PRIMITIVE_TOPOLOGY_TRIANGLE_LIST, baseSwapchain.get_extent(), false);
-        fixedFunctions.SetPipelineLayout(set.get_set_layout(), &modelPushConstant);
+        fixedFunctions.SetPipelineLayout(set_per_frame[0].get_set_layout(), &modelPushConstant);
 
-        fixedFunctions.SetRasterizerSCI(true);
+        //fixedFunctions.SetRasterizerSCI(true);
     }
 
     void BuildGraphicsPipeline() override {
         simpleGraphicsPipeline.Create(subdivisionShaders, fixedFunctions, baseRenderPass.get_handle());
     }
 
-    // default
     void BuildFramebuffer() override {
         simpleFrameBuffer.Create(baseRenderPass.get_handle(), baseSwapchain.get_image_views(), depthImage.GetDepthImageView(), baseSwapchain.get_extent());
     }
@@ -149,6 +150,8 @@ private:
     void CleanUpPipeline() override {
         ZoneScopedC(0xffffff);
         vkDeviceWaitIdle(VKDEVICE);
+        for (size_t i = 0; i < 3; i++)
+            set_per_frame[i].Destroy();
         simpleFrameBuffer.Destroy();
         gridTexture.Destroy();
         checkerTexture.Destroy();
@@ -158,7 +161,6 @@ private:
         simpleGraphicsPipeline.Destroy();
         fixedFunctions.DestroyPipelineLayout();
     }
-
 
 private:
 
@@ -205,7 +207,7 @@ private:
         simpleGraphicsPipeline.Bind(dcb.get_handle());
 
         // Bind the appropriate descriptor sets
-        auto vk_set = set.get_set();
+        auto vk_set = set_per_frame[get_frame_idx()].get_set();
         vkCmdBindDescriptorSets(dcb.get_handle(), VK_PIPELINE_BIND_POINT_GRAPHICS, fixedFunctions.GetPipelineLayout(), 0, 1, &vk_set, 0, nullptr);
 
         // vkCmdDraw(dcb.get_handle(), rainbowTriangleVertices.size(), 1, 0, 0);
@@ -227,7 +229,7 @@ private:
 
         baseRenderPass.end_pass(dcb.get_handle());
         dcb.end_recording();
-    }
+}
 
     void OnUpdateBuffers(uint32_t frameIdx) override {
         vpUBOData.view = glm::mat4(1.0f);
@@ -249,6 +251,8 @@ private:
             ImGui::Text("FPS: %d | Avg : %d | Max : %d | Min : %d", get_fps(), avgFPS, maxFPS, minFPS);
             ImGui::Image((void*)gridTexture.get_descriptor_set(), ImVec2(50, 50), ImVec2(0, 0), ImVec2(1.0f, -1.0f)); ImGui::SameLine();
             ImGui::Image((void*)checkerTexture.get_descriptor_set(), ImVec2(50, 50), ImVec2(0, 0), ImVec2(1.0f, -1.0f));
+
+            ImGui::Text("Descriptor Set Allocations : %d", DescriptorSet::get_current_set_allocations());
         }
         ImGui::End();
 
