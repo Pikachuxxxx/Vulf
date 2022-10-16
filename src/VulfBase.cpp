@@ -69,6 +69,9 @@ namespace Vulf {
         // Initialize the Command Pool and Build
         BuildCommandPool();
 
+        // Create the swapchain
+        BuildSwapchain();
+
         // Build the command pipelines
         BuildCommandPipeline();
 
@@ -159,8 +162,6 @@ namespace Vulf {
     ////////////////////////////////////////////////////////////////////////////
     // PRIVATE
     void VulfBase::BuildCommandPipeline() {
-        // Create the swapchain
-        BuildSwapchain();
 
         // Build texture and image resources
         BuildTextureResources();
@@ -190,7 +191,7 @@ namespace Vulf {
 
     void VulfBase::BuildCommandPool() {
 
-        // This is a graphics pool for allocationf command bufers that can only be sunmitted to graphics queues
+        // This is a graphics pool for allocationg command buffers that can only be submitted to graphics queues
         baseCommandPool.Init(Device::Get()->get_graphics_queue_index());
     }
 
@@ -408,6 +409,8 @@ namespace Vulf {
         CleanUpPipeline();
 
         QuitApp(); // Destroy sync primitives; cmd pool --> dcbs; swapChain & rp properly; (base stuff handled by Vulf)
+
+        BuildSwapchain();
 
         BuildCommandPipeline(); // Recreate sc;sync prims; cmdpool; rp; (base stuff again + client - app stuff)
     }

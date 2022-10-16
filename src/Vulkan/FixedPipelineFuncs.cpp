@@ -174,8 +174,10 @@ void FixedPipelineFuncs::SetPipelineLayout(VkDescriptorSetLayout layout, VkPushC
     layoutCI.sType = VK_STRUCTURE_TYPE_PIPELINE_LAYOUT_CREATE_INFO;
     layoutCI.setLayoutCount = layout == VK_NULL_HANDLE ? 0 : 1;
     layoutCI.pSetLayouts = &layout;
-    layoutCI.pushConstantRangeCount = 1;
-    layoutCI.pPushConstantRanges = pushConstants;
+    if (pushConstants != nullptr) {
+        layoutCI.pushConstantRangeCount = 1;
+        layoutCI.pPushConstantRanges = pushConstants;
+    }
 
     if(VK_CALL(vkCreatePipelineLayout(VKDEVICE, &layoutCI, nullptr, &m_PipelineLayout)))
         throw std::runtime_error("Cannot create pipeline layout");

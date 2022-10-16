@@ -24,7 +24,7 @@ void main() {
     else
         outColor = texture(checkerTex, vs_in.TexCoords) * vec4(vs_in.Color, 1.0f);
 
-    vec4 color = imageLoad(storageImage, ivec2(gl_FragCoord));
-
-    imageStore(storageImage, ivec2(gl_FragCoord), outColor + color);
+    float color = imageLoad(storageImage, ivec2(gl_FragCoord)).x;
+    color++;
+    imageStore(storageImage, ivec2(gl_FragCoord), vec4(color, 0.0f, 0.0f, 0.0f));
 }
