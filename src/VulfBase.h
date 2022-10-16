@@ -200,7 +200,7 @@ namespace Vulf {
     public:
         // Application flow
         std::string                 m_AppName;                      /* The name of the application                                                      */
-        Window* m_Window;                       /* The window abstraction                                                           */
+        Window*                     m_Window;                       /* The window abstraction                                                           */
         Camera3D                    m_Camera;                       /* The default free-fly camera in th e scene                                        */
         bool                        m_FramebufferResized;           /* Boolean to identify screen resize event                                          */
         Ms                          m_FrameTimer;                   /* Time taken for a single frame to render since the last frame was rendered        */

@@ -129,7 +129,7 @@ void Image::Init(uint32_t width, uint32_t height, VkFormat format, VkImageTiling
 
     //------------------------------------------------------------------------------
     // Create the descriptor Info for the Image
-    m_DescriptorInfo.imageLayout = VK_IMAGE_LAYOUT_GENERAL;
+    m_DescriptorInfo.imageLayout = imageInfo.initialLayout;
     m_DescriptorInfo.imageView = m_ImageView;
     m_DescriptorInfo.sampler = m_ImageSampler;
     //------------------------------------------------------------------------------

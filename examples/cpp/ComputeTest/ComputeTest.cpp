@@ -109,7 +109,7 @@ private:
         helloTriangleVBO.Init(rainbowTriangleVertices);
         helloTriangleUBO.Init(sizeof(ViewProjectionUBOData));
 
-        storageImage.Init(1280, 720);
+        storageImage.Init(getWindow()->getWidth(), getWindow()->getHeight());
 
         DescriptorInfo uboInfo(DescriptorType::UNIFORM_BUFFER, 0, ShaderType::VERTEX_SHADER);
         uboInfo.attach_resource<UniformBuffer>(&helloTriangleUBO);
@@ -122,6 +122,7 @@ private:
 
         DescriptorInfo storageImageInfo(DescriptorType::STORAGE_IMAGE, 3, ShaderType::FRAGMENT_SHADER);
         storageImageInfo.attach_resource<StorageImage>(&storageImage);
+        set_per_frame.clear();
         set_per_frame.resize(3);
         for (size_t i = 0; i < 3; i++)
             set_per_frame[i].Init({ checkerTexInfo, uboInfo, gridTexInfo, storageImageInfo });
@@ -152,7 +153,9 @@ private:
         vkDeviceWaitIdle(VKDEVICE);
         for (size_t i = 0; i < 3; i++)
             set_per_frame[i].Destroy();
+        set_per_frame.clear();
         simpleFrameBuffer.Destroy();
+        storageImage.Destroy();
         gridTexture.Destroy();
         checkerTexture.Destroy();
         depthImage.Destroy();
@@ -177,11 +180,9 @@ private:
 #ifdef OPTICK_ENABLE
         OPTICK_EVENT();
 #endif
-
         baseRenderPass.set_clear_color(0.2f, 0.2f, 0.2f);
         auto framebuffers = simpleFrameBuffer.GetFramebuffers();
         //auto descriptorSets = helloTriangleUBO.GetSets();
-
 #ifdef OPTICK_ENABLE
         OPTICK_GPU_CONTEXT(dcb.get_handle());
         OPTICK_GPU_EVENT("Recording cmd buffers");
@@ -215,7 +216,7 @@ private:
 
         // Update the size properly
         // Bind the push constants with the appropriate size
-        modelPCData.model = glm::mat4(1.0f);//glm::rotate(glm::mat4(1.0f), (float) glm::radians(sin(glfwGetTime())), glm::vec3(0.0f, 0.0f, 1.0f));
+        modelPCData.model = glm::mat4(1.0f); //glm::rotate(glm::mat4(1.0f), (float) glm::radians(sin(glfwGetTime())), glm::vec3(0.0f, 0.0f, 1.0f));
         vkCmdPushConstants(dcb.get_handle(), fixedFunctions.GetPipelineLayout(), VK_SHADER_STAGE_VERTEX_BIT | VK_SHADER_STAGE_FRAGMENT_BIT, 0, sizeof(ModelPushConstant), &modelPCData);
         // Draw stuff
         vkCmdDraw(dcb.get_handle(), rainbowTriangleVertices.size(), 1, 0, 0);
@@ -229,7 +230,7 @@ private:
 
         baseRenderPass.end_pass(dcb.get_handle());
         dcb.end_recording();
-}
+    }
 
     void OnUpdateBuffers(uint32_t frameIdx) override {
         vpUBOData.view = glm::mat4(1.0f);

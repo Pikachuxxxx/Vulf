@@ -19,7 +19,7 @@ void main() {
     outColor = vec4( 0.8, 0.4, 0.0, 1.0 );
     outColor = vec4(vs_in.Normal, 1.0f);
     outColor = vec4(vs_in.TexCoords, 0.0f, 1.0f);
-    if(gl_FragCoord.x < 360)
+    if(gl_FragCoord.x < 640)
         outColor = texture(gridSampler, vs_in.TexCoords) * vec4(vs_in.Color, 1.0f);
     else
         outColor = texture(checkerTex, vs_in.TexCoords) * vec4(vs_in.Color, 1.0f);

@@ -39,12 +39,16 @@ void Texture::Init(const std::string& path)
     ImageTransitionInfo transferWrite(m_Image, 0, VK_ACCESS_TRANSFER_WRITE_BIT, VK_IMAGE_LAYOUT_UNDEFINED, VK_IMAGE_LAYOUT_TRANSFER_DST_OPTIMAL);
     ImageMemoryBarrier::insert_barrier(transferWrite, VK_PIPELINE_STAGE_TOP_OF_PIPE_BIT, VK_PIPELINE_STAGE_TRANSFER_BIT);
 
+    m_Image.set_image_layout(VK_IMAGE_LAYOUT_TRANSFER_DST_OPTIMAL);
+
     // Copy the image to the buffer
     Device::Get()->copy_buffer_to_image(m_ImageStagingBuffer.get_handle(), m_Image.get_handle(), m_Width, m_Height);
 
     // Change the formate such that we can sample it from the shader
     ImageTransitionInfo shaderRead(m_Image, VK_ACCESS_TRANSFER_WRITE_BIT, VK_ACCESS_SHADER_READ_BIT, VK_IMAGE_LAYOUT_TRANSFER_DST_OPTIMAL, VK_IMAGE_LAYOUT_SHADER_READ_ONLY_OPTIMAL);
     ImageMemoryBarrier::insert_barrier(shaderRead, VK_PIPELINE_STAGE_TRANSFER_BIT, VK_PIPELINE_STAGE_FRAGMENT_SHADER_BIT);
+
+    m_Image.set_image_layout(VK_IMAGE_LAYOUT_SHADER_READ_ONLY_OPTIMAL);
 
     // Create the image view for the texture (since a image can only be accessed through a view)
     m_Image.create_image_view(VK_FORMAT_R8G8B8A8_UNORM, VK_IMAGE_ASPECT_COLOR_BIT);
@@ -77,11 +81,9 @@ void Texture::Init(const std::string& path)
     // Delete the staging buffer
     m_ImageStagingBuffer.Destroy();
 
-
     VkDescriptorPoolSize poolSize;
     poolSize.type = (VkDescriptorType) VK_DESCRIPTOR_TYPE_COMBINED_IMAGE_SAMPLER;
     poolSize.descriptorCount = 1;
-
 
     VkDescriptorPoolCreateInfo poolInfo{};
     poolInfo.sType = VK_STRUCTURE_TYPE_DESCRIPTOR_POOL_CREATE_INFO;
@@ -151,6 +153,8 @@ void Texture::upload_to_device(const void* imageData, VkDeviceSize imageSize, ui
     ImageTransitionInfo transferWrite(m_Image, 0, VK_ACCESS_TRANSFER_WRITE_BIT, VK_IMAGE_LAYOUT_UNDEFINED, VK_IMAGE_LAYOUT_TRANSFER_DST_OPTIMAL);
     ImageMemoryBarrier::insert_barrier(transferWrite, VK_PIPELINE_STAGE_TOP_OF_PIPE_BIT, VK_PIPELINE_STAGE_TRANSFER_BIT);
 
+    m_Image.set_image_layout(VK_IMAGE_LAYOUT_TRANSFER_DST_OPTIMAL);
+
     // Copy the image to the buffer
     //cmdPool.CopyBufferToImage(m_ImageStagingBuffer.GetBuffer(), m_Image.get_handle(), m_Width, m_Height);
     Device::Get()->copy_buffer_to_image(m_ImageStagingBuffer.get_handle(), m_Image.get_handle(), width, height);
@@ -158,6 +162,8 @@ void Texture::upload_to_device(const void* imageData, VkDeviceSize imageSize, ui
     // Change the formate such that we can sample it from the shader
     ImageTransitionInfo shaderRead(m_Image, VK_ACCESS_TRANSFER_WRITE_BIT, VK_ACCESS_SHADER_READ_BIT, VK_IMAGE_LAYOUT_TRANSFER_DST_OPTIMAL, VK_IMAGE_LAYOUT_SHADER_READ_ONLY_OPTIMAL);
     ImageMemoryBarrier::insert_barrier(shaderRead, VK_PIPELINE_STAGE_TRANSFER_BIT, VK_PIPELINE_STAGE_FRAGMENT_SHADER_BIT);
+
+    m_Image.set_image_layout(VK_IMAGE_LAYOUT_SHADER_READ_ONLY_OPTIMAL);
 
     // Create the image view for the texture (since a image can only be accessed through a view)
     m_Image.create_image_view(VK_FORMAT_R8G8B8A8_UNORM, VK_IMAGE_ASPECT_COLOR_BIT);

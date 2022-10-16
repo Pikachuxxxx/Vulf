@@ -45,7 +45,7 @@ public:
     void Init(uint32_t width, uint32_t height, VkFormat format, VkImageTiling tiling, VkImageUsageFlags usage, VkMemoryPropertyFlags properties);
     void Destroy();
 
-    // Uses VK_IMAGE_VIEW_TYPE_2D by default for now until we deal with 3D or cubemaps
+    // Uses VK_IMAGE_VIEW_TYPE_2D by default for now until we deal with 3D or cube maps
     void create_image_view(/*Type type, */VkFormat format, VkImageAspectFlags aspectFlags);
 
     VkImage get_handle() const { return m_Image; }
@@ -53,6 +53,9 @@ public:
     VkImageView get_view() const { return m_ImageView; }
     VkSampler get_sampler() const { return m_ImageSampler; }
     VkDescriptorImageInfo get_descriptor_info() const { return m_DescriptorInfo; }
+
+    VkImageLayout get_image_layout() { return m_DescriptorInfo.imageLayout; }
+    void set_image_layout(VkImageLayout layout) { m_DescriptorInfo.imageLayout = layout; }
 private:
     VkImage                     m_Image;
     VkDeviceMemory              m_ImageMemory;
