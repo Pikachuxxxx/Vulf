@@ -17,7 +17,7 @@ struct ImageTransitionInfo
     VkImageLayout       newLayout;
     uint32_t            currentQueueFamily  = VK_QUEUE_FAMILY_IGNORED;
     uint32_t            newQueueFamily      = VK_QUEUE_FAMILY_IGNORED;
-    VkImageAspectFlags  aspect              = VK_IMAGE_ASPECT_COLOR_BIT; // Bitmask specifying which aspects of an image are included in a view such as Color, Depth, Stencil etc.
+    VkImageAspectFlags  aspect              = VK_IMAGE_ASPECT_COLOR_BIT; // Bit mask specifying which aspects of an image are included in a view such as Color, Depth, Stencil etc.
 
     ImageTransitionInfo(Image& img, VkAccessFlags currentAccess, VkAccessFlags newAccess, VkImageLayout oldLayout, VkImageLayout newLayout, VkImageAspectFlags aspect = VK_IMAGE_ASPECT_COLOR_BIT, uint32_t currentQueueFamily = VK_QUEUE_FAMILY_IGNORED, uint32_t newQueueFamily = VK_QUEUE_FAMILY_IGNORED) : image(img), currentAccess(currentAccess), newAccess(newAccess), oldLayout(oldLayout), newLayout(newLayout), aspect(aspect), currentQueueFamily(currentQueueFamily), newQueueFamily(newQueueFamily) { }
 };

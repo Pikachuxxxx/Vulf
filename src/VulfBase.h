@@ -68,6 +68,7 @@
 // Vulkan Abstractions
 #include "Vulkan/Instance.h"
 #include "Vulkan/Device.h"
+#include "Vulkan/DescriptorSet.h"
 #include "Vulkan/Swapchain.h"
 #include "Vulkan/Shader.h"
 #include "Vulkan/FixedPipelineFuncs.h"

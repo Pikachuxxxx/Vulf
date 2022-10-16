@@ -8,7 +8,10 @@
 #include <vector>
 
 #include "Buffer.h"
-
+//------------------------------------------------------------------------------
+// Settings
+// The total no. of desc sets that will be allocated by the descriptor pool
+#define MAX_DESCRIPTOR_POOL_ALLOCATIONS 1028
 //------------------------------------------------------------------------------
 
 struct QueueFamilyIndices
@@ -100,6 +103,7 @@ public:
     inline const VkQueue& get_present_queue() const { return m_PresentQueue; }
     inline const VkQueue& get_compute_queue() const { return m_ComputeQueue; }
     inline VkCommandPool get_instaneous_cmd_pool() { return m_InstantaneousCmdPool; }
+    inline VkDescriptorPool get_descriptor_pool() const { return m_DescriptorPool; }
 
 private:
     static Device*          s_Instance;
@@ -110,7 +114,10 @@ private:
     VkQueue                 m_ComputeQueue;
     VkQueue                 m_TransferQueue;
     VkCommandPool           m_InstantaneousCmdPool;
-
+    VkDescriptorPool        m_DescriptorPool; /* All the descriptors will be allocated from this pool */
 private:
     void create_queues();
+    /* We will be allocating a pool capable of allocating 1028 descriptor sets in total */
+    void create_descriptor_pool();
 };
+    

@@ -4,6 +4,8 @@
 #include <iostream>
 #include <set>
 
+#include "DescriptorSet.h"
+
 #include "../utils/prettytable.h"
 #include "../utils/VulkanCheckResult.h"
 
@@ -19,11 +21,11 @@ void PhysicalDevice::Init()
     vkEnumeratePhysicalDevices(Instance::Get()->get_handle(), &numGPUs, availableGPUs.data());
     for (size_t i = 0; i < numGPUs; ++i)
     {
-        if(is_device_suitable(availableGPUs[i]))
+        if (is_device_suitable(availableGPUs[i]))
         {
             m_GPU = availableGPUs[i];
             // Print the GPU details
-            VK_LOG("Vulkan API Version : ", VK_VERSION_MAJOR(m_DeviceProperties.apiVersion), ".", VK_VERSION_MINOR(m_DeviceProperties.apiVersion), ".",  VK_VERSION_PATCH(m_DeviceProperties.apiVersion));
+            VK_LOG("Vulkan API Version : ", VK_VERSION_MAJOR(m_DeviceProperties.apiVersion), ".", VK_VERSION_MINOR(m_DeviceProperties.apiVersion), ".", VK_VERSION_PATCH(m_DeviceProperties.apiVersion));
             // VK_LOG("Device Type        : ", std::string(getPhysicalDeviceTypeString(m_DeviceProperties.deviceType)));
             VK_LOG("GPU Name           : ", std::string(m_DeviceProperties.deviceName));
             VK_LOG("Vendor ID          : ", std::to_string(m_DeviceProperties.vendorID));
@@ -40,8 +42,8 @@ uint32_t PhysicalDevice::find_memory_type_index(uint32_t typeBitFieldFilter, VkM
     VkPhysicalDeviceMemoryProperties memProperties;
     vkGetPhysicalDeviceMemoryProperties(m_GPU, &memProperties);
     for (size_t i = 0; i < memProperties.memoryTypeCount; i++) {
-        if(typeBitFieldFilter & (1 << i) && memProperties.memoryTypes[i].propertyFlags & flags)
-        return i;
+        if (typeBitFieldFilter & (1 << i) && memProperties.memoryTypes[i].propertyFlags & flags)
+            return i;
     }
     return 0;
 }
@@ -54,7 +56,8 @@ VkFormat PhysicalDevice::find_supported_format(const std::vector<VkFormat>& cand
 
         if (tiling == VK_IMAGE_TILING_LINEAR && (props.linearTilingFeatures & features) == features) {
             return format;
-        } else if (tiling == VK_IMAGE_TILING_OPTIMAL && (props.optimalTilingFeatures & features) == features) {
+        }
+        else if (tiling == VK_IMAGE_TILING_OPTIMAL && (props.optimalTilingFeatures & features) == features) {
             return format;
         }
     }
@@ -64,7 +67,7 @@ VkFormat PhysicalDevice::find_supported_format(const std::vector<VkFormat>& cand
 VkFormat PhysicalDevice::find_depth_format()
 {
     return find_supported_format(
-        {VK_FORMAT_D32_SFLOAT, VK_FORMAT_D32_SFLOAT_S8_UINT, VK_FORMAT_D24_UNORM_S8_UINT},
+        { VK_FORMAT_D32_SFLOAT, VK_FORMAT_D32_SFLOAT_S8_UINT, VK_FORMAT_D24_UNORM_S8_UINT },
         VK_IMAGE_TILING_OPTIMAL,
         VK_FORMAT_FEATURE_DEPTH_STENCIL_ATTACHMENT_BIT
     );
@@ -89,20 +92,20 @@ void PhysicalDevice::find_queue_family_indices(VkPhysicalDevice gpu)
     uint32_t i = 0;
     for (const auto& queue : queueFamilyProperties)
     {
-        if(queue.queueFlags & VK_QUEUE_GRAPHICS_BIT)
+        if (queue.queueFlags & VK_QUEUE_GRAPHICS_BIT)
             m_QueueFamilyIndices.graphicsFamily = i;
 
-            // Check for presentation support (usually we see that both graphics and queue family is same)
-            VkBool32 presentationSupported = false;
-            vkGetPhysicalDeviceSurfaceSupportKHR(gpu, i, Instance::Get()->get_surface(), &presentationSupported);
+        // Check for presentation support (usually we see that both graphics and queue family is same)
+        VkBool32 presentationSupported = false;
+        vkGetPhysicalDeviceSurfaceSupportKHR(gpu, i, Instance::Get()->get_surface(), &presentationSupported);
 
-            if(presentationSupported)
-                m_QueueFamilyIndices.presentFamily = i;
+        if (presentationSupported)
+            m_QueueFamilyIndices.presentFamily = i;
 
-            // TODO: Check for Compute queue
+        // TODO: Check for Compute queue
 
-            if(m_QueueFamilyIndices.isComplete())
-                break;
+        if (m_QueueFamilyIndices.isComplete())
+            break;
 
         i++;
     }
@@ -123,10 +126,10 @@ void Device::Init()
 
     auto indices = m_GPUManager.get_queue_family_indices();
     // TODO: add compute and transfer queue family indices
-    std::set<uint32_t> uniqueQueueFamilies = {indices.graphicsFamily.value(), indices.presentFamily.value()};
+    std::set<uint32_t> uniqueQueueFamilies = { indices.graphicsFamily.value(), indices.presentFamily.value() };
     float queuePriority = 1.0f;
     std::vector<VkDeviceQueueCreateInfo> queueCreateInfos;
-    for(uint32_t queueFamily : uniqueQueueFamilies)
+    for (uint32_t queueFamily : uniqueQueueFamilies)
     {
         VkDeviceQueueCreateInfo queueCreateInfo{};
         queueCreateInfo.sType = VK_STRUCTURE_TYPE_DEVICE_QUEUE_CREATE_INFO;
@@ -158,7 +161,7 @@ void Device::Init()
     // check if the user requested extensions are supported or not
     // Now print the layers only for debug purposes
 #ifndef NDEBUG
-    PrettyTable<std::string, std::string> vt({"Requested Extensions", "isAvailable"});
+    PrettyTable<std::string, std::string> vt({ "Requested Extensions", "isAvailable" });
     for (uint32_t i = 0; i < extensionsCount; i++) {
         for (uint32_t j = 0; j < g_DeviceExtensions.size(); j++) {
             if (strcmp(availableDeviceExtensions[i].extensionName, g_DeviceExtensions[j]) == 0) {
@@ -182,7 +185,7 @@ void Device::Init()
     deviceCI.ppEnabledExtensionNames = g_DeviceExtensions.data();
     deviceCI.pEnabledFeatures = &deviceFeatures;
 
-    if(VK_CALL(vkCreateDevice(m_GPUManager.get_gpu(), &deviceCI, nullptr, &m_Device)))
+    if (VK_CALL(vkCreateDevice(m_GPUManager.get_gpu(), &deviceCI, nullptr, &m_Device)))
         throw std::runtime_error("Cannot create Logical Device!");
     else
         VK_LOG_SUCCESS("Logical Device succesfully created!");
@@ -198,6 +201,11 @@ void Device::Init()
     cmdPoolInfo.queueFamilyIndex = get_graphics_queue_index();
     cmdPoolInfo.flags = VK_COMMAND_POOL_CREATE_RESET_COMMAND_BUFFER_BIT;
     VK_CALL(vkCreateCommandPool(m_Device, &cmdPoolInfo, nullptr, &m_InstantaneousCmdPool));
+
+    //---------------------------------------------------------------------------
+    // Create the descriptor Pool
+    create_descriptor_pool();
+    //---------------------------------------------------------------------------
 }
 
 void Device::Destroy()
@@ -231,8 +239,8 @@ VkCommandBuffer Device::begin_single_time_cmd_buffer(VkCommandBufferLevel level,
 void Device::end_single_time_cmd_buffer(VkCommandBuffer cmdBuf)
 {
     if (VK_CALL(vkEndCommandBuffer(cmdBuf))) {
-		throw std::runtime_error("failed to record single time command buffer!");
-	}
+        throw std::runtime_error("failed to record single time command buffer!");
+    }
 }
 
 void Device::flush_cmd_buffer(VkCommandBuffer cmdBuf, VkQueue queue, bool free /*= true*/) {
@@ -387,4 +395,33 @@ void Device::create_queues()
     auto indices = m_GPUManager.get_queue_family_indices();
     vkGetDeviceQueue(m_Device, indices.graphicsFamily.value(), 0, &m_GraphicsQueue);
     vkGetDeviceQueue(m_Device, indices.presentFamily.value(), 0, &m_PresentQueue);
+}
+
+void Device::create_descriptor_pool()
+{
+    // So we will have MAX_DESCRIPTOR_POOL_ALLOCATIONS per Descriptor Type
+    std::vector<VkDescriptorPoolSize> poolSizesPerType = {
+        {
+            .type = (VkDescriptorType)DescriptorType::UNIFORM_BUFFER,
+            .descriptorCount = MAX_DESCRIPTOR_POOL_ALLOCATIONS
+        },
+        {
+            .type = (VkDescriptorType)DescriptorType::COMBINED_IMAGE_SAMPLER,
+            .descriptorCount = MAX_DESCRIPTOR_POOL_ALLOCATIONS
+        },
+        {
+            .type = (VkDescriptorType)DescriptorType::STORAGE_IMAGE,
+            .descriptorCount = MAX_DESCRIPTOR_POOL_ALLOCATIONS
+        }
+    };
+
+    VkDescriptorPoolCreateInfo poolInfo{};
+    poolInfo.sType = VK_STRUCTURE_TYPE_DESCRIPTOR_POOL_CREATE_INFO;
+    poolInfo.poolSizeCount = static_cast<uint32_t>(poolSizesPerType.size());
+    poolInfo.pPoolSizes = poolSizesPerType.data();
+    poolInfo.maxSets = MAX_DESCRIPTOR_POOL_ALLOCATIONS;
+
+    if (VK_CALL(vkCreateDescriptorPool(VKDEVICE, &poolInfo, nullptr, &m_DescriptorPool)))
+        throw std::runtime_error("Cannot create the descriptor pool!");
+    else VK_LOG_SUCCESS("successuflly create descriptor pool!");
 }
