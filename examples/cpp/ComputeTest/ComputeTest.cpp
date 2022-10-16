@@ -21,12 +21,15 @@ std::vector<const char*> g_DeviceExtensions = {
 
 using namespace Vulf;
 
-class VulfTesselation : public Vulf::VulfBase
+class VulfComputeTest : public Vulf::VulfBase
 {
 public:
-    VulfTesselation() : VulfBase("Basic Tesselation") {}
+    VulfComputeTest() : VulfBase("Compute Shaders Test")
+    {
+        LoadObjModel((SRC_DIR)+std::string("/data/models/stanford-bunny.obj"), stanford_bunnyVertices, stanford_bunnyIndices);
+    }
 
-    ~VulfTesselation() {
+    ~VulfComputeTest() {
         VK_LOG("Quitting...");
         defaultVertShader.DestroyModule();
         defaultFragShader.DestroyModule();
@@ -47,14 +50,17 @@ private:
     }vpUBOData;
 
     float someNum = 45.0f;
-    bool    useOrtho = false;
-    float aspectRatio = 1280 / 720;
+    float aspectRatio = 3840 / 2160;
 
 private:
     // default stuff required for initialization, these resources are all explicitly allocated and to not follow RAII, hence the defauly ones are provided by Vulf
-    FixedPipelineFuncs      fixedFunctions;
+    FixedPipelineFuncs      geomFixedFunctions;
+    FixedPipelineFuncs      postFixedFunctions;
+    FixedPipelineFuncs      computeFixedFunctions;
 
-    GraphicsPipeline        simpleGraphicsPipeline;
+    GraphicsPipeline        geomPassPipeline;
+    GraphicsPipeline        postProcessPipeline;
+    ComputePipeline         computePipeline;
 
     VkPushConstantRange     modelPushConstant;
 
@@ -66,19 +72,37 @@ private:
     // Shaders
     Shader                  defaultVertShader;
     Shader                  defaultFragShader;
-    Shader                  subdivtesscShader;
-    Shader                  subdivtesseShader;
+
+    Shader                  quadVertShader;
+    Shader                  quadFragImgShader;
+    Shader                  mandlebrotShader;
+
     ShaderStage             subdivisionShaders;
+    ShaderStage             quadShaders;
 
     // Buffers
     UniformBuffer           helloTriangleUBO;
     VertexBuffer            helloTriangleVBO;
 
+    VertexBuffer            quadVB;
+    IndexBuffer             quadIB;
+
+    std::vector<Vertex>     stanford_bunnyVertices;
+    std::vector<uint16_t>   stanford_bunnyIndices;
+
+    VertexBuffer            stanford_bunnyVB;
+    IndexBuffer             stanford_bunnyIB;
+
+
+    StorageImage            storageImage;
+
     // Textures
     Texture                 gridTexture;
     Texture                 checkerTexture;
 
-    DescriptorSet           set;
+    std::vector<DescriptorSet>           set_per_frame;
+
+    std::vector<DescriptorSet>           post_process_set_per_frame;
 
 private:
     void LoadShaders() override {
@@ -86,16 +110,17 @@ private:
         // Default shaders
         defaultVertShader.CreateShader((SHADER_BINARY_DIR)+std::string("/defaultVert.spv"), ShaderType::VERTEX_SHADER);
         defaultFragShader.CreateShader((SHADER_BINARY_DIR)+std::string("/defaultFrag.spv"), ShaderType::FRAGMENT_SHADER);
-        VK_ERROR("Breakpoint at line : ", __LINE__, __FILE__);
-        subdivtesscShader.CreateShader((SHADER_BINARY_DIR)+std::string("/subdivideTriangleTesc.spv"), ShaderType::TESSELATION_CONTROL_SHADER);
-        VK_ERROR("Breakpoint at line : ", __LINE__, __FILE__);
-        subdivtesseShader.CreateShader((SHADER_BINARY_DIR)+std::string("/subdivideTriangleTese.spv"), ShaderType::TESSELATION_EVALUATION_SHADER);
-        // For some reason this order is important
+
+        quadVertShader.CreateShader((SHADER_BINARY_DIR)+std::string("/quadVert.spv"), ShaderType::VERTEX_SHADER);
+        quadFragImgShader.CreateShader((SHADER_BINARY_DIR)+std::string("/quadFragImg2D.spv"), ShaderType::FRAGMENT_SHADER);
+
+        mandlebrotShader.CreateShader((SHADER_BINARY_DIR)+std::string("/mandlebrot.spv"), ShaderType::COMPUTE_SHADER);
+
         subdivisionShaders.push_back(defaultVertShader.GetShaderStageInfo());
         subdivisionShaders.push_back(defaultFragShader.GetShaderStageInfo());
-        subdivisionShaders.push_back(subdivtesscShader.GetShaderStageInfo());
-        subdivisionShaders.push_back(subdivtesseShader.GetShaderStageInfo());
 
+        quadShaders.push_back(quadVertShader.GetShaderStageInfo());
+        quadShaders.push_back(quadFragImgShader.GetShaderStageInfo());
     }
 
     void BuildTextureResources() override {
@@ -113,11 +138,15 @@ private:
         // Triangle vertices and indices
         helloTriangleVBO.Init(rainbowTriangleVertices);
         helloTriangleUBO.Init(sizeof(ViewProjectionUBOData));
-        // View Projection Uniform Buffer
-        //helloTriangleUBO.AddDescriptor(UniformBuffer::DescriptorInfo(0, ShaderType::VERTEX_SHADER, sizeof(ViewProjectionUBOData), 0));
-        //helloTriangleUBO.AddDescriptor(UniformBuffer::DescriptorInfo(1, ShaderType::FRAGMENT_SHADER, gridTexture));
-        //helloTriangleUBO.AddDescriptor(UniformBuffer::DescriptorInfo(2, ShaderType::FRAGMENT_SHADER, checkerTexture));
-        //helloTriangleUBO.CreateUniformBuffer(3, sizeof(ViewProjectionUBOData));
+
+        // Quad VB & IB
+        quadVB.Init(whiteQuadVertices);
+        quadIB.Init(whiteQuadIndices);
+
+        stanford_bunnyVB.Init(stanford_bunnyVertices);
+        stanford_bunnyIB.Init(stanford_bunnyIndices);
+
+        storageImage.Init(getWindow()->getWidth(), getWindow()->getHeight());
 
         DescriptorInfo uboInfo(DescriptorType::UNIFORM_BUFFER, 0, ShaderType::VERTEX_SHADER);
         uboInfo.attach_resource<UniformBuffer>(&helloTriangleUBO);
@@ -128,7 +157,20 @@ private:
         DescriptorInfo checkerTexInfo(DescriptorType::COMBINED_IMAGE_SAMPLER, 2, ShaderType::FRAGMENT_SHADER);
         checkerTexInfo.attach_resource<Texture>(&checkerTexture);
 
-        set.Init({ uboInfo, gridTexInfo, checkerTexInfo });
+        DescriptorInfo storageImageInfo(DescriptorType::STORAGE_IMAGE, 3, ShaderType::FRAGMENT_SHADER);
+        storageImageInfo.attach_resource<StorageImage>(&storageImage);
+
+        DescriptorInfo storageImageQuadInfo(DescriptorType::STORAGE_IMAGE, 0, ShaderType::FRAGMENT_SHADER);
+        storageImageQuadInfo.attach_resource<StorageImage>(&storageImage);
+
+        set_per_frame.clear();
+        post_process_set_per_frame.clear();
+        set_per_frame.resize(3);
+        post_process_set_per_frame.resize(3);
+        for (size_t i = 0; i < 3; i++) {
+            set_per_frame[i].Init({ checkerTexInfo, uboInfo, gridTexInfo, storageImageInfo });
+            post_process_set_per_frame[i].Init({ storageImageQuadInfo });
+        }
     }
 
     void BuildFixedPipeline() override {
@@ -137,17 +179,23 @@ private:
         modelPushConstant.offset = 0;
         modelPushConstant.size = sizeof(ModelPushConstant);
 
-        fixedFunctions.SetFixedPipelineStage(VK_PRIMITIVE_TOPOLOGY_PATCH_LIST, baseSwapchain.get_extent(), false);
-        fixedFunctions.SetPipelineLayout(set.get_set_layout(), &modelPushConstant);
+        geomFixedFunctions.SetFixedPipelineStage(VK_PRIMITIVE_TOPOLOGY_TRIANGLE_LIST, baseSwapchain.get_extent(), false);
+        geomFixedFunctions.SetPipelineLayout(set_per_frame[0].get_set_layout(), &modelPushConstant);
 
-        fixedFunctions.SetRasterizerSCI(true);
+        postFixedFunctions.SetFixedPipelineStage(VK_PRIMITIVE_TOPOLOGY_TRIANGLE_LIST, baseSwapchain.get_extent(), false);
+        postFixedFunctions.SetPipelineLayout(post_process_set_per_frame[0].get_set_layout(), nullptr);
+
+        computeFixedFunctions.SetPipelineLayout(VK_NULL_HANDLE, nullptr);
     }
 
     void BuildGraphicsPipeline() override {
-        simpleGraphicsPipeline.Create(subdivisionShaders, fixedFunctions, baseRenderPass.get_handle());
+        geomPassPipeline.Create(subdivisionShaders, geomFixedFunctions, baseRenderPass.get_handle());
+
+        postProcessPipeline.Create(quadShaders, postFixedFunctions, baseRenderPass.get_handle());
+
+        computePipeline.Init(mandlebrotShader, computeFixedFunctions.GetPipelineLayout());
     }
 
-    // default
     void BuildFramebuffer() override {
         simpleFrameBuffer.Create(baseRenderPass.get_handle(), baseSwapchain.get_image_views(), depthImage.GetDepthImageView(), baseSwapchain.get_extent());
     }
@@ -155,16 +203,27 @@ private:
     void CleanUpPipeline() override {
         ZoneScopedC(0xffffff);
         vkDeviceWaitIdle(VKDEVICE);
+        for (size_t i = 0; i < 3; i++) {
+            set_per_frame[i].Destroy();
+            post_process_set_per_frame[i].Destroy();
+        }
+        set_per_frame.clear();
+        post_process_set_per_frame.clear();
         simpleFrameBuffer.Destroy();
+        storageImage.Destroy();
         gridTexture.Destroy();
         checkerTexture.Destroy();
         depthImage.Destroy();
         helloTriangleUBO.Destroy();
         helloTriangleVBO.Destroy();
-        simpleGraphicsPipeline.Destroy();
-        fixedFunctions.DestroyPipelineLayout();
+        quadVB.Destroy();
+        quadIB.Destroy();
+        stanford_bunnyVB.Destroy();
+        stanford_bunnyIB.Destroy();
+        geomPassPipeline.Destroy();
+        postProcessPipeline.Destroy();
+        geomFixedFunctions.DestroyPipelineLayout();
     }
-
 
 private:
 
@@ -181,15 +240,16 @@ private:
 #ifdef OPTICK_ENABLE
         OPTICK_EVENT();
 #endif
-
         baseRenderPass.set_clear_color(0.2f, 0.2f, 0.2f);
         auto framebuffers = simpleFrameBuffer.GetFramebuffers();
         //auto descriptorSets = helloTriangleUBO.GetSets();
-
 #ifdef OPTICK_ENABLE
         OPTICK_GPU_CONTEXT(dcb.get_handle());
         OPTICK_GPU_EVENT("Recording cmd buffers");
 #endif
+
+        storageImage.clear(glm::vec4(0.0f));
+
         dcb.begin_recording();
         baseRenderPass.begin_pass(dcb.get_handle(), framebuffers[get_image_idx()], baseSwapchain.get_extent());
 
@@ -208,21 +268,40 @@ private:
         vkCmdSetViewport(dcb.get_handle(), 0, 1, &viewport);
         vkCmdSetScissor(dcb.get_handle(), 0, 1, &scissor);
 
-        simpleGraphicsPipeline.Bind(dcb.get_handle());
+        geomPassPipeline.Bind(dcb.get_handle());
 
         // Bind the appropriate descriptor sets
-        auto vk_sets = set.get_set();
-        vkCmdBindDescriptorSets(dcb.get_handle(), VK_PIPELINE_BIND_POINT_GRAPHICS, fixedFunctions.GetPipelineLayout(), 0, 1, &vk_sets, 0, nullptr);
+        auto vk_set = set_per_frame[get_frame_idx()].get_set();
+        vkCmdBindDescriptorSets(dcb.get_handle(), VK_PIPELINE_BIND_POINT_GRAPHICS, geomFixedFunctions.GetPipelineLayout(), 0, 1, &vk_set, 0, nullptr);
 
         // vkCmdDraw(dcb.get_handle(), rainbowTriangleVertices.size(), 1, 0, 0);
-        helloTriangleVBO.bind(dcb.get_handle());
+        //helloTriangleVBO.bind(dcb.get_handle());
+        stanford_bunnyVB.bind(dcb.get_handle());
+        stanford_bunnyIB.bind(dcb.get_handle());
+
 
         // Update the size properly
         // Bind the push constants with the appropriate size
-        modelPCData.model = glm::mat4(1.0f);//glm::rotate(glm::mat4(1.0f), (float) glm::radians(sin(glfwGetTime())), glm::vec3(0.0f, 0.0f, 1.0f));
-        vkCmdPushConstants(dcb.get_handle(), fixedFunctions.GetPipelineLayout(), VK_SHADER_STAGE_VERTEX_BIT | VK_SHADER_STAGE_FRAGMENT_BIT, 0, sizeof(ModelPushConstant), &modelPCData);
+        modelPCData.model = glm::rotate(glm::mat4(1.0f), (float)glfwGetTime(), glm::vec3(0.0f, 1.0f, 0.0f));
+        vkCmdPushConstants(dcb.get_handle(), geomFixedFunctions.GetPipelineLayout(), VK_SHADER_STAGE_VERTEX_BIT | VK_SHADER_STAGE_FRAGMENT_BIT, 0, sizeof(ModelPushConstant), &modelPCData);
         // Draw stuff
-        vkCmdDraw(dcb.get_handle(), rainbowTriangleVertices.size(), 1, 0, 0);
+        //vkCmdDraw(dcb.get_handle(), rainbowTriangleVertices.size(), 1, 0, 0);
+        vkCmdDrawIndexed(dcb.get_handle(), stanford_bunnyIndices.size(), 1, 0, 0, 0);
+
+        //--------------------------------
+        // Post Process pass
+        postProcessPipeline.Bind(dcb.get_handle());
+
+        // Bind the appropriate descriptor sets
+        auto vk_pp_set = post_process_set_per_frame[get_frame_idx()].get_set();
+        vkCmdBindDescriptorSets(dcb.get_handle(), VK_PIPELINE_BIND_POINT_GRAPHICS, postFixedFunctions.GetPipelineLayout(), 0, 1, &vk_pp_set, 0, nullptr);
+
+        // vkCmdDraw(dcb.get_handle(), rainbowTriangleVertices.size(), 1, 0, 0);
+        quadVB.bind(dcb.get_handle());
+        quadIB.bind(dcb.get_handle());
+
+        // Draw stuff
+        vkCmdDrawIndexed(dcb.get_handle(), 6, 1, 0, 0, 0);
 
         ImGuiIO& io = ImGui::GetIO();
 
@@ -232,6 +311,12 @@ private:
         get_ui_overlay().draw(dcb.get_handle());
 
         baseRenderPass.end_pass(dcb.get_handle());
+
+
+        computePipeline.bind(dcb.get_handle());
+        vkCmdDispatch(dcb.get_handle(), 256, 1, 1);
+
+
         dcb.end_recording();
     }
 
@@ -239,8 +324,8 @@ private:
         vpUBOData.view = glm::mat4(1.0f);
         vpUBOData.proj = glm::mat4(1.0f);
 
-        // vpUBOData.view = getCamera().GetViewMatrix();
-        // vpUBOData.proj = glm::perspective(glm::radians(someNum), (float)baseSwapchain.get_extent().width / baseSwapchain.get_extent().height, 0.01f, 100.0f);
+        vpUBOData.view = getCamera().GetViewMatrix();
+        vpUBOData.proj = glm::perspective(glm::radians(someNum), (float)baseSwapchain.get_extent().width / baseSwapchain.get_extent().height, 0.01f, 100.0f);
         //vpUBOData.proj[1][1] *= -1;
 
         helloTriangleUBO.update_buffer(&vpUBOData, sizeof(ViewProjectionUBOData));
@@ -255,6 +340,8 @@ private:
             ImGui::Text("FPS: %d | Avg : %d | Max : %d | Min : %d", get_fps(), avgFPS, maxFPS, minFPS);
             ImGui::Image((void*)gridTexture.get_descriptor_set(), ImVec2(50, 50), ImVec2(0, 0), ImVec2(1.0f, -1.0f)); ImGui::SameLine();
             ImGui::Image((void*)checkerTexture.get_descriptor_set(), ImVec2(50, 50), ImVec2(0, 0), ImVec2(1.0f, -1.0f));
+
+            ImGui::Text("Descriptor Set Allocations : %d", DescriptorSet::get_current_set_allocations());
         }
         ImGui::End();
 
@@ -262,4 +349,4 @@ private:
     }
 };
 
-VULF_MAIN(Tesselation)
+VULF_MAIN(ComputeTest)

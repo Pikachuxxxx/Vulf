@@ -31,6 +31,9 @@ void Shader::CreateShader(const std::string& path, ShaderType type)
         case ShaderType::FRAGMENT_SHADER :
             m_ShaderStageInfo.stage = VK_SHADER_STAGE_FRAGMENT_BIT;
             break;
+        case ShaderType::COMPUTE_SHADER:
+            m_ShaderStageInfo.stage = VK_SHADER_STAGE_COMPUTE_BIT;
+            break;
         case ShaderType::MESH_SHADER:
             m_ShaderStageInfo.stage = VK_SHADER_STAGE_MESH_BIT_NV;
             break;
@@ -63,9 +66,15 @@ std::string Shader::GetShaderTypeString()
         case ShaderType::FRAGMENT_SHADER :
             return "Fragment";
             break;
+        case ShaderType::COMPUTE_SHADER:
+            return "Compute";
+            break;
+        case ShaderType::TASK_SHADER:
+            return "Task";
+            break;
         case ShaderType::MESH_SHADER:
             return "Mesh";
-            break;;
+            break;
         case  ShaderType::TESSELATION_CONTROL_SHADER:
             return "Tesselation Control";
         case  ShaderType::TESSELATION_EVALUATION_SHADER:

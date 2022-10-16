@@ -74,6 +74,7 @@
 #include "Vulkan/FixedPipelineFuncs.h"
 #include "Vulkan/RenderPass.h"
 #include "Vulkan/GraphicsPipeline.h"
+#include "Vulkan/ComputePipeline.h"
 #include "Vulkan/Framebuffer.h"
 #include "Vulkan/CmdPool.h"
 #include "Vulkan/CmdBuffer.h"

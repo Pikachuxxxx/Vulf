@@ -20,9 +20,9 @@ void main() {
     outColor = vec4(vs_in.Normal, 1.0f);
     outColor = vec4(vs_in.TexCoords, 0.0f, 1.0f);
     if(gl_FragCoord.x < 640)
-        outColor = texture(gridSampler, vs_in.TexCoords) * vec4(vs_in.Color, 1.0f);
+        outColor = texture(gridSampler, vs_in.TexCoords);
     else
-        outColor = texture(checkerTex, vs_in.TexCoords) * vec4(vs_in.Color, 1.0f);
+        outColor = texture(checkerTex, vs_in.TexCoords);
 
     float color = imageLoad(storageImage, ivec2(gl_FragCoord)).x;
     color++;
