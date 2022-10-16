@@ -12,7 +12,7 @@ layout(location = 0) out vec4 outColor;
 
 layout(set = 0, binding = 1) uniform sampler2D gridSampler;
 layout(set = 0, binding = 2) uniform sampler2D checkerTex;
-//layout(set = 0, binding = 3, rgba32f) uniform image2D storageImage;
+layout(set = 0, binding = 3, rgba32f) uniform image2D storageImage;
 
 void main() {
 
@@ -23,6 +23,8 @@ void main() {
         outColor = texture(gridSampler, vs_in.TexCoords) * vec4(vs_in.Color, 1.0f);
     else
         outColor = texture(checkerTex, vs_in.TexCoords) * vec4(vs_in.Color, 1.0f);
-    
-    //imageStore(storageImage, ivec2(vs_in.TexCoords), vec4(1.0f));
+
+    vec4 color = imageLoad(storageImage, ivec2(gl_FragCoord));
+
+    imageStore(storageImage, ivec2(gl_FragCoord), outColor + color);
 }

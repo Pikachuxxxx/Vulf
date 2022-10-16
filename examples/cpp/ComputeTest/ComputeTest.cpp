@@ -120,11 +120,11 @@ private:
         DescriptorInfo checkerTexInfo(DescriptorType::COMBINED_IMAGE_SAMPLER, 2, ShaderType::FRAGMENT_SHADER);
         checkerTexInfo.attach_resource<Texture>(&checkerTexture);
 
-        //DescriptorInfo storageImageInfo(DescriptorType::STORAGE_IMAGE, 3, ShaderType::FRAGMENT_SHADER);
-        //storageImageInfo.attach_resource<StorageImage>(&storageImage);
+        DescriptorInfo storageImageInfo(DescriptorType::STORAGE_IMAGE, 3, ShaderType::FRAGMENT_SHADER);
+        storageImageInfo.attach_resource<StorageImage>(&storageImage);
         set_per_frame.resize(3);
         for (size_t i = 0; i < 3; i++)
-            set_per_frame[i].Init({ checkerTexInfo, uboInfo, gridTexInfo});
+            set_per_frame[i].Init({ checkerTexInfo, uboInfo, gridTexInfo, storageImageInfo });
     }
 
     void BuildFixedPipeline() override {

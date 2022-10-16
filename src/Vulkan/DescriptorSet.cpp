@@ -153,7 +153,7 @@ void DescriptorSet::update_set()
             descriptorWrite.dstArrayElement = 0;
             descriptorWrite.descriptorType = VK_DESCRIPTOR_TYPE_STORAGE_IMAGE;
             descriptorWrite.descriptorCount = 1;
-            descriptorWrite.pImageInfo = &m_VkDescriptorImageInfos[storageImageIndex];
+            descriptorWrite.pImageInfo = &m_VkDescriptorImageInfos[imageIndex + storageImageIndex];
 
             descriptorWrites[j] = descriptorWrite;
             storageImageIndex++;
