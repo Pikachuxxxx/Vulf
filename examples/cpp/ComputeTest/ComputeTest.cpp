@@ -187,6 +187,9 @@ private:
         OPTICK_GPU_CONTEXT(dcb.get_handle());
         OPTICK_GPU_EVENT("Recording cmd buffers");
 #endif
+
+        storageImage.clear({ 1.0f, 0.0f, 1.0f, 1.0f });
+
         dcb.begin_recording();
         baseRenderPass.begin_pass(dcb.get_handle(), framebuffers[get_image_idx()], baseSwapchain.get_extent());
 
