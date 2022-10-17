@@ -27,7 +27,7 @@ vec3 turbo(float t) {
 void main() {
     vec4 color = imageLoad(image, ivec2(gl_FragCoord));
 
-    float pixelOverlap = float(color) / 10.0;
+    // float pixelOverlap = float(color) / 10.0;
 
-    outColor = vec4(turbo(pixelOverlap), 1.0f);;
+    outColor = vec4(color.xyz, 1.0f);;
 }

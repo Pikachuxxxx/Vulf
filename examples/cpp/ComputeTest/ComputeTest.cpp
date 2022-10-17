@@ -31,8 +31,6 @@ public:
 
     ~VulfComputeTest() {
         VK_LOG("Quitting...");
-        defaultVertShader.DestroyModule();
-        defaultFragShader.DestroyModule();
     }
 
     // Types
@@ -54,11 +52,9 @@ private:
 
 private:
     // default stuff required for initialization, these resources are all explicitly allocated and to not follow RAII, hence the defauly ones are provided by Vulf
-    FixedPipelineFuncs      geomFixedFunctions;
     FixedPipelineFuncs      postFixedFunctions;
     FixedPipelineFuncs      computeFixedFunctions;
 
-    GraphicsPipeline        geomPassPipeline;
     GraphicsPipeline        postProcessPipeline;
     ComputePipeline         computePipeline;
 
@@ -70,14 +66,12 @@ private:
 
     using ShaderStage = std::vector<VkPipelineShaderStageCreateInfo>;
     // Shaders
-    Shader                  defaultVertShader;
-    Shader                  defaultFragShader;
+
 
     Shader                  quadVertShader;
     Shader                  quadFragImgShader;
     Shader                  mandlebrotShader;
 
-    ShaderStage             subdivisionShaders;
     ShaderStage             quadShaders;
 
     // Buffers
@@ -108,16 +102,11 @@ private:
     void LoadShaders() override {
 
         // Default shaders
-        defaultVertShader.CreateShader((SHADER_BINARY_DIR)+std::string("/defaultVert.spv"), ShaderType::VERTEX_SHADER);
-        defaultFragShader.CreateShader((SHADER_BINARY_DIR)+std::string("/defaultFrag.spv"), ShaderType::FRAGMENT_SHADER);
 
         quadVertShader.CreateShader((SHADER_BINARY_DIR)+std::string("/quadVert.spv"), ShaderType::VERTEX_SHADER);
         quadFragImgShader.CreateShader((SHADER_BINARY_DIR)+std::string("/quadFragImg2D.spv"), ShaderType::FRAGMENT_SHADER);
 
         mandlebrotShader.CreateShader((SHADER_BINARY_DIR)+std::string("/mandlebrot.spv"), ShaderType::COMPUTE_SHADER);
-
-        subdivisionShaders.push_back(defaultVertShader.GetShaderStageInfo());
-        subdivisionShaders.push_back(defaultFragShader.GetShaderStageInfo());
 
         quadShaders.push_back(quadVertShader.GetShaderStageInfo());
         quadShaders.push_back(quadFragImgShader.GetShaderStageInfo());
@@ -151,25 +140,25 @@ private:
         DescriptorInfo uboInfo(DescriptorType::UNIFORM_BUFFER, 0, ShaderType::VERTEX_SHADER);
         uboInfo.attach_resource<UniformBuffer>(&helloTriangleUBO);
 
-        DescriptorInfo gridTexInfo(DescriptorType::COMBINED_IMAGE_SAMPLER, 1, ShaderType::FRAGMENT_SHADER);
-        gridTexInfo.attach_resource<Texture>(&gridTexture);
-
-        DescriptorInfo checkerTexInfo(DescriptorType::COMBINED_IMAGE_SAMPLER, 2, ShaderType::FRAGMENT_SHADER);
-        checkerTexInfo.attach_resource<Texture>(&checkerTexture);
-
-        DescriptorInfo storageImageInfo(DescriptorType::STORAGE_IMAGE, 3, ShaderType::FRAGMENT_SHADER);
+        // DescriptorInfo gridTexInfo(DescriptorType::COMBINED_IMAGE_SAMPLER, 1, ShaderType::FRAGMENT_SHADER);
+        // gridTexInfo.attach_resource<Texture>(&gridTexture);
+        //
+        // DescriptorInfo checkerTexInfo(DescriptorType::COMBINED_IMAGE_SAMPLER, 2, ShaderType::FRAGMENT_SHADER);
+        // checkerTexInfo.attach_resource<Texture>(&checkerTexture);
+        //
+        DescriptorInfo storageImageInfo(DescriptorType::STORAGE_IMAGE, 0, ShaderType::COMPUTE_SHADER);
         storageImageInfo.attach_resource<StorageImage>(&storageImage);
 
-        DescriptorInfo storageImageQuadInfo(DescriptorType::STORAGE_IMAGE, 0, ShaderType::FRAGMENT_SHADER);
-        storageImageQuadInfo.attach_resource<StorageImage>(&storageImage);
+        DescriptorInfo storageImageFragInfo(DescriptorType::STORAGE_IMAGE, 0, ShaderType::FRAGMENT_SHADER);
+        storageImageFragInfo.attach_resource<StorageImage>(&storageImage);
 
         set_per_frame.clear();
         post_process_set_per_frame.clear();
         set_per_frame.resize(3);
         post_process_set_per_frame.resize(3);
         for (size_t i = 0; i < 3; i++) {
-            set_per_frame[i].Init({ checkerTexInfo, uboInfo, gridTexInfo, storageImageInfo });
-            post_process_set_per_frame[i].Init({ storageImageQuadInfo });
+            set_per_frame[i].Init({ storageImageInfo });
+            post_process_set_per_frame[i].Init({ storageImageFragInfo });
         }
     }
 
@@ -179,17 +168,13 @@ private:
         modelPushConstant.offset = 0;
         modelPushConstant.size = sizeof(ModelPushConstant);
 
-        geomFixedFunctions.SetFixedPipelineStage(VK_PRIMITIVE_TOPOLOGY_TRIANGLE_LIST, baseSwapchain.get_extent(), false);
-        geomFixedFunctions.SetPipelineLayout(set_per_frame[0].get_set_layout(), &modelPushConstant);
-
         postFixedFunctions.SetFixedPipelineStage(VK_PRIMITIVE_TOPOLOGY_TRIANGLE_LIST, baseSwapchain.get_extent(), false);
         postFixedFunctions.SetPipelineLayout(post_process_set_per_frame[0].get_set_layout(), nullptr);
 
-        computeFixedFunctions.SetPipelineLayout(VK_NULL_HANDLE, nullptr);
+        computeFixedFunctions.SetPipelineLayout(set_per_frame[0].get_set_layout(), nullptr);
     }
 
     void BuildGraphicsPipeline() override {
-        geomPassPipeline.Create(subdivisionShaders, geomFixedFunctions, baseRenderPass.get_handle());
 
         postProcessPipeline.Create(quadShaders, postFixedFunctions, baseRenderPass.get_handle());
 
@@ -220,9 +205,7 @@ private:
         quadIB.Destroy();
         stanford_bunnyVB.Destroy();
         stanford_bunnyIB.Destroy();
-        geomPassPipeline.Destroy();
         postProcessPipeline.Destroy();
-        geomFixedFunctions.DestroyPipelineLayout();
     }
 
 private:
@@ -251,6 +234,18 @@ private:
         storageImage.clear(glm::vec4(0.0f));
 
         dcb.begin_recording();
+
+        //----------------------------------------------------------------------
+        // Compute Pass
+
+        auto vk_set = set_per_frame[get_frame_idx()].get_set();
+        vkCmdBindDescriptorSets(dcb.get_handle(), VK_PIPELINE_BIND_POINT_COMPUTE, computeFixedFunctions.GetPipelineLayout(), 0, 1, &vk_set, 0, nullptr);
+
+        computePipeline.bind(dcb.get_handle());
+        vkCmdDispatch(dcb.get_handle(), 512, 512, 0);
+
+        //----------------------------------------------------------------------
+
         baseRenderPass.begin_pass(dcb.get_handle(), framebuffers[get_image_idx()], baseSwapchain.get_extent());
 
         VkViewport viewport = {};
@@ -268,25 +263,7 @@ private:
         vkCmdSetViewport(dcb.get_handle(), 0, 1, &viewport);
         vkCmdSetScissor(dcb.get_handle(), 0, 1, &scissor);
 
-        geomPassPipeline.Bind(dcb.get_handle());
-
-        // Bind the appropriate descriptor sets
-        auto vk_set = set_per_frame[get_frame_idx()].get_set();
-        vkCmdBindDescriptorSets(dcb.get_handle(), VK_PIPELINE_BIND_POINT_GRAPHICS, geomFixedFunctions.GetPipelineLayout(), 0, 1, &vk_set, 0, nullptr);
-
-        // vkCmdDraw(dcb.get_handle(), rainbowTriangleVertices.size(), 1, 0, 0);
-        //helloTriangleVBO.bind(dcb.get_handle());
-        stanford_bunnyVB.bind(dcb.get_handle());
-        stanford_bunnyIB.bind(dcb.get_handle());
-
-
-        // Update the size properly
-        // Bind the push constants with the appropriate size
-        modelPCData.model = glm::rotate(glm::mat4(1.0f), (float)glfwGetTime(), glm::vec3(0.0f, 1.0f, 0.0f));
-        vkCmdPushConstants(dcb.get_handle(), geomFixedFunctions.GetPipelineLayout(), VK_SHADER_STAGE_VERTEX_BIT | VK_SHADER_STAGE_FRAGMENT_BIT, 0, sizeof(ModelPushConstant), &modelPCData);
-        // Draw stuff
-        //vkCmdDraw(dcb.get_handle(), rainbowTriangleVertices.size(), 1, 0, 0);
-        vkCmdDrawIndexed(dcb.get_handle(), stanford_bunnyIndices.size(), 1, 0, 0, 0);
+        // TPODO: Add mem barrier
 
         //--------------------------------
         // Post Process pass
@@ -311,11 +288,6 @@ private:
         get_ui_overlay().draw(dcb.get_handle());
 
         baseRenderPass.end_pass(dcb.get_handle());
-
-
-        computePipeline.bind(dcb.get_handle());
-        vkCmdDispatch(dcb.get_handle(), 256, 1, 1);
-
 
         dcb.end_recording();
     }

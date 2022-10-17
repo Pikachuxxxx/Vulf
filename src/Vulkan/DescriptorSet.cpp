@@ -9,7 +9,7 @@
 
 uint32_t DescriptorSet::m_DescriptorPoolCurrentAllocations = 0;
 
-void DescriptorSet::Init(std::vector<DescriptorInfo> descriptorInfos)
+void DescriptorSet::Init(std::vector<DescriptorInfo> descriptorInfos, bool isCompute/* = false*/)
 {
     std::vector<VkDescriptorSetLayoutBinding> setLayouts;
     for (auto& descriptorInfo : descriptorInfos)

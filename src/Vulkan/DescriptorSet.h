@@ -28,7 +28,7 @@ struct DescriptorInfo
     UniformBuffer*  uniformBuffer;
     Texture*        image;
     StorageImage*   storageImage;
-    
+
     DescriptorInfo(DescriptorType type, uint32_t bindingID, ShaderType shaderType) : type(type), bindingID(bindingID), shaderType(shaderType) {}
 
     template <class T>
@@ -60,7 +60,7 @@ struct DescriptorInfo
 class DescriptorSet
 {
 public:
-    void Init(std::vector<DescriptorInfo> descriptorInfos);
+    void Init(std::vector<DescriptorInfo> descriptorInfos, bool isCompute = false);
     void Destroy();
 
     void update_set();
@@ -76,4 +76,3 @@ private:
     VkDescriptorSetLayout           m_SetLayout;
     VkDescriptorSet                 m_DescriptorSet;
 };
-
