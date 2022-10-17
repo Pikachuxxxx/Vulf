@@ -66,6 +66,7 @@
 #include "utils/LoadObjModel.h"
 
 // Vulkan Abstractions
+#include "Barriers.h"
 #include "Vulkan/Instance.h"
 #include "Vulkan/Device.h"
 #include "Vulkan/DescriptorSet.h"

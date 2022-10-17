@@ -238,11 +238,15 @@ private:
         //----------------------------------------------------------------------
         // Compute Pass
 
+        MemoryBarrier::insert_barrier({0, 0}, VK_PIPELINE_STAGE_VERTEX_SHADER_BIT, VK_PIPELINE_STAGE_COMPUTE_SHADER_BIT);
+
         auto vk_set = set_per_frame[get_frame_idx()].get_set();
         vkCmdBindDescriptorSets(dcb.get_handle(), VK_PIPELINE_BIND_POINT_COMPUTE, computeFixedFunctions.GetPipelineLayout(), 0, 1, &vk_set, 0, nullptr);
 
         computePipeline.bind(dcb.get_handle());
         vkCmdDispatch(dcb.get_handle(), 512, 512, 0);
+
+        MemoryBarrier::insert_barrier({VK_ACCESS_SHADER_WRITE_BIT, VK_ACCESS_SHADER_READ_BIT}, VK_PIPELINE_STAGE_COMPUTE_SHADER_BIT, VK_PIPELINE_STAGE_FRAGMENT_SHADER_BIT);
 
         //----------------------------------------------------------------------
 
