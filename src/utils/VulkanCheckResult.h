@@ -6,6 +6,8 @@
 #include <iostream>
 #include <iomanip>
 
+#include "../Vulkan/Instance.h"
+
 static std::unordered_map<VkResult, std::string> ErrorDescriptions = {
     {VK_SUCCESS, "Command successfully completed"},
     {VK_NOT_READY, "A fence or query has not yet completed"},
@@ -77,3 +79,47 @@ static std::ostream& operator,(std::ostream& out, std::ostream&(*f)(std::ostream
   out << f;
   return out;
 }
+
+
+//------------------------------------------------------------------------
+// Vulkan Debug Markers
+static VkDebugUtilsLabelEXT label{};
+
+static void CmdBeginDebugUtilsLabelEXT(VkCommandBuffer cmdBuffer, VkDebugUtilsLabelEXT& debugUtils)
+{
+    auto func = (PFN_vkCmdBeginDebugUtilsLabelEXT)vkGetInstanceProcAddr(Instance::Get()->get_handle(), "vkCmdBeginDebugUtilsLabelEXT");
+    if (func != nullptr)
+        func(cmdBuffer, &debugUtils);
+    else
+        throw std::runtime_error("Instance not present");
+}
+
+static void CmdInsertDebugUtilsLabelEXT(VkCommandBuffer cmdBuffer, VkDebugUtilsLabelEXT& debugUtils)
+{
+    auto func = (PFN_vkCmdInsertDebugUtilsLabelEXT)vkGetInstanceProcAddr(Instance::Get()->get_handle(), "vkCmdInsertDebugUtilsLabelEXT");
+    if (func != nullptr)
+        func(cmdBuffer, &debugUtils);
+    else
+        throw std::runtime_error("Instance not present");
+}
+
+static void CmdEndDebugUtilsLabelEXT(VkCommandBuffer cmdBuffer)
+{
+    auto func = (PFN_vkCmdEndDebugUtilsLabelEXT)vkGetInstanceProcAddr(Instance::Get()->get_handle(), "vkCmdEndDebugUtilsLabelEXT");
+    if (func != nullptr)
+        func(cmdBuffer);
+    else
+        throw std::runtime_error("Instance not present");
+}
+
+#define BEGIN_MARKER(name, labelColor)  label.sType = VK_STRUCTURE_TYPE_DEBUG_UTILS_LABEL_EXT;\
+                                    label.pLabelName = name; \
+                                    memcpy(label.color, glm::value_ptr(labelColor), 4 * sizeof(float)); \
+                                    CmdBeginDebugUtilsLabelEXT(dcb.get_handle(), label);
+
+#define INSERT_MARKER(name, labelColor)  label.sType = VK_STRUCTURE_TYPE_DEBUG_UTILS_LABEL_EXT;  \
+                                    label.pLabelName = name; \
+                                    memcpy(label.color, glm::value_ptr(labelColor), 4 * sizeof(float)); \
+                                    CmdInsertDebugUtilsLabelEXT(dcb.get_handle(), label);
+
+#define END_MARKER CmdEndDebugUtilsLabelEXT(dcb.get_handle());

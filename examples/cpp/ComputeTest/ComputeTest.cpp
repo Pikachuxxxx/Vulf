@@ -231,12 +231,13 @@ private:
         OPTICK_GPU_EVENT("Recording cmd buffers");
 #endif
 
-        storageImage.clear(glm::vec4(0.0f));
+        //storageImage.clear(glm::vec4(0.0f));
 
         dcb.begin_recording();
 
         //----------------------------------------------------------------------
         // Compute Pass
+        BEGIN_MARKER("Compute Test", glm::vec4(0.8f, 0.4f, 0.6f, 1.0f))
 
         MemoryBarrier::insert_barrier({0, 0}, VK_PIPELINE_STAGE_VERTEX_SHADER_BIT, VK_PIPELINE_STAGE_COMPUTE_SHADER_BIT);
 
@@ -244,11 +245,12 @@ private:
         vkCmdBindDescriptorSets(dcb.get_handle(), VK_PIPELINE_BIND_POINT_COMPUTE, computeFixedFunctions.GetPipelineLayout(), 0, 1, &vk_set, 0, nullptr);
 
         computePipeline.bind(dcb.get_handle());
-        vkCmdDispatch(dcb.get_handle(), 512, 512, 0);
-
+        vkCmdDispatch(dcb.get_handle(), 32, 32, 0);
         MemoryBarrier::insert_barrier({VK_ACCESS_SHADER_WRITE_BIT, VK_ACCESS_SHADER_READ_BIT}, VK_PIPELINE_STAGE_COMPUTE_SHADER_BIT, VK_PIPELINE_STAGE_FRAGMENT_SHADER_BIT);
-
+        END_MARKER
         //----------------------------------------------------------------------
+
+        BEGIN_MARKER("Geom Pass", glm::vec4(0.4f, 0.8f, 0.6f, 1.0f))
 
         baseRenderPass.begin_pass(dcb.get_handle(), framebuffers[get_image_idx()], baseSwapchain.get_extent());
 
@@ -271,6 +273,9 @@ private:
 
         //--------------------------------
         // Post Process pass
+
+        INSERT_MARKER("Post Process Pass", glm::vec4(0.54, 0.16, 0.88, 1.0f))
+
         postProcessPipeline.Bind(dcb.get_handle());
 
         // Bind the appropriate descriptor sets
@@ -284,15 +289,17 @@ private:
         // Draw stuff
         vkCmdDrawIndexed(dcb.get_handle(), 6, 1, 0, 0, 0);
 
+        BEGIN_MARKER("ImGui Pass", glm::vec4(0.94, 0.16, 0.08, 1.0f))
+
         ImGuiIO& io = ImGui::GetIO();
 
         io.DisplaySize = ImVec2((float)getWindow()->getWidth(), (float)getWindow()->getHeight());
 
         get_ui_overlay().update_imgui_buffers();
         get_ui_overlay().draw(dcb.get_handle());
-
+        END_MARKER
         baseRenderPass.end_pass(dcb.get_handle());
-
+        END_MARKER
         dcb.end_recording();
     }
 
