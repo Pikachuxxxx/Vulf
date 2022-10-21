@@ -57,6 +57,7 @@
 // Helper utilities
 #include "utils/VulkanCheckResult.h"
 #include "utils/vertex.h"
+#include "utils/mesh.h"
 #include "utils/Window.h"
 #include "utils/Camera3D.h"
 #include "utils/Transform.h"

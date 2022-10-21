@@ -24,9 +24,9 @@ using namespace Vulf;
 class VulfOverDrawVis : public Vulf::VulfBase
 {
 public:
-    VulfOverDrawVis() : VulfBase("Over Draw Vis Test") 
+    VulfOverDrawVis() : VulfBase("Over Draw Vis Test")
     {
-        LoadObjModel((SRC_DIR)+std::string("/data/models/stanford-bunny.obj"), stanford_bunnyVertices, stanford_bunnyIndices);
+        bunnyMesh = LoadObjModel((SRC_DIR)+std::string("/data/models/sponza.obj"));
     }
 
     ~VulfOverDrawVis() {
@@ -84,11 +84,8 @@ private:
     VertexBuffer            quadVB;
     IndexBuffer             quadIB;
 
-    std::vector<Vertex>     stanford_bunnyVertices;
-    std::vector<uint16_t>   stanford_bunnyIndices;
-
     VertexBuffer            stanford_bunnyVB;
-    IndexBuffer             stanford_bunnyIB;
+    // IndexBuffer             stanford_bunnyIB;
 
 
     StorageImage            storageImage;
@@ -101,6 +98,8 @@ private:
 
     std::vector<DescriptorSet>           post_process_set_per_frame;
 
+    Mesh                    bunnyMesh;
+
 private:
     void LoadShaders() override {
 
@@ -109,7 +108,7 @@ private:
         defaultFragShader.CreateShader((SHADER_BINARY_DIR)+std::string("/defaultFrag.spv"), ShaderType::FRAGMENT_SHADER);
 
         quadVertShader.CreateShader((SHADER_BINARY_DIR)+std::string("/quadVert.spv"), ShaderType::VERTEX_SHADER);
-        quadFragImgShader.CreateShader((SHADER_BINARY_DIR)+std::string("/quadFragImg2D.spv"), ShaderType::FRAGMENT_SHADER);
+        quadFragImgShader.CreateShader((SHADER_BINARY_DIR)+std::string("/overdrawvis.spv"), ShaderType::FRAGMENT_SHADER);
 
         subdivisionShaders.push_back(defaultVertShader.GetShaderStageInfo());
         subdivisionShaders.push_back(defaultFragShader.GetShaderStageInfo());
@@ -139,8 +138,10 @@ private:
         quadVB.Init(whiteQuadVertices);
         quadIB.Init(whiteQuadIndices);
 
-        stanford_bunnyVB.Init(stanford_bunnyVertices);
-        stanford_bunnyIB.Init(stanford_bunnyIndices);
+        VK_LOG("Bunny Mesh");
+            VK_LOG("\t Vertices : ", bunnyMesh.vertices.size());
+            VK_LOG("\t Parts : ", bunnyMesh.parts.size());
+        stanford_bunnyVB.Init(bunnyMesh.vertices);
 
         storageImage.Init(getWindow()->getWidth(), getWindow()->getHeight());
 
@@ -206,12 +207,12 @@ private:
         gridTexture.Destroy();
         checkerTexture.Destroy();
         depthImage.Destroy();
-        helloTriangleUBO.Destroy(); 
+        helloTriangleUBO.Destroy();
         helloTriangleVBO.Destroy();
         quadVB.Destroy();
         quadIB.Destroy();
         stanford_bunnyVB.Destroy();
-        stanford_bunnyIB.Destroy();
+        // stanford_bunnyIB.Destroy();
         geomPassPipeline.Destroy();
         postProcessPipeline.Destroy();
         geomFixedFunctions.DestroyPipelineLayout();
@@ -242,6 +243,9 @@ private:
 
         storageImage.clear(glm::vec4(0.0f));
 
+        ccb.begin_recording();
+        ccb.end_recording();
+
         dcb.begin_recording();
         baseRenderPass.begin_pass(dcb.get_handle(), framebuffers[get_image_idx()], baseSwapchain.get_extent());
 
@@ -269,16 +273,19 @@ private:
         // vkCmdDraw(dcb.get_handle(), rainbowTriangleVertices.size(), 1, 0, 0);
         //helloTriangleVBO.bind(dcb.get_handle());
         stanford_bunnyVB.bind(dcb.get_handle());
-        stanford_bunnyIB.bind(dcb.get_handle());
+        // stanford_bunnyIB.bind(dcb.get_handle());
 
 
         // Update the size properly
         // Bind the push constants with the appropriate size
-        modelPCData.model = glm::rotate(glm::mat4(1.0f), (float)glfwGetTime(), glm::vec3(0.0f, 1.0f, 0.0f));
+        // modelPCData.model = glm::rotate(glm::mat4(1.0f), (float)glfwGetTime(), glm::vec3(0.0f, 1.0f, 0.0f));
+        modelPCData.model = glm::scale(glm::mat4(1.0f), glm::vec3(0.005f));
         vkCmdPushConstants(dcb.get_handle(), geomFixedFunctions.GetPipelineLayout(), VK_SHADER_STAGE_VERTEX_BIT | VK_SHADER_STAGE_FRAGMENT_BIT, 0, sizeof(ModelPushConstant), &modelPCData);
         // Draw stuff
-        //vkCmdDraw(dcb.get_handle(), rainbowTriangleVertices.size(), 1, 0, 0);
-        vkCmdDrawIndexed(dcb.get_handle(), stanford_bunnyIndices.size(), 1, 0, 0, 0);
+        for (auto& part : bunnyMesh.parts) {
+            vkCmdDraw(dcb.get_handle(), part.VertexCount, 1, part.VertexOffset, 0);
+        }
+        // vkCmdDrawIndexed(dcb.get_handle(), stanford_bunnyIndices.size(), 1, 0, 0, 0);
 
         //--------------------------------
         // Post Process pass
