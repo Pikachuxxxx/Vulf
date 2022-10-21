@@ -15,8 +15,6 @@ void Shader::CreateShader(const std::string& path, ShaderType type)
     shaderCI.codeSize = byteCode.size();
     shaderCI.pCode = reinterpret_cast<uint32_t*>(byteCode.data());
 
-    VK_ERROR("Breakpoint at line : ", __LINE__, __FILE__);
-
     if(VK_CALL(vkCreateShaderModule(VKDEVICE, &shaderCI, nullptr, &m_Module)))
         throw std::runtime_error("Cannot Create shader module!");
     else VK_LOG(GetShaderTypeString(), "shader module created!");

@@ -121,7 +121,7 @@ private:
 
     void BuildTextureResources() override {
         // default
-        depthImage.CreateDepthImage(baseSwapchain.get_extent().width, baseSwapchain.get_extent().height, baseCommandPool);
+        depthImage.CreateDepthImage(baseSwapchain.get_extent().width, baseSwapchain.get_extent().height, graphicsCommandPool);
 
         // Grid Texture
         gridTexture.Init((SRC_DIR)+std::string("/data/textures/TestGrid_1024.png"));
@@ -206,7 +206,7 @@ private:
         gridTexture.Destroy();
         checkerTexture.Destroy();
         depthImage.Destroy();
-        helloTriangleUBO.Destroy();
+        helloTriangleUBO.Destroy(); 
         helloTriangleVBO.Destroy();
         quadVB.Destroy();
         quadIB.Destroy();
@@ -224,7 +224,7 @@ private:
 
     }
 
-    void OnRender(CmdBuffer dcb) override
+    void OnRender(CmdBuffer dcb, CmdBuffer ccb) override
     {
         aspectRatio = (float)getWindow()->getWidth() / (float)getWindow()->getHeight();
 

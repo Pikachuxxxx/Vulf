@@ -42,10 +42,10 @@ static const std::vector<uint16_t> rainbowTriangleIndices = {
 };
 
 static const std::vector<Vertex> whiteQuadVertices = {
-    {{-0.25f, -0.25f, 0.5f}, {0.0f, 0.0f, 1.0f}, {0.0f, 0.0f}, {1.0f, 0.0f, 0.0f},},
-    {{0.25f,  -0.25f, 0.5f}, {0.0f, 0.0f, 1.0f}, {1.0f, 0.0f}, {0.0f, 1.0f, 0.0f},},
-    {{0.25f,   0.25f, 0.5f}, {0.0f, 0.0f, 1.0f}, {1.0f, 1.0f}, {0.0f, 0.0f, 1.0f},},
-    {{-0.25f,  0.25f, 0.5f}, {0.0f, 0.0f, 1.0f}, {0.0f, 1.0f}, {0.0f, 0.0f, 1.0f}}
+    {{-1.0f, -1.0f, 0.5f}, {0.0f, 0.0f, 1.0f}, {0.0f, 0.0f}, {1.0f, 0.0f, 0.0f},},
+    {{1.0f,  -1.0f, 0.5f}, {0.0f, 0.0f, 1.0f}, {1.0f, 0.0f}, {0.0f, 1.0f, 0.0f},},
+    {{1.0f,   1.0f, 0.5f}, {0.0f, 0.0f, 1.0f}, {1.0f, 1.0f}, {0.0f, 0.0f, 1.0f},},
+    {{-1.0f,  1.0f, 0.5f}, {0.0f, 0.0f, 1.0f}, {0.0f, 1.0f}, {0.0f, 0.0f, 1.0f}}
 };
 
 static const std::vector<uint16_t> whiteQuadIndices = {

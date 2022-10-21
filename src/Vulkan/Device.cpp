@@ -102,7 +102,9 @@ void PhysicalDevice::find_queue_family_indices(VkPhysicalDevice gpu)
         if (presentationSupported)
             m_QueueFamilyIndices.presentFamily = i;
 
-        // TODO: Check for Compute queue
+        // Check for Compute queue
+        if (queue.queueFlags & VK_QUEUE_COMPUTE_BIT)
+            m_QueueFamilyIndices.computeFamily = i;
 
         if (m_QueueFamilyIndices.isComplete())
             break;
@@ -395,6 +397,7 @@ void Device::create_queues()
 {
     auto indices = m_GPUManager.get_queue_family_indices();
     vkGetDeviceQueue(m_Device, indices.graphicsFamily.value(), 0, &m_GraphicsQueue);
+    vkGetDeviceQueue(m_Device, indices.computeFamily.value(), 0, &m_ComputeQueue);
     vkGetDeviceQueue(m_Device, indices.presentFamily.value(), 0, &m_PresentQueue);
 }
 

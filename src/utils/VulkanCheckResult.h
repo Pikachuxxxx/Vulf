@@ -7,6 +7,7 @@
 #include <iomanip>
 
 #include "../Vulkan/Instance.h"
+#include "../Vulkan/Device.h"
 
 static std::unordered_map<VkResult, std::string> ErrorDescriptions = {
     {VK_SUCCESS, "Command successfully completed"},
@@ -112,14 +113,23 @@ static void CmdEndDebugUtilsLabelEXT(VkCommandBuffer cmdBuffer)
         throw std::runtime_error("Instance not present");
 }
 
-#define BEGIN_MARKER(name, labelColor)  label.sType = VK_STRUCTURE_TYPE_DEBUG_UTILS_LABEL_EXT;\
+static VkResult CreateDebugObjName(VkDebugUtilsObjectNameInfoEXT* info)
+{
+    auto func = (PFN_vkSetDebugUtilsObjectNameEXT)vkGetInstanceProcAddr(Instance::Get()->get_handle(), "vkSetDebugUtilsObjectNameEXT");
+    if (func != nullptr)
+        return func(Device::Get()->get_handle(), info);
+    else
+        return VK_ERROR_EXTENSION_NOT_PRESENT;
+}
+
+#define BEGIN_MARKER(cmdBuf, name, labelColor)  label.sType = VK_STRUCTURE_TYPE_DEBUG_UTILS_LABEL_EXT;\
                                     label.pLabelName = name; \
                                     memcpy(label.color, glm::value_ptr(labelColor), 4 * sizeof(float)); \
-                                    CmdBeginDebugUtilsLabelEXT(dcb.get_handle(), label);
+                                    CmdBeginDebugUtilsLabelEXT(cmdBuf.get_handle(), label);
 
-#define INSERT_MARKER(name, labelColor)  label.sType = VK_STRUCTURE_TYPE_DEBUG_UTILS_LABEL_EXT;  \
+#define INSERT_MARKER(cmdBuf,name, labelColor)  label.sType = VK_STRUCTURE_TYPE_DEBUG_UTILS_LABEL_EXT;  \
                                     label.pLabelName = name; \
                                     memcpy(label.color, glm::value_ptr(labelColor), 4 * sizeof(float)); \
-                                    CmdInsertDebugUtilsLabelEXT(dcb.get_handle(), label);
+                                    CmdInsertDebugUtilsLabelEXT(cmdBuf.get_handle(), label);
 
-#define END_MARKER CmdEndDebugUtilsLabelEXT(dcb.get_handle());
+#define END_MARKER(cmdBuf) CmdEndDebugUtilsLabelEXT(cmdBuf.get_handle());

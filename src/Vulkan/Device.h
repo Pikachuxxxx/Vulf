@@ -23,13 +23,7 @@ struct QueueFamilyIndices
 
     bool isComplete()
     {
-#ifdef __APPLE__
-        return graphicsFamily.has_value() && presentFamily.has_value();
-#endif
-
-#ifdef _WIN32
-        return graphicsFamily.has_value() && presentFamily.has_value();//&& computeFamily.has_value();
-#endif
+        return graphicsFamily.has_value() && presentFamily.has_value() && computeFamily.has_value();
     }
 };
 

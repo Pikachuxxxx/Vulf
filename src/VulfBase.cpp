@@ -150,7 +150,7 @@ namespace Vulf {
         }
         m_ImageAvailableSemaphores.clear();
         m_RenderFinishedSemaphores.clear();
-        baseCommandPool.Destroy(); // --> Automatically frees cmdBuffers out of existence
+        graphicsCommandPool.Destroy(); // --> Automatically frees cmdBuffers out of existence
     }
     ////////////////////////////////////////////////////////////////////////////
 
@@ -191,8 +191,12 @@ namespace Vulf {
 
     void VulfBase::BuildCommandPool() {
 
-        // This is a graphics pool for allocationg command buffers that can only be submitted to graphics queues
-        baseCommandPool.Init(Device::Get()->get_graphics_queue_index());
+        // This is a graphics pool for allocating command buffers that can only be submitted to graphics queues
+        graphicsCommandPool.Init(Device::Get()->get_graphics_queue_index());
+
+        // This command pool is for allocating the compute command buffers
+        computeCommandPool.Init(Device::Get()->get_compute_queue_index());
+
     }
 
     void VulfBase::BuildSwapchain() {
@@ -229,8 +233,11 @@ namespace Vulf {
 
         // One for each frame in flight
         m_DrawCmdBuffers.resize(MAX_FRAMES_IN_FLIGHT);
-        for (size_t i = 0; i < MAX_FRAMES_IN_FLIGHT; i++)
-            m_DrawCmdBuffers[i].Init(baseCommandPool.get_handle());
+        m_ComputeCmdBuffers.resize(MAX_FRAMES_IN_FLIGHT);
+        for (size_t i = 0; i < MAX_FRAMES_IN_FLIGHT; i++) {
+            m_DrawCmdBuffers[i].Init(graphicsCommandPool.get_handle());
+            m_ComputeCmdBuffers[i].Init(computeCommandPool.get_handle());
+        }
     }
 
     void VulfBase::BuildDescriptorSets() {
@@ -284,7 +291,8 @@ namespace Vulf {
 
         // Reset the command buffer first --> then record onto it
         m_DrawCmdBuffers[m_CurrentFrame].reset();
-        OnRender(m_DrawCmdBuffers[m_CurrentFrame]);
+        m_ComputeCmdBuffers[m_CurrentFrame].reset();
+        OnRender(m_DrawCmdBuffers[m_CurrentFrame], m_ComputeCmdBuffers[m_CurrentFrame]);
 
         OnUpdateBuffers(m_CurrentFrame);
 
@@ -305,20 +313,37 @@ namespace Vulf {
 #endif
         VkResult result;
 
-        VkSubmitInfo submitInfo{};
-        submitInfo.sType                    = VK_STRUCTURE_TYPE_SUBMIT_INFO;
-        VkSemaphore waitSemaphore[]         = { m_ImageAvailableSemaphores[m_CurrentFrame].get_handle() };
-        VkPipelineStageFlags waitStages[]   = {VK_PIPELINE_STAGE_COLOR_ATTACHMENT_OUTPUT_BIT};
-        submitInfo.waitSemaphoreCount       = 1;
-        submitInfo.pWaitSemaphores          = waitSemaphore;
-        submitInfo.pWaitDstStageMask        = waitStages;
+        // wait and signal stages/semaphore as Vulf needs and provide an API in future to make this easier for the user and not modify source code
+        VkSubmitInfo computeSubmitInfo{};
+        computeSubmitInfo.sType = VK_STRUCTURE_TYPE_SUBMIT_INFO;
+        VkPipelineStageFlags waitStages[1] = { VK_PIPELINE_STAGE_COMPUTE_SHADER_BIT };
+        VkSemaphore waitSemaphore[] = {m_GraphicsSemaphores[m_CurrentFrame].get_handle()};
+        computeSubmitInfo.waitSemaphoreCount = 1;
+        computeSubmitInfo.pWaitSemaphores = waitSemaphore;
+        computeSubmitInfo.pWaitDstStageMask = waitStages;
+        computeSubmitInfo.signalSemaphoreCount = 1;
+        computeSubmitInfo.pSignalSemaphores = &m_ComputeSemaphores[m_CurrentFrame].get_handle();
+        computeSubmitInfo.commandBufferCount = 1;
+        computeSubmitInfo.pCommandBuffers = &m_ComputeCmdBuffers[m_CurrentFrame].get_handle();
 
-        submitInfo.commandBufferCount       = 1;
-        submitInfo.pCommandBuffers          = &m_DrawCmdBuffers[m_CurrentFrame].get_handle();
+        if (VK_CALL(vkQueueSubmit(Device::Get()->get_compute_queue(), 1, &computeSubmitInfo, VK_NULL_HANDLE))) {
+            throw std::runtime_error("Cannot submit compute command buffer!");
+        }
 
-        VkSemaphore signalSemaphores[]      = {m_RenderFinishedSemaphores[m_CurrentFrame].get_handle()};
-        submitInfo.signalSemaphoreCount     = 1;
-        submitInfo.pSignalSemaphores        = signalSemaphores;
+        VkSubmitInfo graphicsSubmitInfo{};
+        graphicsSubmitInfo.sType                    = VK_STRUCTURE_TYPE_SUBMIT_INFO;
+        waitStages[0]                                = {VK_PIPELINE_STAGE_COLOR_ATTACHMENT_OUTPUT_BIT};
+        graphicsSubmitInfo.waitSemaphoreCount       = 2;
+        VkSemaphore grpahiscWaitSemaphore[]         = {m_ComputeSemaphores[m_CurrentFrame].get_handle() ,m_ImageAvailableSemaphores[m_CurrentFrame].get_handle()};
+        graphicsSubmitInfo.pWaitSemaphores          = grpahiscWaitSemaphore;
+        graphicsSubmitInfo.pWaitDstStageMask        = waitStages;
+
+        graphicsSubmitInfo.commandBufferCount       = 1;
+        graphicsSubmitInfo.pCommandBuffers          = &m_DrawCmdBuffers[m_CurrentFrame].get_handle();
+
+        VkSemaphore signalSemaphores[]              = {m_GraphicsSemaphores[m_CurrentFrame].get_handle(), m_RenderFinishedSemaphores[m_CurrentFrame].get_handle()};
+        graphicsSubmitInfo.signalSemaphoreCount     = 2;
+        graphicsSubmitInfo.pSignalSemaphores        = signalSemaphores;
 #ifdef OPTICK_ENABLE
         // OPTICK_GPU_EVENT("Reset In Flight Fences");
 #endif
@@ -326,14 +351,14 @@ namespace Vulf {
 #ifdef OPTICK_ENABLE
         OPTICK_GPU_EVENT("Queue Submit");
 #endif
-        if(VK_CALL(vkQueueSubmit(Device::Get()->get_graphics_queue(), 1, &submitInfo, m_InFlightFences[m_CurrentFrame].get_handle()))) {
-            throw std::runtime_error("Cannot submit command buffer!");
+        if(VK_CALL(vkQueueSubmit(Device::Get()->get_graphics_queue(), 1, &graphicsSubmitInfo, m_InFlightFences[m_CurrentFrame].get_handle()))) {
+            throw std::runtime_error("Cannot submit graphics command buffer!");
         }
 
         VkPresentInfoKHR presentInfo{};
         presentInfo.sType = VK_STRUCTURE_TYPE_PRESENT_INFO_KHR;
         presentInfo.waitSemaphoreCount = 1;
-        presentInfo.pWaitSemaphores = signalSemaphores;
+        presentInfo.pWaitSemaphores = &m_RenderFinishedSemaphores[m_CurrentFrame].get_handle();
         VkSwapchainKHR swapChains[] = {baseSwapchain.get_handle()};
         presentInfo.swapchainCount = 1;
         presentInfo.pSwapchains = swapChains;
@@ -368,7 +393,7 @@ namespace Vulf {
 
     }
 
-    void VulfBase::OnRender(CmdBuffer dcb) {
+    void VulfBase::OnRender(CmdBuffer dcb, CmdBuffer ccb) {
     }
 
     // Update the uniform buffers and descriptor sets
@@ -387,14 +412,20 @@ namespace Vulf {
 
         m_ImageAvailableSemaphores.clear();
         m_RenderFinishedSemaphores.clear();
+        m_ComputeSemaphores.clear();
+        m_GraphicsSemaphores.clear();
         m_InFlightFences.clear();
         m_ImageAvailableSemaphores.resize(MAX_FRAMES_IN_FLIGHT);
         m_RenderFinishedSemaphores.resize(MAX_FRAMES_IN_FLIGHT);
+        m_ComputeSemaphores.resize(MAX_FRAMES_IN_FLIGHT);
+        m_GraphicsSemaphores.resize(MAX_FRAMES_IN_FLIGHT);
         m_InFlightFences.resize(MAX_FRAMES_IN_FLIGHT);
 
         for (size_t i = 0; i < MAX_FRAMES_IN_FLIGHT; i++) {
-            m_ImageAvailableSemaphores[i].Init();
-            m_RenderFinishedSemaphores[i].Init();
+            m_ImageAvailableSemaphores[i].Init("m_ImageAvailableSemaphores");
+            m_RenderFinishedSemaphores[i].Init("m_RenderFinishedSemaphores");
+            m_GraphicsSemaphores[i].Init("m_GraphicsSemaphores");
+            m_ComputeSemaphores[i].Init("m_ComputeSemaphores");
             m_InFlightFences[i].Init();
         }
     }

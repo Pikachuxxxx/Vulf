@@ -129,14 +129,13 @@ namespace Vulf {
 
     protected:
         // App setting to customize (this is BS!)
-        bool        waitOnAllFences = true; /* Whether or not to wail on all fences for reset               */
-        // TODO: Remove all vulkan primitives that we give by default that aren't constant remove any dependencies except for cmd buffers and pools + Swapchain
-        // TODO: Rename this as Graphics Command Pool (apt name tbd) and use it only for DCB, CCB will use a Compute CmdPool
-        CmdPool     baseCommandPool;        /* The default command pool used to allocate command buffers    */
+        bool        waitOnAllFences = true;     /* Whether or not to wail on all fences for reset                   */
+        CmdPool     graphicsCommandPool;        /* Command pool used to allocate graphics command buffers from      */
+        CmdPool     computeCommandPool;         /* Command pool to allocate compute command buffer from             */
         // TODO: Move this to a new class called Context or Instance as we have only one Swapchain (default framebuffer will still be handled by user as offline rendering is possible)
-        Swapchain   baseSwapchain;          /* The base swapchain from which the images are used to render  */
+        Swapchain   baseSwapchain;              /* The base swapchain from which the images are used to render      */
         // TODO: Remove!!! this from here!!! This is at the mercy of the use to create and use
-        RenderPass  baseRenderPass;         /* The base renderpass used to transition the images            */
+        RenderPass  baseRenderPass;             /* The base renderpass used to transition the images                */
 
     protected:
         /**
@@ -188,7 +187,7 @@ namespace Vulf {
          */
         virtual void OnUpdate(double dt);
         /* Client defines how the scene is rendered and it's resources are used */
-        virtual void OnRender(CmdBuffer dcb);
+        virtual void OnRender(CmdBuffer dcb, CmdBuffer ccb);
         /* Updates Uniform buffers, SSAO and other buffer resources */
         virtual void OnUpdateBuffers(uint32_t frameIdx);
         /* ImGui Overlay */
@@ -202,7 +201,7 @@ namespace Vulf {
     public:
         // Application flow
         std::string                 m_AppName;                      /* The name of the application                                                      */
-        Window*                     m_Window;                       /* The window abstraction                                                           */
+        Window* m_Window;                       /* The window abstraction                                                           */
         Camera3D                    m_Camera;                       /* The default free-fly camera in th e scene                                        */
         bool                        m_FramebufferResized;           /* Boolean to identify screen resize event                                          */
         Ms                          m_FrameTimer;                   /* Time taken for a single frame to render since the last frame was rendered        */
@@ -218,12 +217,15 @@ namespace Vulf {
     private:
         ImGuiOverlay                m_ImGuiOVerlay;                 /* ImGui overlay for the application                                                */
         std::vector<CmdBuffer>      m_DrawCmdBuffers;
+        std::vector<CmdBuffer>      m_ComputeCmdBuffers;
         std::vector<Semaphore>      m_RenderFinishedSemaphores;
         std::vector<Semaphore>      m_ImageAvailableSemaphores;
+        std::vector<Semaphore>      m_GraphicsSemaphores;
+        std::vector<Semaphore>      m_ComputeSemaphores;
         std::vector<Fence>          m_InFlightFences;
 
     private:
-        // Init, render loop & build occur right after run in naming and then folowed by protexted and remaining private methods
+        // Init, render loop & build occur right after run in naming and then followed by protected and remaining private methods
 
         /* Initializes any resources before the application starts up */
         void InitResources();

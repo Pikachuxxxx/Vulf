@@ -21,6 +21,10 @@ std::vector<const char*> g_DeviceExtensions = {
 
 using namespace Vulf;
 
+// TODO: 
+// [ ] Compute Command Buffer + Pool
+// [ ] Compute Queue submission (no need to sync their submit operations we do them asynchronously and use mem barriers for the resources)
+
 class VulfComputeTest : public Vulf::VulfBase
 {
 public:
@@ -114,7 +118,7 @@ private:
 
     void BuildTextureResources() override {
         // default
-        depthImage.CreateDepthImage(baseSwapchain.get_extent().width, baseSwapchain.get_extent().height, baseCommandPool);
+        depthImage.CreateDepthImage(baseSwapchain.get_extent().width, baseSwapchain.get_extent().height, graphicsCommandPool);
 
         // Grid Texture
         gridTexture.Init((SRC_DIR)+std::string("/data/textures/TestGrid_1024.png"));
@@ -215,7 +219,7 @@ private:
 
     }
 
-    void OnRender(CmdBuffer dcb) override
+    void OnRender(CmdBuffer dcb, CmdBuffer ccb) override
     {
         aspectRatio = (float)getWindow()->getWidth() / (float)getWindow()->getHeight();
 
@@ -231,29 +235,35 @@ private:
         OPTICK_GPU_EVENT("Recording cmd buffers");
 #endif
 
-        //storageImage.clear(glm::vec4(0.0f));
-
-        dcb.begin_recording();
+        storageImage.clear(glm::vec4(1.0f, 1.0f, 0.0f, 1.0f));
 
         //----------------------------------------------------------------------
         // Compute Pass
-        BEGIN_MARKER("Compute Test", glm::vec4(0.8f, 0.4f, 0.6f, 1.0f))
 
-        MemoryBarrier::insert_barrier({0, 0}, VK_PIPELINE_STAGE_VERTEX_SHADER_BIT, VK_PIPELINE_STAGE_COMPUTE_SHADER_BIT);
+        MemoryBarrier::insert_barrier({ 0, 0 }, VK_PIPELINE_STAGE_FRAGMENT_SHADER_BIT, VK_PIPELINE_STAGE_COMPUTE_SHADER_BIT);
+        ccb.begin_recording();
+        BEGIN_MARKER(ccb, "Compute Test", glm::vec4(0.8f, 0.4f, 0.6f, 1.0f))
 
         auto vk_set = set_per_frame[get_frame_idx()].get_set();
-        vkCmdBindDescriptorSets(dcb.get_handle(), VK_PIPELINE_BIND_POINT_COMPUTE, computeFixedFunctions.GetPipelineLayout(), 0, 1, &vk_set, 0, nullptr);
+        vkCmdBindDescriptorSets(ccb.get_handle(), VK_PIPELINE_BIND_POINT_COMPUTE, computeFixedFunctions.GetPipelineLayout(), 0, 1, &vk_set, 0, nullptr);
 
-        computePipeline.bind(dcb.get_handle());
-        vkCmdDispatch(dcb.get_handle(), 32, 32, 0);
-        MemoryBarrier::insert_barrier({VK_ACCESS_SHADER_WRITE_BIT, VK_ACCESS_SHADER_READ_BIT}, VK_PIPELINE_STAGE_COMPUTE_SHADER_BIT, VK_PIPELINE_STAGE_FRAGMENT_SHADER_BIT);
-        END_MARKER
+        computePipeline.bind(ccb.get_handle());
+        vkCmdDispatch(ccb.get_handle(), (baseSwapchain.get_extent().width / 32) + 1, (baseSwapchain.get_extent().height / 32) + 1, 1);
+
+        END_MARKER(ccb)
+        ccb.end_recording();
+
+        MemoryBarrier::insert_barrier({ VK_ACCESS_SHADER_WRITE_BIT, VK_ACCESS_SHADER_READ_BIT }, VK_PIPELINE_STAGE_COMPUTE_SHADER_BIT, VK_PIPELINE_STAGE_FRAGMENT_SHADER_BIT);
+
         //----------------------------------------------------------------------
 
-        BEGIN_MARKER("Geom Pass", glm::vec4(0.4f, 0.8f, 0.6f, 1.0f))
+        dcb.begin_recording();
+
+        BEGIN_MARKER(dcb, "Geom Pass", glm::vec4(0.4f, 0.8f, 0.6f, 1.0f))
 
         baseRenderPass.begin_pass(dcb.get_handle(), framebuffers[get_image_idx()], baseSwapchain.get_extent());
 
+#if 1
         VkViewport viewport = {};
         viewport.x = 0.0f;
         viewport.y = 0.0f;
@@ -269,12 +279,11 @@ private:
         vkCmdSetViewport(dcb.get_handle(), 0, 1, &viewport);
         vkCmdSetScissor(dcb.get_handle(), 0, 1, &scissor);
 
-        // TPODO: Add mem barrier
 
         //--------------------------------
         // Post Process pass
 
-        INSERT_MARKER("Post Process Pass", glm::vec4(0.54, 0.16, 0.88, 1.0f))
+        INSERT_MARKER(dcb, "Post Process Pass", glm::vec4(0.54, 0.16, 0.88, 1.0f))
 
         postProcessPipeline.Bind(dcb.get_handle());
 
@@ -289,7 +298,7 @@ private:
         // Draw stuff
         vkCmdDrawIndexed(dcb.get_handle(), 6, 1, 0, 0, 0);
 
-        BEGIN_MARKER("ImGui Pass", glm::vec4(0.94, 0.16, 0.08, 1.0f))
+        BEGIN_MARKER(dcb, "ImGui Pass", glm::vec4(0.94, 0.16, 0.08, 1.0f))
 
         ImGuiIO& io = ImGui::GetIO();
 
@@ -297,9 +306,10 @@ private:
 
         get_ui_overlay().update_imgui_buffers();
         get_ui_overlay().draw(dcb.get_handle());
-        END_MARKER
+        END_MARKER(dcb)
+#endif
         baseRenderPass.end_pass(dcb.get_handle());
-        END_MARKER
+        END_MARKER(dcb)
         dcb.end_recording();
     }
 

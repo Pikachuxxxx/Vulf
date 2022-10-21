@@ -2,6 +2,7 @@
 
 #include <vulkan/vulkan.h>
 
+#include <string>
 /**
  * Semaphores allow us to synchronize operations submitted to queues, not only
  * within one queue, but also between different queues (of any family type) in
@@ -16,7 +17,7 @@ class Semaphore
 public:
     Semaphore() = default;
 
-    void Init();
+    void Init(std::string name = "Semaphore");
     void Destroy();
 
     // signal/un-signal and reset the semaphore API
