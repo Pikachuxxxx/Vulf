@@ -255,6 +255,7 @@ private:
 
         knotVB.bind(dcb.get_handle());
         modelPCData.model = glm::scale(glm::mat4(1.0f), glm::vec3(0.01f));
+        modelPCData.model *= glm::rotate(glm::mat4(1.0f), glm::radians(180.0f), glm::vec3(0.0f, 0.0f, 1.0f));
         vkCmdPushConstants(dcb.get_handle(), lightingFixedFunctions.GetPipelineLayout(), VK_SHADER_STAGE_VERTEX_BIT | VK_SHADER_STAGE_FRAGMENT_BIT, 0, sizeof(ModelPushConstant), &modelPCData);
         for (auto& part : knotMesh.parts)
             vkCmdDraw(dcb.get_handle(), part.VertexCount, 1, part.VertexOffset, 0);
@@ -281,7 +282,7 @@ private:
 
         vpUBOData.view = getCamera().GetViewMatrix();
         vpUBOData.proj = glm::perspective(glm::radians(45.0f), (float)baseSwapchain.get_extent().width / baseSwapchain.get_extent().height, 0.01f, 100.0f);
-        //vpUBOData.proj[1][1] *= -1;
+        vpUBOData.proj[1][1] *= -1;
 
         vpUBO.update_buffer(&vpUBOData, sizeof(ViewProjectionUBOData));
 

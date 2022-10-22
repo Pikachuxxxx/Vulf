@@ -33,7 +33,7 @@ void Camera3D::Update(Window& window, float deltaTime)
 
     if (window.isMouseButtonHeld(GLFW_MOUSE_BUTTON_RIGHT))
     {
-        ProcessMouseMovement(window.deltaMouseX, -window.deltaMouseY);
+        ProcessMouseMovement(window.deltaMouseX, window.deltaMouseY);
         window.deltaMouseX = 0.0f;
         window.deltaMouseY = 0.0f;
     }
