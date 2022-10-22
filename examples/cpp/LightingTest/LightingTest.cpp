@@ -58,7 +58,7 @@ private:
         glm::vec3 ambient = glm::vec3(1.0f);
         glm::vec3 diffuse = glm::vec3(1.0f);
         glm::vec3 specular = glm::vec3(1.0f);
-        glm::vec4 _padding;
+        glm::vec4 viewPos;
     }dirLightData;
 
     float aspectRatio = 1280 / 720;
@@ -287,6 +287,7 @@ private:
         vpUBO.update_buffer(&vpUBOData, sizeof(ViewProjectionUBOData));
 
         // Update Lighting Data
+        dirLightData.viewPos = glm::vec4(getCamera().Position, 1.0f);
         lightingUBO.update_buffer(&dirLightData, sizeof(DirectionalLightingData));
     }
 

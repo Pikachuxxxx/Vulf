@@ -254,7 +254,7 @@ namespace Vulf {
     ////////////////////////////////////////////////////////////////////////////
     // Draw the Frame
     void VulfBase::DrawFrame() {
-        ZoneScopedC(0xff0000)
+        //ZoneScopedC(0xff0000)
 #ifdef OPTICK_ENABLE
         OPTICK_EVENT();
         OPTICK_GPU_EVENT("Draw Frame");
@@ -317,7 +317,7 @@ namespace Vulf {
         VkSubmitInfo computeSubmitInfo{};
         computeSubmitInfo.sType = VK_STRUCTURE_TYPE_SUBMIT_INFO;
         VkPipelineStageFlags waitStages[1] = { VK_PIPELINE_STAGE_COMPUTE_SHADER_BIT };
-        VkSemaphore waitSemaphore[] = {m_GraphicsSemaphores[m_CurrentFrame].get_handle()};
+        VkSemaphore waitSemaphore[] = { m_GraphicsSemaphores[m_CurrentFrame].get_handle() };
         computeSubmitInfo.waitSemaphoreCount = 1;
         computeSubmitInfo.pWaitSemaphores = waitSemaphore;
         computeSubmitInfo.pWaitDstStageMask = waitStages;
@@ -331,19 +331,19 @@ namespace Vulf {
         }
 
         VkSubmitInfo graphicsSubmitInfo{};
-        graphicsSubmitInfo.sType                    = VK_STRUCTURE_TYPE_SUBMIT_INFO;
-        waitStages[0]                                = {VK_PIPELINE_STAGE_COLOR_ATTACHMENT_OUTPUT_BIT};
-        graphicsSubmitInfo.waitSemaphoreCount       = 2;
-        VkSemaphore grpahiscWaitSemaphore[]         = {m_ComputeSemaphores[m_CurrentFrame].get_handle() ,m_ImageAvailableSemaphores[m_CurrentFrame].get_handle()};
-        graphicsSubmitInfo.pWaitSemaphores          = grpahiscWaitSemaphore;
-        graphicsSubmitInfo.pWaitDstStageMask        = waitStages;
+        graphicsSubmitInfo.sType = VK_STRUCTURE_TYPE_SUBMIT_INFO;
+        waitStages[0] = { VK_PIPELINE_STAGE_COLOR_ATTACHMENT_OUTPUT_BIT };
+        graphicsSubmitInfo.waitSemaphoreCount = 2;
+        VkSemaphore grpahiscWaitSemaphore[] = { m_ComputeSemaphores[m_CurrentFrame].get_handle() ,m_ImageAvailableSemaphores[m_CurrentFrame].get_handle() };
+        graphicsSubmitInfo.pWaitSemaphores = grpahiscWaitSemaphore;
+        graphicsSubmitInfo.pWaitDstStageMask = waitStages;
 
-        graphicsSubmitInfo.commandBufferCount       = 1;
-        graphicsSubmitInfo.pCommandBuffers          = &m_DrawCmdBuffers[m_CurrentFrame].get_handle();
+        graphicsSubmitInfo.commandBufferCount = 1;
+        graphicsSubmitInfo.pCommandBuffers = &m_DrawCmdBuffers[m_CurrentFrame].get_handle();
 
-        VkSemaphore signalSemaphores[]              = {m_GraphicsSemaphores[m_CurrentFrame].get_handle(), m_RenderFinishedSemaphores[m_CurrentFrame].get_handle()};
-        graphicsSubmitInfo.signalSemaphoreCount     = 2;
-        graphicsSubmitInfo.pSignalSemaphores        = signalSemaphores;
+        VkSemaphore signalSemaphores[] = { m_GraphicsSemaphores[m_CurrentFrame].get_handle(), m_RenderFinishedSemaphores[m_CurrentFrame].get_handle() };
+        graphicsSubmitInfo.signalSemaphoreCount = 2;
+        graphicsSubmitInfo.pSignalSemaphores = signalSemaphores;
 #ifdef OPTICK_ENABLE
         // OPTICK_GPU_EVENT("Reset In Flight Fences");
 #endif
@@ -351,7 +351,7 @@ namespace Vulf {
 #ifdef OPTICK_ENABLE
         OPTICK_GPU_EVENT("Queue Submit");
 #endif
-        if(VK_CALL(vkQueueSubmit(Device::Get()->get_graphics_queue(), 1, &graphicsSubmitInfo, m_InFlightFences[m_CurrentFrame].get_handle()))) {
+        if (VK_CALL(vkQueueSubmit(Device::Get()->get_graphics_queue(), 1, &graphicsSubmitInfo, m_InFlightFences[m_CurrentFrame].get_handle()))) {
             throw std::runtime_error("Cannot submit graphics command buffer!");
         }
 
@@ -359,7 +359,7 @@ namespace Vulf {
         presentInfo.sType = VK_STRUCTURE_TYPE_PRESENT_INFO_KHR;
         presentInfo.waitSemaphoreCount = 1;
         presentInfo.pWaitSemaphores = &m_RenderFinishedSemaphores[m_CurrentFrame].get_handle();
-        VkSwapchainKHR swapChains[] = {baseSwapchain.get_handle()};
+        VkSwapchainKHR swapChains[] = { baseSwapchain.get_handle() };
         presentInfo.swapchainCount = 1;
         presentInfo.pSwapchains = swapChains;
         presentInfo.pImageIndices = &m_ImageIndex;
@@ -369,16 +369,16 @@ namespace Vulf {
 #endif
         result = vkQueuePresentKHR(Device::Get()->get_present_queue(), &presentInfo);
 
-        if(result == VK_ERROR_OUT_OF_DATE_KHR || result == VK_SUBOPTIMAL_KHR || m_Window->IsResized()) {
+        if (result == VK_ERROR_OUT_OF_DATE_KHR || result == VK_SUBOPTIMAL_KHR || m_Window->IsResized()) {
             m_Window->SetResizedFalse();
             RecreateSwapchain();
             return;
         }
-        else if(result != VK_SUCCESS) {
+        else if (result != VK_SUCCESS) {
             throw std::runtime_error("Cannot submit presentation queue!");
         }
 
-        m_CurrentFrame = (m_CurrentFrame + 1 ) % MAX_FRAMES_IN_FLIGHT;
+        m_CurrentFrame = (m_CurrentFrame + 1) % MAX_FRAMES_IN_FLIGHT;;
     }
     ////////////////////////////////////////////////////////////////////////////
 
@@ -431,7 +431,7 @@ namespace Vulf {
     }
 
     void VulfBase::RecreateSwapchain() {
-        ZoneScopedC(0xff00ff);
+        //ZoneScopedC(0xff00ff);
         VK_LOG_SUCCESS("Recreating Swapchain..........");
 
         vkDeviceWaitIdle(VKDEVICE);

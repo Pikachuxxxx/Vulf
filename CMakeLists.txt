@@ -10,6 +10,14 @@ set_property(GLOBAL PROPERTY USE_FOLDERS ON)
 set_property(GLOBAL PROPERTY PREDEFINED_TARGETS_FOLDER "_CMakePredefinedTargets")
 # Set the startup project - HelloTriangle
 set_property(DIRECTORY ${CMAKE_CURRENT_SOURCE_DIR} PROPERTY VS_STARTUP_PROJECT HelloTriangle)
+
+if (CMAKE_CXX_COMPILER_ID MATCHES "MSVC")
+  set(CMAKE_CXX_FLAGS_DEBUG "/ZI")
+  set(CMAKE_SHARED_LINKER_FLAGS "/SAFESEH:NO")
+  set(CMAKE_EXE_LINKER_FLAGS "/SAFESEH:NO")
+  set(CMAKE_EXE_LINKER_FLAGS "${CMAKE_EXE_LINKER_FLAGS} /INCREMENTAL:YES" )
+endif()
+
 #===============================================================================
 # TODO: Download the necesary assets here
 #===============================================================================
@@ -218,7 +226,6 @@ if(WIN32)
 target_link_libraries(Vulf glfw3 vulkan-1)
 endif()
 #===============================================================================
-
 # now build the examples
 # HACK: Just try building hello triangle then make it dynamics to build all exaples with source dependency
 file(GLOB_RECURSE EXAMPLE_SOURCE_FILES
@@ -234,7 +241,6 @@ foreach(source IN LISTS EXAMPLE_SOURCE_FILES)
     add_executable(${FILENAME} ${source})
     target_link_libraries(${FILENAME} Vulf)
     add_dependencies(${FILENAME} Vulf)
-
     if(APPLE) # Used only with makefiles cause VS can handle this
         # Run the binary built using 'make run' command
         add_custom_target("${FILENAME}.run"
@@ -246,6 +252,7 @@ foreach(source IN LISTS EXAMPLE_SOURCE_FILES)
     # Set the output directory for the examples build separately
     set_target_properties(${FILENAME} PROPERTIES RUNTIME_OUTPUT_DIRECTORY ${CMAKE_CURRENT_BINARY_DIR}/examples)
     set_target_properties(${FILENAME} PROPERTIES FOLDER "examples")
+
 endforeach()
 
 #===============================================================================
