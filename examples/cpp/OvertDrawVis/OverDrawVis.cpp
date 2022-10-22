@@ -31,8 +31,8 @@ public:
 
     ~VulfOverDrawVis() {
         VK_LOG("Quitting...");
-        defaultVertShader.DestroyModule();
-        defaultFragShader.DestroyModule();
+        defaultVertShader.Destroy();
+        defaultFragShader.Destroy();
     }
 
     // Types
@@ -66,7 +66,7 @@ private:
 
     Framebuffer             simpleFrameBuffer;
 
-    using ShaderStage = std::vector<VkPipelineShaderStageCreateInfo>;
+    using ShaderStages = std::vector<VkPipelineShaderStageCreateInfo>;
     // Shaders
     Shader                  defaultVertShader;
     Shader                  defaultFragShader;
@@ -74,8 +74,8 @@ private:
     Shader                  quadVertShader;
     Shader                  quadFragImgShader;
 
-    ShaderStage             subdivisionShaders;
-    ShaderStage             quadShaders;
+    ShaderStages             subdivisionShaders;
+    ShaderStages             quadShaders;
 
     // Buffers
     UniformBuffer           helloTriangleUBO;
@@ -104,17 +104,17 @@ private:
     void LoadShaders() override {
 
         // Default shaders
-        defaultVertShader.CreateShader((SHADER_BINARY_DIR)+std::string("/defaultVert.spv"), ShaderType::VERTEX_SHADER);
-        defaultFragShader.CreateShader((SHADER_BINARY_DIR)+std::string("/defaultFrag.spv"), ShaderType::FRAGMENT_SHADER);
+        defaultVertShader.Init((SHADER_BINARY_DIR)+std::string("/defaultVert.spv"), ShaderType::VERTEX_SHADER);
+        defaultFragShader.Init((SHADER_BINARY_DIR)+std::string("/defaultFrag.spv"), ShaderType::FRAGMENT_SHADER);
 
-        quadVertShader.CreateShader((SHADER_BINARY_DIR)+std::string("/quadVert.spv"), ShaderType::VERTEX_SHADER);
-        quadFragImgShader.CreateShader((SHADER_BINARY_DIR)+std::string("/overdrawvis.spv"), ShaderType::FRAGMENT_SHADER);
+        quadVertShader.Init((SHADER_BINARY_DIR)+std::string("/quadVert.spv"), ShaderType::VERTEX_SHADER);
+        quadFragImgShader.Init((SHADER_BINARY_DIR)+std::string("/overdrawvis.spv"), ShaderType::FRAGMENT_SHADER);
 
-        subdivisionShaders.push_back(defaultVertShader.GetShaderStageInfo());
-        subdivisionShaders.push_back(defaultFragShader.GetShaderStageInfo());
+        subdivisionShaders.push_back(defaultVertShader.get_shader_stage_info());
+        subdivisionShaders.push_back(defaultFragShader.get_shader_stage_info());
 
-        quadShaders.push_back(quadVertShader.GetShaderStageInfo());
-        quadShaders.push_back(quadFragImgShader.GetShaderStageInfo());
+        quadShaders.push_back(quadVertShader.get_shader_stage_info());
+        quadShaders.push_back(quadFragImgShader.get_shader_stage_info());
 
     }
 

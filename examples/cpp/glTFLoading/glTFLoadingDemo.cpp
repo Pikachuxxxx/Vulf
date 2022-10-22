@@ -67,11 +67,11 @@ private:
 
     CmdBuffer               simpleCommandBuffer;
 
-    using ShaderStage = std::vector<VkPipelineShaderStageCreateInfo>;
+    using ShaderStages = std::vector<VkPipelineShaderStageCreateInfo>;
     // Shaders
     Shader                  cubeVertShader;
     Shader                  cubeFragShader;
-    ShaderStage             cubeShaders;
+    ShaderStages             cubeShaders;
 
     // Buffers
     UniformBuffer           helloTriangleUBO;

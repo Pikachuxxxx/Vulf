@@ -6,18 +6,18 @@
 #include "Device.h"
 #include "../utils/VulkanCheckResult.h"
 
-void Shader::CreateShader(const std::string& path, ShaderType type)
+void Shader::Init(const std::string& path, ShaderType type)
 {
     m_ShaderType = type;
     VkShaderModuleCreateInfo shaderCI{};
     shaderCI.sType = VK_STRUCTURE_TYPE_SHADER_MODULE_CREATE_INFO;
-    std::vector<char> byteCode = ReadShaderByteCode(path);
+    std::vector<char> byteCode = read_shader_byte_code(path);
     shaderCI.codeSize = byteCode.size();
     shaderCI.pCode = reinterpret_cast<uint32_t*>(byteCode.data());
 
     if(VK_CALL(vkCreateShaderModule(VKDEVICE, &shaderCI, nullptr, &m_Module)))
         throw std::runtime_error("Cannot Create shader module!");
-    else VK_LOG(GetShaderTypeString(), "shader module created!");
+    else VK_LOG(get_shader_type_string(), "shader module created!");
 
     // Create the pipeline shader stage create info
     m_ShaderStageInfo = {};
@@ -50,12 +50,12 @@ void Shader::CreateShader(const std::string& path, ShaderType type)
     m_ShaderStageInfo.pSpecializationInfo = nullptr;
 }
 
-void Shader::DestroyModule()
+void Shader::Destroy()
 {
     vkDestroyShaderModule(VKDEVICE, m_Module, nullptr);
 }
 
-std::string Shader::GetShaderTypeString()
+std::string Shader::get_shader_type_string()
 {
     switch (m_ShaderType) {
         case ShaderType::VERTEX_SHADER :
@@ -81,7 +81,7 @@ std::string Shader::GetShaderTypeString()
     }
 }
 
-std::vector<char> Shader::ReadShaderByteCode(const std::string& filePath)
+std::vector<char> Shader::read_shader_byte_code(const std::string& filePath)
 {
     std::ifstream file(filePath, std::ios::ate | std::ios::binary);
 

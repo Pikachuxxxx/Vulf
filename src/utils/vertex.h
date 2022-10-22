@@ -30,15 +30,22 @@ namespace std {
         }
     };
 }
-
+// Just some utility vertex/index data
 static const std::vector<Vertex> rainbowTriangleVertices = {
     {{-0.50f,  0.50f, 0.0f}, {1.0f, 0.0f, 0.0f}, {0.0f, 0.0f}, {1.0f, 0.0f, 0.0f},},
     {{ 0.00f, -0.50f, 0.0f}, {0.0f, 1.0f, 0.0f}, {1.0f, 0.0f}, {0.0f, 1.0f, 0.0f},},
     {{ 0.50f,  0.50f, 0.0f}, {0.0f, 0.0f, 1.0f}, {1.0f, 1.0f}, {0.0f, 0.0f, 1.0f}}
 };
 
-static const std::vector<uint16_t> rainbowTriangleIndices = {
-    0, 1, 2, 3, 0
+static const std::vector<Vertex> planeVertices = {
+    {{-1.0f, 2.0f, -1.0f}, {0.0f, 1.0f, 0.0f}, {0.0f, 0.0f}, {1.0f, 0.0f, 0.0f},},
+    {{1.0f,  2.0f, -1.0f}, {0.0f, 1.0f, 0.0f}, {1.0f, 0.0f}, {0.0f, 1.0f, 0.0f},},
+    {{1.0f,  2.0f,  1.0f}, {0.0f, 1.0f, 0.0f}, {1.0f, 1.0f}, {0.0f, 0.0f, 1.0f},},
+    {{-1.0f, 2.0f,  1.0f}, {0.0f, 1.0f, 0.0f}, {0.0f, 1.0f}, {1.0f, 1.0f, 1.0f}}
+};
+
+static const std::vector<uint16_t> planeIndices = {
+    0, 3, 2, 2, 1, 0
 };
 
 static const std::vector<Vertex> whiteQuadVertices = {
@@ -49,5 +56,5 @@ static const std::vector<Vertex> whiteQuadVertices = {
 };
 
 static const std::vector<uint16_t> whiteQuadIndices = {
-    0, 1, 2, 2, 3, 0
+    0, 3, 2, 2, 1, 0
 };

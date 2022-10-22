@@ -68,7 +68,7 @@ private:
 
     Framebuffer             simpleFrameBuffer;
 
-    using ShaderStage = std::vector<VkPipelineShaderStageCreateInfo>;
+    using ShaderStages = std::vector<VkPipelineShaderStageCreateInfo>;
     // Shaders
 
 
@@ -76,7 +76,7 @@ private:
     Shader                  quadFragImgShader;
     Shader                  mandlebrotShader;
 
-    ShaderStage             quadShaders;
+    ShaderStages             quadShaders;
 
     // Buffers
     UniformBuffer           helloTriangleUBO;
@@ -107,13 +107,13 @@ private:
 
         // Default shaders
 
-        quadVertShader.CreateShader((SHADER_BINARY_DIR)+std::string("/quadVert.spv"), ShaderType::VERTEX_SHADER);
-        quadFragImgShader.CreateShader((SHADER_BINARY_DIR)+std::string("/quadFragImg2D.spv"), ShaderType::FRAGMENT_SHADER);
+        quadVertShader.Init((SHADER_BINARY_DIR)+std::string("/quadVert.spv"), ShaderType::VERTEX_SHADER);
+        quadFragImgShader.Init((SHADER_BINARY_DIR)+std::string("/quadFragImg2D.spv"), ShaderType::FRAGMENT_SHADER);
 
-        mandlebrotShader.CreateShader((SHADER_BINARY_DIR)+std::string("/mandlebrot.spv"), ShaderType::COMPUTE_SHADER);
+        mandlebrotShader.Init((SHADER_BINARY_DIR)+std::string("/mandlebrot.spv"), ShaderType::COMPUTE_SHADER);
 
-        quadShaders.push_back(quadVertShader.GetShaderStageInfo());
-        quadShaders.push_back(quadFragImgShader.GetShaderStageInfo());
+        quadShaders.push_back(quadVertShader.get_shader_stage_info());
+        quadShaders.push_back(quadFragImgShader.get_shader_stage_info());
     }
 
     void BuildTextureResources() override {

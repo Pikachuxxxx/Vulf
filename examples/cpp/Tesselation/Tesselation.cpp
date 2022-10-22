@@ -28,8 +28,8 @@ public:
 
     ~VulfTesselation() {
         VK_LOG("Quitting...");
-        defaultVertShader.DestroyModule();
-        defaultFragShader.DestroyModule();
+        defaultVertShader.Destroy();
+        defaultFragShader.Destroy();
     }
 
     // Types
@@ -62,13 +62,13 @@ private:
 
     Framebuffer             simpleFrameBuffer;
 
-    using ShaderStage = std::vector<VkPipelineShaderStageCreateInfo>;
+    using ShaderStages = std::vector<VkPipelineShaderStageCreateInfo>;
     // Shaders
     Shader                  defaultVertShader;
     Shader                  defaultFragShader;
     Shader                  subdivtesscShader;
     Shader                  subdivtesseShader;
-    ShaderStage             subdivisionShaders;
+    ShaderStages             subdivisionShaders;
 
     // Buffers
     UniformBuffer           helloTriangleUBO;
@@ -84,17 +84,17 @@ private:
     void LoadShaders() override {
 
         // Default shaders
-        defaultVertShader.CreateShader((SHADER_BINARY_DIR)+std::string("/defaultVert.spv"), ShaderType::VERTEX_SHADER);
-        defaultFragShader.CreateShader((SHADER_BINARY_DIR)+std::string("/defaultFrag.spv"), ShaderType::FRAGMENT_SHADER);
+        defaultVertShader.Init((SHADER_BINARY_DIR)+std::string("/defaultVert.spv"), ShaderType::VERTEX_SHADER);
+        defaultFragShader.Init((SHADER_BINARY_DIR)+std::string("/defaultFrag.spv"), ShaderType::FRAGMENT_SHADER);
         VK_ERROR("Breakpoint at line : ", __LINE__, __FILE__);
-        subdivtesscShader.CreateShader((SHADER_BINARY_DIR)+std::string("/subdivideTriangleTesc.spv"), ShaderType::TESSELATION_CONTROL_SHADER);
+        subdivtesscShader.Init((SHADER_BINARY_DIR)+std::string("/subdivideTriangleTesc.spv"), ShaderType::TESSELATION_CONTROL_SHADER);
         VK_ERROR("Breakpoint at line : ", __LINE__, __FILE__);
-        subdivtesseShader.CreateShader((SHADER_BINARY_DIR)+std::string("/subdivideTriangleTese.spv"), ShaderType::TESSELATION_EVALUATION_SHADER);
+        subdivtesseShader.Init((SHADER_BINARY_DIR)+std::string("/subdivideTriangleTese.spv"), ShaderType::TESSELATION_EVALUATION_SHADER);
         // For some reason this order is important
-        subdivisionShaders.push_back(defaultVertShader.GetShaderStageInfo());
-        subdivisionShaders.push_back(defaultFragShader.GetShaderStageInfo());
-        subdivisionShaders.push_back(subdivtesscShader.GetShaderStageInfo());
-        subdivisionShaders.push_back(subdivtesseShader.GetShaderStageInfo());
+        subdivisionShaders.push_back(defaultVertShader.get_shader_stage_info());
+        subdivisionShaders.push_back(defaultFragShader.get_shader_stage_info());
+        subdivisionShaders.push_back(subdivtesscShader.get_shader_stage_info());
+        subdivisionShaders.push_back(subdivtesseShader.get_shader_stage_info());
 
     }
 

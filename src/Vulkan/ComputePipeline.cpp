@@ -9,7 +9,7 @@ void ComputePipeline::Init(Shader computeShader, VkPipelineLayout layout)
     VkComputePipelineCreateInfo pipelineCI = {
         .sType = VK_STRUCTURE_TYPE_COMPUTE_PIPELINE_CREATE_INFO,
         .pNext = nullptr,
-        .stage = computeShader.GetShaderStageInfo(),
+        .stage = computeShader.get_shader_stage_info(),
         .layout = layout
     };
 

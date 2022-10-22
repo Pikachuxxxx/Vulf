@@ -28,8 +28,8 @@ public:
 
     ~VulfHelloTriangle() {
         VK_LOG("Quitting...");
-        defaultVertShader.DestroyModule();
-        defaultFragShader.DestroyModule();
+        defaultVertShader.Destroy();
+        defaultFragShader.Destroy();
     }
 
     // Types
@@ -62,11 +62,11 @@ private:
 
     Framebuffer             simpleFrameBuffer;
 
-    using ShaderStage = std::vector<VkPipelineShaderStageCreateInfo>;
+    using ShaderStages = std::vector<VkPipelineShaderStageCreateInfo>;
     // Shaders
     Shader                  defaultVertShader;
     Shader                  defaultFragShader;
-    ShaderStage             defaultShaders;
+    ShaderStages             defaultShaders;
 
     // Buffers
     VertexBuffer            helloTriangleVBO;
@@ -83,10 +83,10 @@ private:
     {
 
         // Default shaders
-        defaultVertShader.CreateShader((SHADER_BINARY_DIR) + std::string("/defaultVert.spv"), ShaderType::VERTEX_SHADER);
-        defaultFragShader.CreateShader((SHADER_BINARY_DIR) + std::string("/defaultFrag.spv"), ShaderType::FRAGMENT_SHADER);
-        defaultShaders.push_back(defaultVertShader.GetShaderStageInfo());
-        defaultShaders.push_back(defaultFragShader.GetShaderStageInfo());
+        defaultVertShader.Init((SHADER_BINARY_DIR) + std::string("/defaultVert.spv"), ShaderType::VERTEX_SHADER);
+        defaultFragShader.Init((SHADER_BINARY_DIR) + std::string("/defaultFrag.spv"), ShaderType::FRAGMENT_SHADER);
+        defaultShaders.push_back(defaultVertShader.get_shader_stage_info());
+        defaultShaders.push_back(defaultFragShader.get_shader_stage_info());
     }
 
     void BuildTextureResources() override

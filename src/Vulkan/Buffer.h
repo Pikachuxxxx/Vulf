@@ -31,7 +31,6 @@ public:
     static void clear();
 };
 
-// TODO: Add buffer memory barriers when using staging buffer
 class Buffer
 {
 public:

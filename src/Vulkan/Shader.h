@@ -7,9 +7,8 @@
 enum ShaderType
 {
     VERTEX_SHADER = VK_SHADER_STAGE_VERTEX_BIT,
-    // GEOMETRY_SHADER,
-    // TESSELATION_SHADER,
     FRAGMENT_SHADER = VK_SHADER_STAGE_FRAGMENT_BIT,
+    //GEOMETRY_SHADER = VK_SHADER_STAGE_GEOMETRY_BIT,
     COMPUTE_SHADER = VK_SHADER_STAGE_COMPUTE_BIT,
     TASK_SHADER = VK_SHADER_STAGE_TASK_BIT_NV,
     MESH_SHADER = VK_SHADER_STAGE_MESH_BIT_NV,
@@ -21,15 +20,18 @@ class Shader
 {
 public:
     Shader() = default;
-    void CreateShader(const std::string& path, ShaderType type);
-    void DestroyModule();
-    const VkShaderModule& GetModule() { return m_Module; }
-    const VkPipelineShaderStageCreateInfo& GetShaderStageInfo() { return m_ShaderStageInfo; }
-    std::string GetShaderTypeString();
+    void Init(const std::string& path, ShaderType type);
+    void Destroy();
+
+
+    const VkShaderModule& get_handle() { return m_Module; }
+    const VkPipelineShaderStageCreateInfo& get_shader_stage_info() { return m_ShaderStageInfo; }
+    std::string get_shader_type_string();
+
 private:
-    VkShaderModule m_Module;
-    ShaderType m_ShaderType;
+    VkShaderModule                  m_Module;
+    ShaderType                      m_ShaderType;
     VkPipelineShaderStageCreateInfo m_ShaderStageInfo;
 private:
-    std::vector<char> ReadShaderByteCode(const std::string& filePath);
+    std::vector<char> read_shader_byte_code(const std::string& filePath);
 };

@@ -76,11 +76,11 @@ private:
 
     Framebuffer             simpleFrameBuffer;
 
-    using ShaderStage = std::vector<VkPipelineShaderStageCreateInfo>;
+    using ShaderStages = std::vector<VkPipelineShaderStageCreateInfo>;
     // Shaders
     Shader                  meshShader;
     Shader                  meshPixelShader;
-    ShaderStage             meshShadersStages;
+    ShaderStages             meshShadersStages;
 
 private:
     void LoadShaders() override
@@ -88,10 +88,10 @@ private:
         VK_ERROR("Testing this");
 
         // Default shaders
-        meshShader.CreateShader((SHADER_BINARY_DIR) + std::string("/mesh_shader_mesh.spv"), ShaderType::MESH_SHADER);
-        meshPixelShader.CreateShader((SHADER_BINARY_DIR) + std::string("/mesh_shader_frag.spv"), ShaderType::FRAGMENT_SHADER);
-        meshShadersStages.push_back(meshShader.GetShaderStageInfo());
-        meshShadersStages.push_back(meshPixelShader.GetShaderStageInfo());
+        meshShader.Init((SHADER_BINARY_DIR) + std::string("/mesh_shader_mesh.spv"), ShaderType::MESH_SHADER);
+        meshPixelShader.Init((SHADER_BINARY_DIR) + std::string("/mesh_shader_frag.spv"), ShaderType::FRAGMENT_SHADER);
+        meshShadersStages.push_back(meshShader.get_shader_stage_info());
+        meshShadersStages.push_back(meshPixelShader.get_shader_stage_info());
     }
 
     void BuildTextureResources() override
