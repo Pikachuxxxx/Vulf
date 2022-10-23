@@ -35,7 +35,7 @@ static void LoadObjModel(const std::string& path, std::vector<Vertex>& vertices,
 
             vertex.position = {
                 attrib.vertices[3 * index.vertex_index + 0],
-                -attrib.vertices[3 * index.vertex_index + 1],
+                attrib.vertices[3 * index.vertex_index + 1],
                 attrib.vertices[3 * index.vertex_index + 2]
             };
 
@@ -93,7 +93,7 @@ static Mesh LoadObjModel(const std::string& path)
 
             vertex.position = {
                 attrib.vertices[3 * index.vertex_index + 0],
-                -attrib.vertices[3 * index.vertex_index + 1],
+                attrib.vertices[3 * index.vertex_index + 1],
                 attrib.vertices[3 * index.vertex_index + 2]
             };
 

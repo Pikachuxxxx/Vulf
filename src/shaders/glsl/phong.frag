@@ -12,11 +12,11 @@ layout(location = 0) out vec4 outColor;
 
 layout(set = 0, binding = 1) uniform LightingDataUBO
 {
-     vec3 direction;
-     vec3 ambient;
-     vec3 diffuse;
-     vec3 specular;
-     vec3 viewPos;
+    vec4 direction;
+    vec4 ambient;
+    vec4 diffuse;
+    vec4 specular;
+    vec4 viewPos;
 }light;
 
 void main() {
@@ -28,22 +28,23 @@ void main() {
     //------------------------------------------
 
     // Ambient lighting
-    vec3 ambient = light.ambient * 0.25;
+    vec3 ambient = light.ambient.rgb;
 
     // Diffuse Lighting
     vec3 normal = normalize(vs_in.Normal);
-    vec3 lightDir = normalize(-light.direction);
+    vec3 lightDir = normalize(-light.direction.rgb);
     float diff = max(dot(normal, lightDir), 0.0f);
-    vec3 diffuse = light.diffuse * diff;
+    vec3 diffuse = light.diffuse.rgb * diff;
 
     // Specular shading
-    vec3 viewDir = normalize(light.viewPos - vs_in.FragPos.xyz);
+    vec3 viewDir = normalize(light.viewPos.xyz - vs_in.FragPos.xyz);
     vec3 reflectDir = reflect(-lightDir, normal);
-    float spec = pow(max(dot(viewDir, reflectDir), 0.0f), 32);
-    vec3 specular = light.specular * spec ;
+    float spec = pow(max(dot(viewDir, reflectDir), 0.0f), 64);
+    vec3 specular = light.specular.rgb * spec ;
 
     // Emission shading
     // Calculate the final lighting color
-    vec3 result = (ambient + diffuse + specular);
+    vec3 result = ambient + diffuse + specular;
     outColor = vec4(result, 1.0f);
+
 }

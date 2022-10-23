@@ -21,7 +21,7 @@ std::vector<const char*> g_DeviceExtensions = {
 
 using namespace Vulf;
 
-// TODO: 
+// TODO:
 // [ ] Compute Command Buffer + Pool
 // [ ] Compute Queue submission (no need to sync their submit operations we do them asynchronously and use mem barriers for the resources)
 
@@ -32,6 +32,8 @@ public:
     {
         LoadObjModel((SRC_DIR)+std::string("/data/models/stanford-bunny.obj"), stanford_bunnyVertices, stanford_bunnyIndices);
         knotMesh = LoadObjModel((SRC_DIR)+std::string("/data/models/knot.obj"));
+
+        GenerateSphereSmooth(5, 10, 10);
     }
 
     ~VulfLightingTest() {
@@ -54,10 +56,10 @@ private:
 
     struct DirectionalLightingData
     {
-        glm::vec3 direction = glm::vec3(1.0f);
-        glm::vec3 ambient = glm::vec3(1.0f);
-        glm::vec3 diffuse = glm::vec3(1.0f);
-        glm::vec3 specular = glm::vec3(1.0f);
+        glm::vec4 direction = glm::vec4(1.0f);
+        glm::vec4 ambient   = glm::vec4(glm::vec3(0.15), 1.0f);
+        glm::vec4 diffuse   = glm::vec4(0.94, 0.1 , 0.14, 1.0f);
+        glm::vec4 specular  = glm::vec4(0.0f, 1.0f, 0.0f, 1.0f);
         glm::vec4 viewPos;
     }dirLightData;
 
@@ -255,7 +257,6 @@ private:
 
         knotVB.bind(dcb.get_handle());
         modelPCData.model = glm::scale(glm::mat4(1.0f), glm::vec3(0.01f));
-        modelPCData.model *= glm::rotate(glm::mat4(1.0f), glm::radians(180.0f), glm::vec3(0.0f, 0.0f, 1.0f));
         vkCmdPushConstants(dcb.get_handle(), lightingFixedFunctions.GetPipelineLayout(), VK_SHADER_STAGE_VERTEX_BIT | VK_SHADER_STAGE_FRAGMENT_BIT, 0, sizeof(ModelPushConstant), &modelPCData);
         for (auto& part : knotMesh.parts)
             vkCmdDraw(dcb.get_handle(), part.VertexCount, 1, part.VertexOffset, 0);
@@ -299,6 +300,10 @@ private:
         {
             ImGui::Text("FPS: %d | Avg : %d | Max : %d | Min : %d", get_fps(), avgFPS, maxFPS, minFPS);
             ImGui::Text("Descriptor Set Allocations : %d", DescriptorSet::get_current_set_allocations());
+
+            ImGui::Separator();
+
+            ImGui::DragFloat3("Light Direction", glm::value_ptr(dirLightData.direction));
         }
         ImGui::End();
 

@@ -319,7 +319,7 @@ private:
 
         vpUBOData.view = getCamera().GetViewMatrix();
         vpUBOData.proj = glm::perspective(glm::radians(someNum), (float)baseSwapchain.get_extent().width / baseSwapchain.get_extent().height, 0.01f, 100.0f);
-        //vpUBOData.proj[1][1] *= -1;
+        vpUBOData.proj[1][1] *= -1;
 
         helloTriangleUBO.update_buffer(&vpUBOData, sizeof(ViewProjectionUBOData));
     }
