@@ -41,7 +41,7 @@ public:
     float Zoom;
 public:
     // Constructor with vectors
-    Camera3D(glm::vec3 position = glm::vec3(0.0f, -5.0f, 2.0f), glm::vec3 up = glm::vec3(0.0f, 1.0f, 0.0f), float yaw = YAW, float pitch = PITCH);
+    Camera3D(glm::vec3 position = glm::vec3(3.5f, 2.6f, 4.3f), glm::vec3 up = glm::vec3(0.0f, 1.0f, 0.0f), float yaw = -130, float pitch = -22);
     // Constructor with scalar values
     Camera3D(float posX, float posY, float posZ, float upX, float upY, float upZ, float yaw, float pitch);
     // Update the camera movement in the world space

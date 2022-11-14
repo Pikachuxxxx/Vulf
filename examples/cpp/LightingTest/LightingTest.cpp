@@ -21,17 +21,12 @@ std::vector<const char*> g_DeviceExtensions = {
 
 using namespace Vulf;
 
-// TODO:
-// [ ] Compute Command Buffer + Pool
-// [ ] Compute Queue submission (no need to sync their submit operations we do them asynchronously and use mem barriers for the resources)
-
 class VulfLightingTest : public Vulf::VulfBase
 {
 public:
     VulfLightingTest() : VulfBase("Lighting Test")
     {
-        LoadObjModel((SRC_DIR)+std::string("/data/models/stanford-bunny.obj"), stanford_bunnyVertices, stanford_bunnyIndices);
-        knotMesh = LoadObjModel((SRC_DIR)+std::string("/data/models/knot.obj"));
+        teapotMesh = LoadObjModel((SRC_DIR)+std::string("/data/models/teapot.obj"));
 
         GenerateSphereSmooth(5, 10, 10);
     }
@@ -57,9 +52,9 @@ private:
     struct DirectionalLightingData
     {
         glm::vec4 direction = glm::vec4(1.0f);
-        glm::vec4 ambient   = glm::vec4(glm::vec3(0.15), 1.0f);
+        glm::vec4 ambient   = glm::vec4(glm::vec3(0.015), 1.0f);
         glm::vec4 diffuse   = glm::vec4(0.94, 0.1 , 0.14, 1.0f);
-        glm::vec4 specular  = glm::vec4(0.0f, 1.0f, 0.0f, 1.0f);
+        glm::vec4 specular  = glm::vec4(1.0f);
         glm::vec4 viewPos;
     }dirLightData;
 
@@ -89,17 +84,12 @@ private:
     UniformBuffer           vpUBO;
     UniformBuffer           lightingUBO;
 
-    VertexBuffer            planeVB;
-    IndexBuffer             planeIB;
+    VertexBuffer            cubeVB;
 
-    Mesh                    knotMesh;
-    VertexBuffer            knotVB;
+    Mesh                    teapotMesh;
+    VertexBuffer            teapotVB;
 
-    std::vector<Vertex>     stanford_bunnyVertices;
-    std::vector<uint16_t>   stanford_bunnyIndices;
-
-    VertexBuffer            stanford_bunnyVB;
-    IndexBuffer             stanford_bunnyIB;
+    Texture                 skyboxTexture;
 
     std::vector<DescriptorSet>           set_per_frame;
 private:
@@ -107,43 +97,50 @@ private:
 
         // Default shaders
 
-        defaultVertShader.Init((SHADER_BINARY_DIR)+std::string("/defaultVert.spv"), ShaderType::VERTEX_SHADER);
-        phongLightingShader.Init((SHADER_BINARY_DIR)+std::string("/phong.spv"), ShaderType::FRAGMENT_SHADER);
+        defaultVertShader.Init((SHADER_BINARY_DIR)+std::string("/skybox.vert.spv"), ShaderType::VERTEX_SHADER);
+        phongLightingShader.Init((SHADER_BINARY_DIR)+std::string("/skybox.frag.spv"), ShaderType::FRAGMENT_SHADER);
 
         lightingShaderStages.push_back(defaultVertShader.get_shader_stage_info());
         lightingShaderStages.push_back(phongLightingShader.get_shader_stage_info());
     }
 
     void BuildTextureResources() override {
+
+        skyboxTexture.Init((SRC_DIR)+std::string("/data/textures/HDR/table_mountain.hdr"));
+
         // default
         depthImage.CreateDepthImage(baseSwapchain.get_extent().width, baseSwapchain.get_extent().height, graphicsCommandPool);
     }
 
     void BuildBufferResource() override {
 
-        vpUBO.Init(sizeof(ViewProjectionUBOData));
-        lightingUBO.Init(sizeof(DirectionalLightingData));
+        // Shader buffer resources
+        {
+            vpUBO.Init(sizeof(ViewProjectionUBOData));
+            // lightingUBO.Init(sizeof(DirectionalLightingData));
+        }
 
-        // Quad VB & IB
-        planeVB.Init(planeVertices);
-        planeIB.Init(planeIndices);
+        // Meshes
+        {
+            // Quad VB & IB
+            cubeVB.Init(cubeVertices);
 
-        stanford_bunnyVB.Init(stanford_bunnyVertices);
-        stanford_bunnyIB.Init(stanford_bunnyIndices);
+            teapotVB.Init(teapotMesh.vertices);
+        }
 
-        knotVB.Init(knotMesh.vertices);
+        // Descriptors bindings info and resouce mapping
+        {
+            DescriptorInfo vpuboInfo(DescriptorType::UNIFORM_BUFFER, 0, ShaderType::VERTEX_SHADER);
+            vpuboInfo.attach_resource<UniformBuffer>(&vpUBO);
 
-        DescriptorInfo vpuboInfo(DescriptorType::UNIFORM_BUFFER, 0, ShaderType::VERTEX_SHADER);
-        vpuboInfo.attach_resource<UniformBuffer>(&vpUBO);
-
-        DescriptorInfo lightuboInfo(DescriptorType::UNIFORM_BUFFER, 1, ShaderType::FRAGMENT_SHADER);
-        lightuboInfo.attach_resource<UniformBuffer>(&lightingUBO);
+            DescriptorInfo skyboxTexInfo(DescriptorType::COMBINED_IMAGE_SAMPLER, 1, ShaderType::FRAGMENT_SHADER);
+            skyboxTexInfo.attach_resource<Texture>(&skyboxTexture);
 
 
-        set_per_frame.clear();
-        set_per_frame.resize(3);
-        for (size_t i = 0; i < 3; i++) {
-            set_per_frame[i].Init({ vpuboInfo, lightuboInfo });
+            set_per_frame.clear();
+            set_per_frame.resize(3);
+            for (size_t i = 0; i < 3; i++)
+                set_per_frame[i].Init({ vpuboInfo, skyboxTexInfo });
         }
     }
 
@@ -178,12 +175,9 @@ private:
         simpleFrameBuffer.Destroy();
         depthImage.Destroy();
         vpUBO.Destroy();
-        lightingUBO.Destroy();
-        planeVB.Destroy();
-        planeIB.Destroy();
-        knotVB.Destroy();
-        stanford_bunnyVB.Destroy();
-        stanford_bunnyIB.Destroy();
+        // lightingUBO.Destroy();
+        cubeVB.Destroy();
+        teapotVB.Destroy();
         lightingPipeline.Destroy();
     }
 
@@ -243,22 +237,21 @@ private:
         auto vk_pp_set = set_per_frame[get_frame_idx()].get_set();
         vkCmdBindDescriptorSets(dcb.get_handle(), VK_PIPELINE_BIND_POINT_GRAPHICS, lightingFixedFunctions.GetPipelineLayout(), 0, 1, &vk_pp_set, 0, nullptr);
 
-        planeVB.bind(dcb.get_handle());
-        planeIB.bind(dcb.get_handle());
+        cubeVB.bind(dcb.get_handle());
 
         modelPCData.model = glm::scale(glm::mat4(1.0f), glm::vec3(1.0f));
         vkCmdPushConstants(dcb.get_handle(), lightingFixedFunctions.GetPipelineLayout(), VK_SHADER_STAGE_VERTEX_BIT | VK_SHADER_STAGE_FRAGMENT_BIT, 0, sizeof(ModelPushConstant), &modelPCData);
 
-        INSERT_MARKER(dcb, "Draw Plane", glm::vec4(0.2f));
+        INSERT_MARKER(dcb, "Draw Cube", glm::vec4(0.2f));
         // Draw stuff
-        vkCmdDrawIndexed(dcb.get_handle(), 6, 1, 0, 0, 0);
+        vkCmdDraw(dcb.get_handle(), 36, 1, 0, 0);
 
-        INSERT_MARKER(dcb, "Draw Knot", glm::vec4(0.2, 0.6f, 0.4f, 1.0f));
+        INSERT_MARKER(dcb, "Draw", glm::vec4(0.2, 0.6f, 0.4f, 1.0f));
 
-        knotVB.bind(dcb.get_handle());
+        teapotVB.bind(dcb.get_handle());
         modelPCData.model = glm::scale(glm::mat4(1.0f), glm::vec3(0.01f));
         vkCmdPushConstants(dcb.get_handle(), lightingFixedFunctions.GetPipelineLayout(), VK_SHADER_STAGE_VERTEX_BIT | VK_SHADER_STAGE_FRAGMENT_BIT, 0, sizeof(ModelPushConstant), &modelPCData);
-        for (auto& part : knotMesh.parts)
+        for (auto& part : teapotMesh.parts)
             vkCmdDraw(dcb.get_handle(), part.VertexCount, 1, part.VertexOffset, 0);
 
         BEGIN_MARKER(dcb, "ImGui Pass", glm::vec4(0.94, 0.16, 0.08, 1.0f));
@@ -286,10 +279,10 @@ private:
         vpUBOData.proj[1][1] *= -1;
 
         vpUBO.update_buffer(&vpUBOData, sizeof(ViewProjectionUBOData));
-
-        // Update Lighting Data
-        dirLightData.viewPos = glm::vec4(getCamera().Position, 1.0f);
-        lightingUBO.update_buffer(&dirLightData, sizeof(DirectionalLightingData));
+        //
+        // // Update Lighting Data
+        // dirLightData.viewPos = glm::vec4(getCamera().Position, 1.0f);
+        // lightingUBO.update_buffer(&dirLightData, sizeof(DirectionalLightingData));
     }
 
     void OnImGui() override
@@ -304,6 +297,7 @@ private:
             ImGui::Separator();
 
             ImGui::DragFloat3("Light Direction", glm::value_ptr(dirLightData.direction));
+            ImGui::Text("Camera Pos : (%f, %f, %f) | YAW : %f | Pitch : %f", getCamera().Position.x, getCamera().Position.y, getCamera().Position.z, getCamera().Yaw ,getCamera().Pitch);
         }
         ImGui::End();
 

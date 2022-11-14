@@ -83,8 +83,8 @@ private:
     {
 
         // Default shaders
-        defaultVertShader.Init((SHADER_BINARY_DIR) + std::string("/defaultVert.spv"), ShaderType::VERTEX_SHADER);
-        defaultFragShader.Init((SHADER_BINARY_DIR) + std::string("/defaultFrag.spv"), ShaderType::FRAGMENT_SHADER);
+        defaultVertShader.Init((SHADER_BINARY_DIR) + std::string("/default.vert.spv"), ShaderType::VERTEX_SHADER);
+        defaultFragShader.Init((SHADER_BINARY_DIR) + std::string("/default.frag.spv"), ShaderType::FRAGMENT_SHADER);
         defaultShaders.push_back(defaultVertShader.get_shader_stage_info());
         defaultShaders.push_back(defaultFragShader.get_shader_stage_info());
     }

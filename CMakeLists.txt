@@ -62,7 +62,7 @@ source_group(shaders "Shaders" FILES ${SHADERS})
 
 # Custom rule for compiling the shader files
 foreach(source IN LISTS SHADERS)
-  get_filename_component(FILENAME ${source} NAME_WE)
+  get_filename_component(FILENAME ${source} NAME)
   add_custom_command(
     COMMAND
       ${glslc_executable}

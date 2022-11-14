@@ -216,6 +216,7 @@ void Texture::update_set()
 unsigned char* Texture::load_image(const std::string& path)
 {
     VK_LOG("Loading image from==>", path);
+    stbi_set_flip_vertically_on_load(true);
     unsigned char* pixels = stbi_load(path.c_str(), &m_Width, &m_Height, &m_BPP, STBI_rgb_alpha);
 
     if(!pixels) {

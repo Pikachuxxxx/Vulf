@@ -5,3 +5,4 @@
 build/
 bin/
 bin-int/
+src/shaders/spir-v

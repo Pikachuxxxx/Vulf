@@ -104,11 +104,11 @@ private:
     void LoadShaders() override {
 
         // Default shaders
-        defaultVertShader.Init((SHADER_BINARY_DIR)+std::string("/defaultVert.spv"), ShaderType::VERTEX_SHADER);
-        defaultFragShader.Init((SHADER_BINARY_DIR)+std::string("/defaultFrag.spv"), ShaderType::FRAGMENT_SHADER);
+        defaultVertShader.Init((SHADER_BINARY_DIR)+std::string("/default.vert.spv"), ShaderType::VERTEX_SHADER);
+        defaultFragShader.Init((SHADER_BINARY_DIR)+std::string("/default.frag.spv"), ShaderType::FRAGMENT_SHADER);
 
-        quadVertShader.Init((SHADER_BINARY_DIR)+std::string("/quadVert.spv"), ShaderType::VERTEX_SHADER);
-        quadFragImgShader.Init((SHADER_BINARY_DIR)+std::string("/overdrawvis.spv"), ShaderType::FRAGMENT_SHADER);
+        quadVertShader.Init((SHADER_BINARY_DIR)+std::string("/quad.vert.spv"), ShaderType::VERTEX_SHADER);
+        quadFragImgShader.Init((SHADER_BINARY_DIR)+std::string("/overdrawvis.frag.spv"), ShaderType::FRAGMENT_SHADER);
 
         subdivisionShaders.push_back(defaultVertShader.get_shader_stage_info());
         subdivisionShaders.push_back(defaultFragShader.get_shader_stage_info());

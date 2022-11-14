@@ -26,7 +26,7 @@ void main() {
     outColor = vec4(vs_in.Normal, 1.0f);
 
     //------------------------------------------
-
+    //  Directio
     // Ambient lighting
     vec3 ambient = light.ambient.rgb;
 

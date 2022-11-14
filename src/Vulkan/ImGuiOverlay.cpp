@@ -11,8 +11,8 @@ namespace Vulf {
     void ImGuiOverlay::init()
     {
         // Load the UI shaders
-        m_OverlayVertShader.Init((SHADER_BINARY_DIR) + std::string("/uioverlayVert.spv"), ShaderType::VERTEX_SHADER);
-        m_OverlayFragShader.Init((SHADER_BINARY_DIR) + std::string("/uioverlayFrag.spv"), ShaderType::FRAGMENT_SHADER);
+        m_OverlayVertShader.Init((SHADER_BINARY_DIR) + std::string("/uioverlay.vert.spv"), ShaderType::VERTEX_SHADER);
+        m_OverlayFragShader.Init((SHADER_BINARY_DIR) + std::string("/uioverlay.frag.spv"), ShaderType::FRAGMENT_SHADER);
         imguiOverlayShader.push_back(m_OverlayVertShader.get_shader_stage_info());
         imguiOverlayShader.push_back(m_OverlayFragShader.get_shader_stage_info());
 

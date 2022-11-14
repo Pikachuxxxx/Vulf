@@ -21,7 +21,7 @@ std::vector<const char*> g_DeviceExtensions = {
 
 using namespace Vulf;
 
-// TODO: 
+// TODO:
 // [ ] Compute Command Buffer + Pool
 // [ ] Compute Queue submission (no need to sync their submit operations we do them asynchronously and use mem barriers for the resources)
 
@@ -107,10 +107,10 @@ private:
 
         // Default shaders
 
-        quadVertShader.Init((SHADER_BINARY_DIR)+std::string("/quadVert.spv"), ShaderType::VERTEX_SHADER);
-        quadFragImgShader.Init((SHADER_BINARY_DIR)+std::string("/quadFragImg2D.spv"), ShaderType::FRAGMENT_SHADER);
+        quadVertShader.Init((SHADER_BINARY_DIR)+std::string("/quad.vert.spv"), ShaderType::VERTEX_SHADER);
+        quadFragImgShader.Init((SHADER_BINARY_DIR)+std::string("/quadFragImg2D.frag.spv"), ShaderType::FRAGMENT_SHADER);
 
-        mandlebrotShader.Init((SHADER_BINARY_DIR)+std::string("/mandlebrot.spv"), ShaderType::COMPUTE_SHADER);
+        mandlebrotShader.Init((SHADER_BINARY_DIR)+std::string("/mandlebrot.comp.spv"), ShaderType::COMPUTE_SHADER);
 
         quadShaders.push_back(quadVertShader.get_shader_stage_info());
         quadShaders.push_back(quadFragImgShader.get_shader_stage_info());
