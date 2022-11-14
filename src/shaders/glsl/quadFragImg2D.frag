@@ -30,7 +30,4 @@ void main() {
     //float pixelOverlap = float(color) / 10.0;
 
     outColor = vec4(color.xyz, 1.0f);
-
-    outColor = vec4( vs_in.TexCoords, 0.0f, 1.0 );
-
 }
