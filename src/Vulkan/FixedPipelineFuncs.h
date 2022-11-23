@@ -13,21 +13,21 @@ class FixedPipelineFuncs
 public:
     FixedPipelineFuncs() = default;
     void SetFixedPipelineStage(VkPrimitiveTopology topology, const VkExtent2D& swapchainExtent, bool enableWireFrameMode);
-    const VkPipelineVertexInputStateCreateInfo& GetVertexInputSCI() { return m_VertexInputSCI; }
-    const VkPipelineInputAssemblyStateCreateInfo& GetInputAssemblySCI() { return m_InputAssemblySCI; }
-    const VkPipelineViewportStateCreateInfo& GetViewportStateCI() { return m_ViewportSCI; }
-    const VkPipelineRasterizationStateCreateInfo& GetRazterizerSCI() { return m_RasterizerSCI; }
-    const VkPipelineMultisampleStateCreateInfo& GetMultiSampleSCI() { return m_MultiSampleSCI; }
-    const VkPipelineDepthStencilStateCreateInfo& GetDepthStencilSCI() { return m_DepthStencilSCI;}
-    const VkPipelineColorBlendStateCreateInfo& GetColorBlendSCI() { return m_ColorBlendSCI; }
-    const VkPipelineDynamicStateCreateInfo& GetDynmaicSCI() { return m_DynamicSCI; }
-    const VkPipelineLayout& GetPipelineLayout() { return m_PipelineLayout; }
+    VkPipelineVertexInputStateCreateInfo& GetVertexInputSCI() { return m_VertexInputSCI; }
+    VkPipelineInputAssemblyStateCreateInfo& GetInputAssemblySCI() { return m_InputAssemblySCI; }
+    VkPipelineViewportStateCreateInfo& GetViewportStateCI() { return m_ViewportSCI; }
+    VkPipelineRasterizationStateCreateInfo& GetRazterizerSCI() { return m_RasterizerSCI; }
+    VkPipelineMultisampleStateCreateInfo& GetMultiSampleSCI() { return m_MultiSampleSCI; }
+    VkPipelineDepthStencilStateCreateInfo& GetDepthStencilSCI() { return m_DepthStencilSCI;}
+    VkPipelineColorBlendStateCreateInfo& GetColorBlendSCI() { return m_ColorBlendSCI; }
+    VkPipelineDynamicStateCreateInfo& GetDynmaicSCI() { return m_DynamicSCI; }
+    VkPipelineLayout& GetPipelineLayout() { return m_PipelineLayout; }
     void SetVertexInputSCI();
     void SetInputAssemblyStageInfo(VkPrimitiveTopology topology);
     void SetViewportSCI(const VkExtent2D& swapchainExtent);
-    void SetRasterizerSCI(bool enableWireFrameMode);
+    void SetRasterizerSCI(int cullMode = VK_CULL_MODE_BACK_BIT, bool enableWireFrameMode = false);
     void SetMultiSampleSCI();
-    void SetDepthStencilSCI();
+    void SetDepthStencilSCI(int depthCompareOp = VK_COMPARE_OP_LESS);
     void SetColorBlendSCI();
     void SetDynamicSCI();
     void SetPipelineLayout(VkDescriptorSetLayout layout, VkPushConstantRange* pushConstants);

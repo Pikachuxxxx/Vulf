@@ -107,7 +107,8 @@ include_directories(
     "${CMAKE_SOURCE_DIR}/vendor/ktx/include"
     "${CMAKE_SOURCE_DIR}/vendor/tinygltf"
     "${CMAKE_SOURCE_DIR}/vendor/ktx/other_include/"
-
+    # taskflow
+    "${CMAKE_SOURCE_DIR}/vendor/taskflow/"
     # Vulkan MacOS headers
     $ENV{VULKAN_SDK}/macOS/include
 )
@@ -145,7 +146,8 @@ include_directories(
     "${CMAKE_SOURCE_DIR}/vendor/ktx/include"
     "${CMAKE_SOURCE_DIR}/vendor/tinygltf"
     "${CMAKE_SOURCE_DIR}/vendor/ktx/other_include/"
-
+    # taskflow
+    "${CMAKE_SOURCE_DIR}/vendor/taskflow/"
     # Platform specific vulkan headers
     $ENV{VULKAN_SDK}/include
 )

@@ -206,7 +206,6 @@ private:
     void OnStart() override
     {
         // generate cubemap from equirectangularMap
-        
 
     }
 
@@ -218,7 +217,7 @@ private:
 #ifdef OPTICK_ENABLE
         OPTICK_EVENT();
 #endif
-        baseRenderPass.set_clear_color(0.2f, 0.2f, 0.2f);
+        baseRenderPass.set_clear_color(0.2f, 0.2f, 0.2f); // 19, 50, 78
         auto framebuffers = simpleFrameBuffer.GetFramebuffers();
 
 #ifdef OPTICK_ENABLE

@@ -78,7 +78,7 @@ void FixedPipelineFuncs::SetViewportSCI(const VkExtent2D& swapchainExtent)
     m_ViewportSCI.pScissors = &scissor;
 }
 
-void FixedPipelineFuncs::SetRasterizerSCI(bool enableWireFrameMode)
+void FixedPipelineFuncs::SetRasterizerSCI(int cullMode, bool enableWireFrameMode)
 {
     m_RasterizerSCI = {};
     m_RasterizerSCI.sType = VK_STRUCTURE_TYPE_PIPELINE_RASTERIZATION_STATE_CREATE_INFO;
@@ -88,7 +88,7 @@ void FixedPipelineFuncs::SetRasterizerSCI(bool enableWireFrameMode)
         m_RasterizerSCI.polygonMode = VK_POLYGON_MODE_LINE;
     else
         m_RasterizerSCI.polygonMode = VK_POLYGON_MODE_FILL;
-    m_RasterizerSCI.cullMode = VK_CULL_MODE_BACK_BIT;//VK_CULL_MODE_NONE;//
+    m_RasterizerSCI.cullMode = cullMode;//VK_CULL_MODE_NONE;//
     m_RasterizerSCI.frontFace = VK_FRONT_FACE_CLOCKWISE;//VK_FRONT_FACE_COUNTER_CLOCKWISE;//
     m_RasterizerSCI.depthBiasEnable = VK_FALSE;
     m_RasterizerSCI.depthBiasConstantFactor = 0.0f;
@@ -101,7 +101,6 @@ void FixedPipelineFuncs::SetMultiSampleSCI()
 {
     m_MultiSampleSCI = {};
     m_MultiSampleSCI.sType = VK_STRUCTURE_TYPE_PIPELINE_MULTISAMPLE_STATE_CREATE_INFO;
-    m_MultiSampleSCI.sType = VK_STRUCTURE_TYPE_PIPELINE_MULTISAMPLE_STATE_CREATE_INFO;
     m_MultiSampleSCI.rasterizationSamples = VK_SAMPLE_COUNT_1_BIT;
     m_MultiSampleSCI.sampleShadingEnable = VK_FALSE;
     m_MultiSampleSCI.minSampleShading = 1.0f;
@@ -110,7 +109,7 @@ void FixedPipelineFuncs::SetMultiSampleSCI()
     m_MultiSampleSCI.alphaToOneEnable = VK_FALSE;
 }
 
-void FixedPipelineFuncs::SetDepthStencilSCI()
+void FixedPipelineFuncs::SetDepthStencilSCI(int depthCompareOp)
 {
     // TODO: Fill this later (for now pass a nullptr)
     m_DepthStencilSCI = {};
@@ -118,7 +117,7 @@ void FixedPipelineFuncs::SetDepthStencilSCI()
     m_DepthStencilSCI.depthTestEnable = VK_TRUE;
     m_DepthStencilSCI.depthWriteEnable = VK_TRUE;
     ////////////////////////////////////////////////////
-    m_DepthStencilSCI.depthCompareOp = VK_COMPARE_OP_LESS;
+    m_DepthStencilSCI.depthCompareOp = (VkCompareOp)depthCompareOp;
     ////////////////////////////////////////////////////
     m_DepthStencilSCI.depthBoundsTestEnable = VK_FALSE;
     m_DepthStencilSCI.minDepthBounds = 0.0f; // Optional

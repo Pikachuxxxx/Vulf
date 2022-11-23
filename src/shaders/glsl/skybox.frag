@@ -10,6 +10,10 @@ layout(location = 0) in VS_OUT {
 
 layout(set = 0, binding = 1) uniform sampler2D equirectangularMap;
 
+layout (set = 0, binding = 2) uniform LightConstantData{
+    vec4 viewPos;
+}lightData;
+
 layout(location = 0) out vec4 outColor;
 
 const vec2 invAtan = vec2(0.1591, 0.3183);
