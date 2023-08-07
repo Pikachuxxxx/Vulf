@@ -26,7 +26,7 @@ class VulfLightingTest : public Vulf::VulfBase
 public:
     VulfLightingTest() : VulfBase("Lighting Test")
     {
-        teapotMesh = LoadObjModel((SRC_DIR)+std::string("/data/models/teapot.obj"));
+        teapotMesh = LoadObjModel((SRC_DIR)+std::string("/data/models/sponza.obj"));
 
         GenerateSphereSmooth(5, 10, 10);
     }
@@ -56,9 +56,9 @@ private:
     struct DirectionalLightingData
     {
         glm::vec4 direction = glm::vec4(1.0f);
-        glm::vec4 ambient   = glm::vec4(glm::vec3(0.015), 1.0f);
-        glm::vec4 diffuse   = glm::vec4(0.94, 0.1 , 0.14, 1.0f);
-        glm::vec4 specular  = glm::vec4(1.0f);
+        glm::vec4 ambient = glm::vec4(glm::vec3(0.015), 1.0f);
+        glm::vec4 diffuse = glm::vec4(0.94, 0.1, 0.14, 1.0f);
+        glm::vec4 specular = glm::vec4(1.0f);
         glm::vec4 viewPos;
     }dirLightData;
 
@@ -101,6 +101,7 @@ private:
     Texture                 skyboxTexture;
 
     std::vector<DescriptorSet>           set_per_frame;
+    uint64_t drawCallsCount = 0;
 private:
     void LoadShaders() override {
 
@@ -118,7 +119,7 @@ private:
 
     void BuildTextureResources() override {
 
-        skyboxTexture.Init((SRC_DIR)+std::string("/data/textures/HDR/table_mountain.hdr"));
+        skyboxTexture.Init((SRC_DIR)+std::string("/data/textures/HDR/newport_loft_32bit.hdr"));
 
         // default
         depthImage.CreateDepthImage(baseSwapchain.get_extent().width, baseSwapchain.get_extent().height, graphicsCommandPool);
@@ -140,7 +141,7 @@ private:
             teapotVB.Init(teapotMesh.vertices);
         }
 
-        // Descriptors bindings info and resouce mapping
+        // Descriptors bindings info and resource mapping
         {
             DescriptorInfo vpuboInfo(DescriptorType::UNIFORM_BUFFER, 0, ShaderType::VERTEX_SHADER);
             vpuboInfo.attach_resource<UniformBuffer>(&vpUBO);
@@ -206,7 +207,7 @@ private:
     void OnStart() override
     {
         // generate cubemap from equirectangularMap
-        
+
 
     }
 
@@ -218,7 +219,7 @@ private:
 #ifdef OPTICK_ENABLE
         OPTICK_EVENT();
 #endif
-        baseRenderPass.set_clear_color(0.2f, 0.2f, 0.2f);
+        baseRenderPass.set_clear_color(0.2f, sin(glfwGetTime()), 0.2f);
         auto framebuffers = simpleFrameBuffer.GetFramebuffers();
 
 #ifdef OPTICK_ENABLE
@@ -253,6 +254,7 @@ private:
         vkCmdSetViewport(dcb.get_handle(), 0, 1, &viewport);
         vkCmdSetScissor(dcb.get_handle(), 0, 1, &scissor);
 
+#if 1
         skyboxPipeline.Bind(dcb.get_handle());
 
         // Bind the appropriate descriptor sets
@@ -275,11 +277,26 @@ private:
         vkCmdBindDescriptorSets(dcb.get_handle(), VK_PIPELINE_BIND_POINT_GRAPHICS, geomFixedFunctions.GetPipelineLayout(), 0, 1, &vk_pp_set, 0, nullptr);
 
         teapotVB.bind(dcb.get_handle());
+#endif
 
-        modelPCData.model = glm::scale(glm::mat4(1.0f), glm::vec3(0.01f));
-        vkCmdPushConstants(dcb.get_handle(), geomFixedFunctions.GetPipelineLayout(), VK_SHADER_STAGE_VERTEX_BIT | VK_SHADER_STAGE_FRAGMENT_BIT, 0, sizeof(ModelPushConstant), &modelPCData);
-        for (auto& part : teapotMesh.parts)
-            vkCmdDraw(dcb.get_handle(), part.VertexCount, 1, part.VertexOffset, 0);
+
+        //for (int32_t x = -5; x < 5; x++)
+        //{
+        //    for (int32_t y = -5; y < 5; y++)
+        //    {
+        //        for (int32_t z = -5; z < 5; z++)
+        //        {
+                    //modelPCData.model = glm::translate(glm::mat4(1.0f), glm::vec3(x, y, z));
+        //modelPCData.model *= glm::scale(glm::mat4(1.0f), glm::vec3(0.001f));
+        //vkCmdPushConstants(dcb.get_handle(), geomFixedFunctions.GetPipelineLayout(), VK_SHADER_STAGE_VERTEX_BIT | VK_SHADER_STAGE_FRAGMENT_BIT, 0, sizeof(ModelPushConstant), &modelPCData);
+        //for (auto& part : teapotMesh.parts) {
+        //    vkCmdDraw(dcb.get_handle(), part.VertexCount, 1, part.VertexOffset, 0);
+        //    drawCallsCount++;
+        //}
+        //            }
+        //        }
+        //    }
+        //}
 
         BEGIN_MARKER(dcb, "ImGui Pass", glm::vec4(0.94, 0.16, 0.08, 1.0f));
 
@@ -318,13 +335,14 @@ private:
 
         if (ImGui::Begin(get_app_name().c_str()))
         {
-            ImGui::Text("FPS: %d | Avg : %d | Max : %d | Min : %d", get_fps(), avgFPS, maxFPS, minFPS);
-            ImGui::Text("Descriptor Set Allocations : %d", DescriptorSet::get_current_set_allocations());
+            ImGui::Text("FPS: %d | Max : %d | delta time : %f", get_fps(), maxFPS, get_dt());
+            ImGui::Text("Descriptor Set Allocs: %d", DescriptorSet::get_current_set_allocations());
+            ImGui::Text("Draw Calls : %d", drawCallsCount);
+            drawCallsCount = 0;
+
+            drawCallsCount = 0;
 
             ImGui::Separator();
-
-            ImGui::DragFloat3("Light Direction", glm::value_ptr(dirLightData.direction));
-            ImGui::Text("Camera Pos : (%f, %f, %f) | YAW : %f | Pitch : %f", getCamera().Position.x, getCamera().Position.y, getCamera().Position.z, getCamera().Yaw ,getCamera().Pitch);
         }
         ImGui::End();
 

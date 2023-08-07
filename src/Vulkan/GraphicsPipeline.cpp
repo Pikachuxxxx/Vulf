@@ -1,4 +1,4 @@
- #include "GraphicsPipeline.h"
+#include "GraphicsPipeline.h"
 
 #include "Device.h"
 #include "../utils/VulkanCheckResult.h"
@@ -39,6 +39,15 @@ void GraphicsPipeline::Create(std::vector<VkPipelineShaderStageCreateInfo> shade
     dynamicStateCI.dynamicStateCount = uint32_t(dynamicStateDescriptors.size());
     dynamicStateCI.pDynamicStates = dynamicStateDescriptors.data();
 
+
+    VkFormat swapFromat = VK_FORMAT_B8G8R8A8_UNORM;
+    VkPipelineRenderingCreateInfoKHR pipeline_rendering_create_info{
+        .sType = VK_STRUCTURE_TYPE_PIPELINE_RENDERING_CREATE_INFO_KHR,
+        .colorAttachmentCount = 1,
+        .pColorAttachmentFormats = &swapFromat,
+    };
+
+    graphicsCI.pNext = &pipeline_rendering_create_info;
     graphicsCI.pVertexInputState = &m_VertexInputSCI;
     graphicsCI.pInputAssemblyState = &fixedfunctions.GetInputAssemblySCI();
     graphicsCI.pViewportState = &fixedfunctions.GetViewportStateCI();
@@ -48,7 +57,7 @@ void GraphicsPipeline::Create(std::vector<VkPipelineShaderStageCreateInfo> shade
     graphicsCI.pColorBlendState = &fixedfunctions.GetColorBlendSCI();
     graphicsCI.pDynamicState = &dynamicStateCI;
     graphicsCI.layout = fixedfunctions.GetPipelineLayout();
-    graphicsCI.renderPass = renderpass;
+    graphicsCI.renderPass = nullptr;
     graphicsCI.subpass = 0;
     graphicsCI.basePipelineHandle = VK_NULL_HANDLE;
     graphicsCI.basePipelineIndex = -1;

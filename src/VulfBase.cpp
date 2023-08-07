@@ -13,10 +13,10 @@
 
 namespace Vulf {
 
-// Public
-/*******************************************************************************
- *                              Init Application                               *
- ******************************************************************************/
+    // Public
+    /*******************************************************************************
+     *                              Init Application                               *
+     ******************************************************************************/
 
     VulfBase::~VulfBase() { }
 
@@ -32,10 +32,10 @@ namespace Vulf {
 #endif
     }
 
-// Private
-/*******************************************************************************
- *                              Init Application                               *
- ******************************************************************************/
+    // Private
+    /*******************************************************************************
+     *                              Init Application                               *
+     ******************************************************************************/
     void VulfBase::InitResources() {
 
     }
@@ -54,10 +54,10 @@ namespace Vulf {
         Device::Get()->Init();
 
 #ifdef OPTICK_ENABLE
-        auto device         = Device::Get()->get_handle();
+        auto device = Device::Get()->get_handle();
         auto physicalDevice = Device::Get()->get_gpu();
-        auto queuefam       = Device::Get()->get_graphics_queue();
-        uint32_t numQueues  = Device::Get()->get_graphics_queue_index();
+        auto queuefam = Device::Get()->get_graphics_queue();
+        uint32_t numQueues = Device::Get()->get_graphics_queue_index();
         OPTICK_GPU_INIT_VULKAN(&device, &physicalDevice, &queuefam, &numQueues, 1);
 #endif
         // Load the shaders
@@ -92,6 +92,7 @@ namespace Vulf {
     // PRIVATE
     // Render Loop Beginning
     void VulfBase::RenderLoop() {
+        ZoneScopedC(0xfdf0ff);
 
         OnStart();
 
@@ -120,14 +121,19 @@ namespace Vulf {
                 m_FPS = m_FrameCounter;
 
                 // Update the moving avg FPS
-                ++avgQnt;
-                avgFPS += ((get_fps() - avgFPS)/avgQnt);
+                //++avgQnt;
+                //int64_t prevAvgFPS = avgFPS;
+                //float delta = ((get_fps() - prevAvgFPS) / avgQnt);
+                //avgFPS += (int64_t)delta;
+
+                //if (avgFPS > 2000)
+                //    __debugbreak();
 
                 // Update the min and max fps
-                if(get_fps() > maxFPS)
+                if (get_fps() > maxFPS)
                     maxFPS = get_fps();
 
-                if(get_fps() < minFPS)
+                if (get_fps() < minFPS)
                     minFPS = get_fps();
 
                 auto title = m_AppName + " [FPS : " + std::to_string(m_FrameCounter) + "]";
@@ -159,8 +165,8 @@ namespace Vulf {
  *                  Client Side Customization(default behavior)                *
  ******************************************************************************/
 
-    ////////////////////////////////////////////////////////////////////////////
-    // PRIVATE
+ ////////////////////////////////////////////////////////////////////////////
+ // PRIVATE
     void VulfBase::BuildCommandPipeline() {
 
         // Build texture and image resources
@@ -244,17 +250,17 @@ namespace Vulf {
 
     }
 
-//-----------------------------------------------------------------------------//
-// cleanup --> Used by applicaion to destroy it's resources
+    //-----------------------------------------------------------------------------//
+    // cleanup --> Used by applicaion to destroy it's resources
     void VulfBase::CleanUpPipeline() {
 
     }
-//-----------------------------------------------------------------------------//
-// Draw Frame + Submission logic
-    ////////////////////////////////////////////////////////////////////////////
-    // Draw the Frame
+    //-----------------------------------------------------------------------------//
+    // Draw Frame + Submission logic
+        ////////////////////////////////////////////////////////////////////////////
+        // Draw the Frame
     void VulfBase::DrawFrame() {
-        //ZoneScopedC(0xff0000)
+        ZoneScopedC(0xffffff)
 #ifdef OPTICK_ENABLE
         OPTICK_EVENT();
         OPTICK_GPU_EVENT("Draw Frame");
@@ -265,11 +271,11 @@ namespace Vulf {
         // Acquire the image to render onto
         VkResult result = vkAcquireNextImageKHR(VKDEVICE, baseSwapchain.get_handle(), UINT64_MAX, m_ImageAvailableSemaphores[m_CurrentFrame].get_handle(), VK_NULL_HANDLE, &m_ImageIndex);
 
-        if(result == VK_ERROR_OUT_OF_DATE_KHR) {
+        if (result == VK_ERROR_OUT_OF_DATE_KHR) {
             RecreateSwapchain();
             return;
         }
-        else if(result != VK_SUCCESS && result != VK_SUBOPTIMAL_KHR) {
+        else if (result != VK_SUCCESS && result != VK_SUBOPTIMAL_KHR) {
             throw std::runtime_error("Cannot acquire next image!");
         }
 
@@ -405,8 +411,8 @@ namespace Vulf {
 
     }
 
-//-----------------------------------------------------------------------------//
-// Private methods
+    //-----------------------------------------------------------------------------//
+    // Private methods
 
     void VulfBase::InitSyncPrimitives() {
 
@@ -451,5 +457,5 @@ namespace Vulf {
         baseRenderPass.Destroy();
         baseSwapchain.Destroy();
     }
-/******************************************************************************/
+    /******************************************************************************/
 }

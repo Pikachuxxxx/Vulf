@@ -44,5 +44,5 @@ void main() {
 
     outColor = mix( reflect_color, refract_color, angle );
 
-    outColor = vec4(reflect_color.xyz, 1.0f);
+    outColor = vec4(vs_in.Normal.xyz, 1.0f);
 }

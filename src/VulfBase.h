@@ -194,11 +194,12 @@ namespace Vulf {
         /* ImGui Overlay */
         virtual void OnImGui();
 
-        inline const uint32_t& get_fps() { return m_FPS; }
+        inline const uint64_t& get_fps() { return m_FPS; }
         inline const std::string& get_app_name() { return m_AppName; }
         inline const uint32_t& get_image_idx() const { return m_ImageIndex; }
         inline const uint32_t& get_frame_idx() const { return m_CurrentFrame; }
         inline ImGuiOverlay& get_ui_overlay() { return m_ImGuiOVerlay; }
+        inline float get_dt() { return m_FrameTimer.count() * 1000.0f; }
     public:
         // Application flow
         std::string                 m_AppName;                      /* The name of the application                                                      */
@@ -210,10 +211,10 @@ namespace Vulf {
         HighResClock                m_LastTimestamp;                /* High resolution clock to measure the last time when a frame was rendered         */
         uint32_t                    m_ImageIndex = 0;        /* The next image index from the swapchain images list to which we can render to    */
         uint32_t                    m_CurrentFrame = 0;        /* The index of the frame/swap image index that is being presented on the screen    */
-        uint32_t                    m_FPS = 0;        /* The frame per second                                                             */
+        uint64_t                    m_FPS = 0;        /* The frame per second                                                             */
         // FPS
-        int avgQnt = 1;
-        int minFPS = 1000.0f, maxFPS = 0, avgFPS = 0;
+        int64_t avgQnt = 1;
+        int64_t minFPS = 1000.0f, maxFPS = 0, avgFPS = 0;
 
     private:
         ImGuiOverlay                m_ImGuiOVerlay;                 /* ImGui overlay for the application                                                */

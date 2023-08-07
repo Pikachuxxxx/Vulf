@@ -147,9 +147,13 @@ void Device::Init()
     deviceFeatures.tessellationShader = VK_TRUE;
     deviceFeatures.fragmentStoresAndAtomics = VK_TRUE;
 
+    VkPhysicalDeviceDynamicRenderingFeaturesKHR dynamic_rendering_feature;
+    dynamic_rendering_feature.sType = VK_STRUCTURE_TYPE_PHYSICAL_DEVICE_DYNAMIC_RENDERING_FEATURES_KHR;
+    dynamic_rendering_feature.dynamicRendering = VK_TRUE;
+
     VkPhysicalDeviceMeshShaderFeaturesNV meshShaderFeatures{};
     meshShaderFeatures.sType = VK_STRUCTURE_TYPE_PHYSICAL_DEVICE_MESH_SHADER_FEATURES_NV;
-    meshShaderFeatures.pNext = nullptr;
+    meshShaderFeatures.pNext = &dynamic_rendering_feature;
     meshShaderFeatures.taskShader = VK_TRUE;
     meshShaderFeatures.meshShader = VK_TRUE;
 

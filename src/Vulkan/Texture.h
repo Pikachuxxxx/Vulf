@@ -2,6 +2,8 @@
 
 #include <vulkan/vulkan.h>
 
+#include <string>
+
 #include "Buffer.h"
 #include "CmdPool.h"
 #include "Image.h"
